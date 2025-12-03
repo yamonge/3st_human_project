@@ -45,9 +45,18 @@ const OnboardingScreen = ({navigation}) => {
     setCurrentIndex(index);
   };
 
-  const handleStart = () => {
-    // 메인 네비게이션으로 이동
-    navigation.replace('MainApp');
+  const handleStart = async () => {
+    // 최초 실행 플래그 저장
+    try {
+      const AsyncStorage =
+        require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.setItem('hasLaunched', 'true');
+    } catch (error) {
+      console.error('AsyncStorage 저장 에러:', error);
+    }
+
+    // 로그인 화면으로 이동
+    navigation.replace('Login');
   };
 
   const renderItem = ({item}) => (
@@ -135,7 +144,7 @@ const styles = StyleSheet.create({
   },
   backgroundAnimation: {
     position: 'absolute',
-    width: '100%',
+    width: '80%',
     height: '100%',
     top: 0,
     left: 0,

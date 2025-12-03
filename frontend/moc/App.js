@@ -1,99 +1,51 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
+
+// 온보딩 & 인증 화면
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
+import LoginScreen from './src/screens/user/LoginScreen';
+import SignupScreen from './src/screens/user/SignupScreen';
+import FindAccountScreen from './src/screens/user/FindAccountScreen';
+
+// 메인 화면
+import HomeScreen from './src/screens/home/HomeScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// 임시 화면 컴포넌트들
-function HomeScreen() {
-  const [count, setCount] = useState(0);
-
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Home Screen</Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => {
-          setCount(count + 1);
-          Alert.alert('버튼 클릭!', `${count + 1}번 클릭했습니다`);
-        }}>
-        <Text style={styles.buttonText}>터치 테스트 버튼</Text>
-        <Text style={styles.countText}>클릭 횟수: {count}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+// TODO: 임시 화면들 (추후 실제 화면으로 교체)
+function RecipeBoardScreen() {
+  return null; // 추후 구현
 }
 
-function ChatScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Chat Screen</Text>
-    </View>
-  );
-}
-
-function ListScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>List Screen</Text>
-    </View>
-  );
+function NotificationScreen() {
+  return null; // 추후 구현
 }
 
 function ProfileScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Profile Screen</Text>
-    </View>
-  );
+  return null; // 추후 구현
 }
 
-// 서브메뉴 화면들
-function CameraScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Camera Screen</Text>
-    </View>
-  );
+function CameraFlowScreen() {
+  return null; // 추후 구현
 }
 
-function VideoScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Video Screen</Text>
-    </View>
-  );
+function VoiceFlowScreen() {
+  return null; // 추후 구현
 }
 
-function MusicScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Music Screen</Text>
-    </View>
-  );
+function MapFlowScreen() {
+  return null; // 추후 구현
 }
 
-function EditScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Edit Screen</Text>
-    </View>
-  );
-}
-
-function ShareScreen() {
-  return (
-    <View style={styles.screen}>
-      <Text style={styles.text}>Share Screen</Text>
-    </View>
-  );
-}
-
+/**
+ * 메인 하단 탭 네비게이터
+ * Metaball 스타일의 커스텀 네비게이션 바 사용
+ */
 function MainTabNavigator() {
   return (
     <Tab.Navigator
@@ -101,70 +53,85 @@ function MainTabNavigator() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Tab.Screen name="Heart" component={HomeScreen} />
-      <Tab.Screen name="Chat" component={ChatScreen} />
-      <Tab.Screen name="List" component={ListScreen} />
-      <Tab.Screen name="Tag" component={ProfileScreen} />
-      {/* 서브메뉴 화면들 */}
-      <Tab.Screen name="Camera" component={CameraScreen} />
-      <Tab.Screen name="Video" component={VideoScreen} />
-      <Tab.Screen name="Music" component={MusicScreen} />
-      <Tab.Screen name="Edit" component={EditScreen} />
-      <Tab.Screen name="Share" component={ShareScreen} />
+      {/* 하단 4개 탭 */}
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="RecipeBoard" component={RecipeBoardScreen} />
+      <Tab.Screen name="Notification" component={NotificationScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+
+      {/* FAB 서브메뉴 화면들 */}
+      <Tab.Screen name="Camera" component={CameraFlowScreen} />
+      <Tab.Screen name="Voice" component={VoiceFlowScreen} />
+      <Tab.Screen name="Recipe" component={RecipeBoardScreen} />
+      <Tab.Screen name="Receipt" component={CameraFlowScreen} />
+      <Tab.Screen name="Map" component={MapFlowScreen} />
     </Tab.Navigator>
   );
 }
 
+/**
+ * 루트 앱 컴포넌트
+ *
+ * 화면 플로우:
+ * 1. 최초 실행: Onboarding → Login
+ * 2. 재실행 (로그인 상태): MainApp (Home)
+ * 3. 로그인 필요: Login → Signup / FindAccount
+ * 4. 로그인 성공: MainApp
+ */
 function App() {
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
+
+  useEffect(() => {
+    checkFirstLaunch();
+  }, []);
+
+  // 최초 실행 여부 및 로그인 상태 체크
+  const checkFirstLaunch = async () => {
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+
+      // 온보딩 항상 표시 (개발용)
+      setIsFirstLaunch(true);
+      setIsLoggedIn(token !== null);
+    } catch (error) {
+      console.error('앱 초기화 에러:', error);
+      setIsFirstLaunch(true);
+      setIsLoggedIn(false);
+    }
+  };
+
+  // 로딩 중
+  if (isFirstLaunch === null || isLoggedIn === null) {
+    return null; // TODO: 스플래시 화면 추가
+  }
+
+  // 초기 화면 결정 - 항상 온보딩부터 시작
+  const getInitialRouteName = () => {
+    return 'Onboarding'; // 항상 온보딩
+  };
+
   return (
     <NavigationContainer>
       <Stack.Navigator
+        initialRouteName={getInitialRouteName()}
         screenOptions={{
           headerShown: false,
+          animation: 'fade',
         }}>
+        {/* 온보딩 */}
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+
+        {/* 인증 화면들 */}
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Signup" component={SignupScreen} />
+        <Stack.Screen name="FindAccount" component={FindAccountScreen} />
+
+        {/* 메인 앱 (하단 탭 네비게이션) */}
         <Stack.Screen name="MainApp" component={MainTabNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 30,
-  },
-  button: {
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  countText: {
-    color: 'white',
-    fontSize: 14,
-    marginTop: 5,
-    textAlign: 'center',
-  },
-});
 
 export default App;
