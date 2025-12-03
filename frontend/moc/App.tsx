@@ -1,130 +1,119 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {View, Text, StyleSheet} from 'react-native';
+import MetaballNavigation from './src/navigation/MetaballNavigation';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const Tab = createBottomTabNavigator();
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+// 임시 화면 컴포넌트들
+function HomeScreen() {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={styles.screen}>
+      <Text style={styles.text}>Home Screen</Text>
+    </View>
+  );
+}
+
+function ChatScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Chat Screen</Text>
+    </View>
+  );
+}
+
+function ListScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>List Screen</Text>
+    </View>
+  );
+}
+
+function ProfileScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Profile Screen</Text>
+    </View>
+  );
+}
+
+// 서브메뉴 화면들
+function CameraScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Camera Screen</Text>
+    </View>
+  );
+}
+
+function VideoScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Video Screen</Text>
+    </View>
+  );
+}
+
+function MusicScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Music Screen</Text>
+    </View>
+  );
+}
+
+function EditScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Edit Screen</Text>
+    </View>
+  );
+}
+
+function ShareScreen() {
+  return (
+    <View style={styles.screen}>
+      <Text style={styles.text}>Share Screen</Text>
     </View>
   );
 }
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the reccomendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
-
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </View>
+    <NavigationContainer>
+      <Tab.Navigator
+        tabBar={props => <MetaballNavigation {...props} />}
+        screenOptions={{
+          headerShown: false,
+        }}>
+        <Tab.Screen name="Heart" component={HomeScreen} />
+        <Tab.Screen name="Chat" component={ChatScreen} />
+        <Tab.Screen name="List" component={ListScreen} />
+        <Tab.Screen name="Tag" component={ProfileScreen} />
+        {/* 서브메뉴 화면들 */}
+        <Tab.Screen name="Camera" component={CameraScreen} />
+        <Tab.Screen name="Video" component={VideoScreen} />
+        <Tab.Screen name="Music" component={MusicScreen} />
+        <Tab.Screen name="Edit" component={EditScreen} />
+        <Tab.Screen name="Share" component={ShareScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  screen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
   },
-  sectionTitle: {
+  text: {
     fontSize: 24,
     fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+    color: '#333',
   },
 });
 

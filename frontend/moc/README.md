@@ -32,7 +32,7 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 ### Navigation
 - **@react-navigation/native:** ^7.1.21
 - **@react-navigation/bottom-tabs:** ^7.0.0
-- **react-native-screens:** ^4.4.0
+- **react-native-screens:** @latest
 - **react-native-safe-area-context:** ^5.6.2
 
 ### UI/Animation
