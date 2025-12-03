@@ -1,0 +1,16 @@
+spring:
+  mail:
+    host: smtp.gmail.com          # 예: smtp.gmail.com, smtp.naver.com 등
+    port: 587                       # 보통 TLS는 587
+    username: no-reply@example.com  # 보내는 메일 주소
+    password: your-mail-password    # 메일 계정 비밀번호 또는 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# 프론트엔드 베이스 URL (비밀번호 재설정 페이지)
+app:
+  frontend-base-url: http://localhost:3010

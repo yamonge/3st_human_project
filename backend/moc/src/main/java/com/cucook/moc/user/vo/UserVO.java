@@ -1,9 +1,6 @@
 package com.cucook.moc.user.vo;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,9 +8,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @ToString
 public class UserVO {
-    private Long userId;            // 
+    private Long userId;            //
     private String userEmail;       // 이메일
     private String userName;
     private String userNickname;

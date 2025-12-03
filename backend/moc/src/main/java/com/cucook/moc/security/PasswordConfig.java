@@ -1,4 +1,4 @@
-package com.cucook.moc.config;
+package com.cucook.moc.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

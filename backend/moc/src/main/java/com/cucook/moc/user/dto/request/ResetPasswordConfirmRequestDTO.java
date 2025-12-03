@@ -13,7 +13,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString
-public class ResetPwdConfirmRequestDTO {
+public class ResetPasswordConfirmRequestDTO {
     private String token;             // 이메일 링크에 들어있는 resetToken
     private String newPassword;
     private String newPasswordConfirm;

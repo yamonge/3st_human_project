@@ -1,4 +1,4 @@
-package com.cucook.moc.user.dto;
+package com.cucook.moc.user.dto.request;
 
 import java.time.LocalDate;
 

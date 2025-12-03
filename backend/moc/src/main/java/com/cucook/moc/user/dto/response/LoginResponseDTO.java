@@ -1,9 +1,6 @@
-package com.cucook.moc.user.dto;
+package com.cucook.moc.user.dto.response;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 /**
  * 로그인 응답 DTO
@@ -12,6 +9,8 @@ import lombok.ToString;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @ToString
 public class LoginResponseDTO {
     private Long userId;

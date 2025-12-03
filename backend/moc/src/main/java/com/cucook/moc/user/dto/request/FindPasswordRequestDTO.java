@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @ToString
-public class FindPwdRequestDTO {
+public class FindPasswordRequestDTO {
     private String userEmail;
     private String userName;
     private LocalDate userBirthDate;
