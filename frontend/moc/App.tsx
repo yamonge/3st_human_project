@@ -1,16 +1,27 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 
 const Tab = createBottomTabNavigator();
 
 // 임시 화면 컴포넌트들
 function HomeScreen() {
+  const [count, setCount] = useState(0);
+
   return (
     <View style={styles.screen}>
       <Text style={styles.text}>Home Screen</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => {
+          setCount(count + 1);
+          Alert.alert('버튼 클릭!', `${count + 1}번 클릭했습니다`);
+        }}>
+        <Text style={styles.buttonText}>터치 테스트 버튼</Text>
+        <Text style={styles.countText}>클릭 횟수: {count}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -114,6 +125,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 30,
+  },
+  button: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  countText: {
+    color: 'white',
+    fontSize: 14,
+    marginTop: 5,
+    textAlign: 'center',
   },
 });
 
