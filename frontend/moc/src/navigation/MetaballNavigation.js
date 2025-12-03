@@ -1,0 +1,611 @@
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+  Pressable,
+  Alert,
+} from 'react-native';
+import {
+  Canvas,
+  Circle,
+  Group,
+  Paint,
+  Blur,
+  ColorMatrix,
+  Path,
+  vec,
+  Shadow,
+  RadialGradient,
+  LinearGradient,
+  SweepGradient,
+} from '@shopify/react-native-skia';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  interpolate,
+  useDerivedValue,
+} from 'react-native-reanimated';
+import {BlurView} from '@react-native-community/blur';
+import {
+  Plus,
+  Camera,
+  Video,
+  Edit2,
+  Home,
+  FileText,
+  Flag,
+  User,
+  Image,
+  Music,
+  Share2,
+} from 'lucide-react-native';
+
+// --- Constants ---
+const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const CANVAS_HEIGHT = SCREEN_HEIGHT; // 전체 화면 높이
+const TAB_BAR_HEIGHT = 60;
+const FAB_OFFSET_Y = 15;
+
+const FAB_SIZE = 64;
+const FAB_CENTER_X = SCREEN_WIDTH / 2;
+const FAB_CENTER_Y_CLOSED = CANVAS_HEIGHT - TAB_BAR_HEIGHT + FAB_OFFSET_Y; // 닫힌 상태 위치
+const FAB_CENTER_Y_OPEN = SCREEN_HEIGHT / 2; // 화면 중앙
+
+const MENU_RADIUS = 120; // 원형 배치를 위해 증가
+
+// 부드러운 메타볼 효과를 위한 스프링 설정
+const SPRING_CONFIG = {
+  stiffness: 100,
+  damping: 18,
+  mass: 1,
+};
+
+// 뽕뽕 튀어나오는 탄성 스프링
+const BOUNCE_SPRING_CONFIG = {
+  damping: 12,
+  stiffness: 150,
+  mass: 0.8,
+};
+
+// 메타볼 효과를 위한 ColorMatrix (선명한 경계)
+const METABALL_MATRIX = [
+  1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 22, -8,
+];
+
+// --- 배경 Path (Figma 디자인 곡선) ---
+const getBackgroundPath = (width, height, barHeight) => {
+  const center = width / 2;
+  const curveWidth = 135; // 더 넓게
+  const curveDepth = 48; // FAB와 분리되게
+  const topY = height - barHeight;
+
+  const startX = center - curveWidth / 2;
+  const endX = center + curveWidth / 2;
+  const cp1X = center - curveWidth / 4;
+  const cp2X = center + curveWidth / 4;
+  const bottomY = topY + curveDepth;
+
+  return `
+    M 0 ${topY}
+    L ${startX} ${topY}
+    C ${cp1X} ${topY}, ${cp1X} ${bottomY}, ${center} ${bottomY}
+    C ${cp2X} ${bottomY}, ${cp2X} ${topY}, ${endX} ${topY}
+    L ${width} ${topY}
+    L ${width} ${height}
+    L 0 ${height}
+    Z
+  `;
+};
+
+// --- 서브메뉴 데이터 (원형 배치) - 5개 ---
+const SUB_MENU_ITEMS = [
+  {id: 'camera', icon: Camera, angle: 0, color: '#00B8DB'},
+  {id: 'video', icon: Video, angle: 72, color: '#00B8DB'},
+  {id: 'music', icon: Music, angle: 144, color: '#00B8DB'},
+  {id: 'edit', icon: Edit2, angle: 216, color: '#00B8DB'},
+  {id: 'share', icon: Share2, angle: 288, color: '#00B8DB'},
+];
+
+// 향후 확장을 위한 예시 (8개)
+// const SUB_MENU_ITEMS = [
+//   {id: 'camera', icon: Camera, angle: 0, color: '#7FC9E7'},
+//   {id: 'gallery', icon: Image, angle: 45, color: '#7FC9E7'},
+//   {id: 'video', icon: Video, angle: 90, color: '#7FC9E7'},
+//   {id: 'music', icon: Music, angle: 135, color: '#7FC9E7'},
+//   {id: 'edit', icon: Edit2, angle: 180, color: '#7FC9E7'},
+//   {id: 'share', icon: Share2, angle: 225, color: '#7FC9E7'},
+//   {id: 'download', icon: Download, angle: 270, color: '#7FC9E7'},
+//   {id: 'settings', icon: Settings, angle: 315, color: '#7FC9E7'},
+// ];
+
+/**
+ * 각도와 진행도에 따른 위치 계산
+ */
+const getPosition = (angleDeg, progress, radius) => {
+  'worklet';
+  const radian = (angleDeg * Math.PI) / 180;
+  const x = Math.cos(radian) * radius * progress;
+  const y = Math.sin(radian) * radius * progress;
+  return {x, y};
+};
+
+export default function MetaballNavigation({state, navigation}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // 각 서브메뉴 아이템의 진행도
+  const subMenuProgress = SUB_MENU_ITEMS.map(() => useSharedValue(0));
+  const rotation = useSharedValue(0);
+  const fabScale = useSharedValue(1);
+  const fabCenterY = useSharedValue(FAB_CENTER_Y_CLOSED); // FAB Y 위치 애니메이션
+  const backdropOpacity = useSharedValue(0);
+  const navBarOpacity = useSharedValue(1); // 네비게이션 바 투명도
+
+  // --- 애니메이션 ---
+  useEffect(() => {
+    rotation.value = withSpring(isOpen ? 45 : 0, {
+      stiffness: 200,
+      damping: 20,
+    });
+
+    fabScale.value = withSpring(isOpen ? 1.7 : 1, {
+      stiffness: 120,
+      damping: 18,
+    });
+
+    // FAB 중앙 이동 (속도 감소)
+    fabCenterY.value = withSpring(
+      isOpen ? FAB_CENTER_Y_OPEN : FAB_CENTER_Y_CLOSED,
+      {
+        stiffness: 100,
+        damping: 25,
+      },
+    );
+
+    // 블러 배경
+    backdropOpacity.value = withSpring(isOpen ? 1 : 0, {
+      stiffness: 200,
+      damping: 20,
+    });
+
+    // 네비게이션 바는 항상 보이게
+    navBarOpacity.value = 1;
+
+    // 서브메뉴 뽕뽕 튀어나오기 (속도 감소)
+    SUB_MENU_ITEMS.forEach((_, index) => {
+      const delay = isOpen
+        ? index * 100 + 250 // FAB 이동 후 시작 (딜레이 증가)
+        : 0; // 닫힐 때는 한꺼번에
+      subMenuProgress[index].value = withDelay(
+        delay,
+        withSpring(isOpen ? 1 : 0, {
+          damping: 13,
+          stiffness: 160,
+          mass: 0.9,
+        }),
+      );
+    });
+  }, [isOpen]);
+
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const closeMenu = () => setIsOpen(false);
+
+  // --- Skia 메타볼 위치 계산 ---
+  const metaballPositions = SUB_MENU_ITEMS.map((item, index) =>
+    useDerivedValue(() => {
+      const pos = getPosition(
+        item.angle,
+        subMenuProgress[index].value,
+        MENU_RADIUS,
+      );
+      return vec(FAB_CENTER_X + pos.x, fabCenterY.value + pos.y);
+    }),
+  );
+
+  // 브릿지 메타볼 (FAB과 서브메뉴 사이에만)
+  const bridgeData = SUB_MENU_ITEMS.map((item, index) =>
+    useDerivedValue(() => {
+      const progress = subMenuProgress[index].value;
+
+      // 0.1~0.35 구간에서만 브릿지 생성 (더 짧게)
+      if (progress < 0.1 || progress > 0.35) {
+        return [];
+      }
+
+      const bridges = [];
+      const numBridges = 4; // 브릿지 개수 줄임
+
+      for (let i = 0; i < numBridges; i++) {
+        const t = (i + 1) / (numBridges + 1);
+        const bridgeProgress = progress * t;
+        const pos = getPosition(item.angle, bridgeProgress, MENU_RADIUS);
+
+        // 거리에 따라 반지름 감소 (장력 효과)
+        const radius = 45 - t * 10;
+
+        bridges.push({
+          pos: vec(FAB_CENTER_X + pos.x, fabCenterY.value + pos.y),
+          radius: radius,
+        });
+      }
+
+      return bridges;
+    }),
+  );
+
+  // FAB 중심 위치 (동적 Y)
+  const fabCenter = useDerivedValue(() => {
+    return vec(FAB_CENTER_X, fabCenterY.value);
+  });
+
+  // FAB 반지름 (스케일 적용) - 동적 크기 변화
+  const fabRadius = useDerivedValue(() => {
+    return 34 * fabScale.value; // 기본 34에서 스케일 적용
+  });
+
+  // --- Reanimated 아이콘 스타일 ---
+  const iconStyles = SUB_MENU_ITEMS.map((item, index) =>
+    useAnimatedStyle(() => {
+      const pos = getPosition(
+        item.angle,
+        subMenuProgress[index].value,
+        MENU_RADIUS,
+      );
+      return {
+        transform: [
+          {translateX: pos.x},
+          {translateY: pos.y},
+          {scale: subMenuProgress[index].value},
+        ],
+        opacity: interpolate(
+          subMenuProgress[index].value,
+          [0, 0.3, 1],
+          [0, 0, 1],
+        ),
+      };
+    }),
+  );
+
+  const plusStyle = useAnimatedStyle(() => ({
+    transform: [{rotate: `${rotation.value}deg`}],
+  }));
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+    pointerEvents: isOpen ? 'auto' : 'none',
+  }));
+
+  const backgroundPath = getBackgroundPath(
+    SCREEN_WIDTH,
+    CANVAS_HEIGHT,
+    TAB_BAR_HEIGHT,
+  );
+
+  const blurStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  const navBarStyle = useAnimatedStyle(() => ({
+    opacity: navBarOpacity.value,
+  }));
+
+  return (
+    <>
+      {/* 블러 배경 */}
+      {isOpen && (
+        <Pressable style={StyleSheet.absoluteFill} onPress={closeMenu}>
+          <Animated.View style={[styles.blurBackdrop, blurStyle]}>
+            <BlurView
+              style={styles.blurView}
+              blurType="light"
+              blurAmount={15}
+              reducedTransparencyFallbackColor="rgba(240, 240, 240, 0.8)"
+            />
+          </Animated.View>
+        </Pressable>
+      )}
+
+      <View style={styles.container}>
+        {/* LAYER 1: Skia Canvas (메타볼 효과) */}
+        <Canvas style={styles.canvas}>
+          {/* 배경 */}
+          <Path path={backgroundPath} color="#ffffff">
+            <Shadow
+              dx={0}
+              dy={-10}
+              blur={40}
+              color="rgba(149, 168, 195, 0.15)"
+            />
+          </Path>
+
+          {/* 각 서브메뉴마다 독립적인 메타볼 레이어 */}
+          {SUB_MENU_ITEMS.map((item, index) => (
+            <Group key={`metaball-group-${index}`}>
+              <Group
+                layer={
+                  <Paint>
+                    <Blur blur={20} />
+                    <ColorMatrix matrix={METABALL_MATRIX} />
+                  </Paint>
+                }>
+                {/* FAB 메타볼 (동적 크기 적용 - 그라데이션 적용) */}
+                <Circle c={fabCenter} r={fabRadius}>
+                  <LinearGradient
+                    start={useDerivedValue(() =>
+                      vec(
+                        fabCenter.value.x - fabRadius.value,
+                        fabCenter.value.y,
+                      ),
+                    )}
+                    end={useDerivedValue(() =>
+                      vec(
+                        fabCenter.value.x + fabRadius.value,
+                        fabCenter.value.y,
+                      ),
+                    )}
+                    colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
+                  />
+                </Circle>
+
+                {/* 이 서브메뉴와 연결되는 브릿지들 */}
+                {bridgeData[index].value.map((bridge, bridgeIndex) => (
+                  <Circle
+                    key={`bridge-${bridgeIndex}`}
+                    c={bridge.pos}
+                    r={bridge.radius}
+                    color={item.color}
+                  />
+                ))}
+
+                {/* 이 서브메뉴 메타볼 (투명하게 - 브릿지만 보이게) */}
+                <Circle
+                  c={metaballPositions[index]}
+                  r={21}
+                  color={item.color}
+                />
+              </Group>
+            </Group>
+          ))}
+
+          {/* 서브메뉴 그라데이션 원들 */}
+          {metaballPositions.map((pos, index) => (
+            <Circle key={`submenu-gradient-${index}`} c={pos} r={28}>
+              <LinearGradient
+                start={useDerivedValue(() =>
+                  vec(pos.value.x - 28, pos.value.y),
+                )}
+                end={useDerivedValue(() => vec(pos.value.x + 28, pos.value.y))}
+                colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
+              />
+            </Circle>
+          ))}
+
+          {/* FAB 그라데이션 원 */}
+          <Group>
+            {/* 메인 FAB */}
+            <Circle c={fabCenter} r={fabRadius}>
+              <LinearGradient
+                start={useDerivedValue(() =>
+                  vec(fabCenter.value.x - fabRadius.value, fabCenter.value.y),
+                )}
+                end={useDerivedValue(() =>
+                  vec(fabCenter.value.x + fabRadius.value, fabCenter.value.y),
+                )}
+                colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
+              />
+            </Circle>
+          </Group>
+        </Canvas>
+
+        {/* LAYER 2: React Native 오버레이 (아이콘 & 인터랙션) */}
+        <View style={styles.overlay} pointerEvents="box-none">
+          {/* 하단 탭 바 아이콘들 (페이드아웃) */}
+          <Animated.View style={[styles.tabBarIconsContainer, navBarStyle]}>
+            <View style={styles.iconGroup}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isOpen) closeMenu();
+                  navigation.navigate('Heart');
+                }}>
+                <Home
+                  color={state.index === 0 ? '#3B82F6' : '#97A2B0'}
+                  size={28}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isOpen) closeMenu();
+                  navigation.navigate('Chat');
+                }}>
+                <FileText
+                  color={state.index === 1 ? '#3B82F6' : '#97A2B0'}
+                  size={28}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={{width: 100}} />
+            <View style={styles.iconGroup}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isOpen) closeMenu();
+                  navigation.navigate('List');
+                }}>
+                <Flag
+                  color={state.index === 3 ? '#3B82F6' : '#97A2B0'}
+                  size={28}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isOpen) closeMenu();
+                  navigation.navigate('Tag');
+                }}>
+                <User
+                  color={state.index === 4 ? '#3B82F6' : '#97A2B0'}
+                  size={28}
+                />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+
+          {/* 서브메뉴 아이콘들 (동적 중심점) */}
+          <Animated.View
+            style={[
+              styles.centerAnchor,
+              useAnimatedStyle(() => ({
+                transform: [
+                  {translateY: fabCenterY.value - FAB_CENTER_Y_CLOSED},
+                ],
+              })),
+            ]}
+            pointerEvents="box-none">
+            {SUB_MENU_ITEMS.map((item, index) => (
+              <Animated.View
+                key={item.id}
+                style={[styles.menuItem, iconStyles[index]]}
+                pointerEvents={isOpen ? 'auto' : 'none'}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // 화면 이름의 첫 글자를 대문자로 변환하여 네비게이션
+                    const screenName =
+                      item.id.charAt(0).toUpperCase() + item.id.slice(1);
+                    console.log('Navigating to:', screenName);
+
+                    try {
+                      navigation.navigate(screenName);
+                      closeMenu();
+                    } catch (error) {
+                      console.error('Navigation error:', error);
+                      Alert.alert('에러', `${screenName} 화면으로 이동 실패`);
+                      closeMenu();
+                    }
+                  }}
+                  style={styles.touchable}
+                  activeOpacity={0.8}>
+                  <item.icon color="white" size={24} />
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </Animated.View>
+
+          {/* 중앙 FAB 버튼 (동적 위치 & 크기) */}
+          <Animated.View
+            style={[
+              styles.fabAnchor,
+              useAnimatedStyle(() => ({
+                transform: [
+                  {translateY: fabCenterY.value - FAB_CENTER_Y_CLOSED},
+                  {scale: fabScale.value},
+                ],
+              })),
+            ]}>
+            <TouchableOpacity
+              onPress={toggleMenu}
+              style={styles.fabTouchable}
+              activeOpacity={1}>
+              <Animated.View style={plusStyle}>
+                <Plus color="white" size={32} strokeWidth={3} />
+              </Animated.View>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    width: SCREEN_WIDTH,
+    height: CANVAS_HEIGHT,
+    position: 'absolute',
+    bottom: 0,
+    justifyContent: 'flex-end',
+  },
+  canvas: {
+    flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  // 탭 바 아이콘
+  tabBarIconsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: TAB_BAR_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingHorizontal: 30,
+    justifyContent: 'space-between',
+  },
+  iconGroup: {
+    flexDirection: 'row',
+    width: 90,
+    justifyContent: 'space-between',
+  },
+
+  // 중앙 앵커
+  centerAnchor: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: SCREEN_WIDTH,
+    height: CANVAS_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 25,
+  },
+  menuItem: {
+    position: 'absolute',
+    left: FAB_CENTER_X - 28,
+    top: FAB_CENTER_Y_CLOSED - 28, // 기본 위치 (동적 위치는 애니메이션으로 처리)
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  touchable: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // 메인 FAB
+  fabAnchor: {
+    position: 'absolute',
+    left: FAB_CENTER_X - 28,
+    top: FAB_CENTER_Y_CLOSED - 28, // 기본 위치
+    width: 56,
+    height: 56,
+    zIndex: 20,
+  },
+  fabTouchable: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 28,
+  },
+
+  // 블러 배경 (전체 화면)
+  blurBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  backdropPress: {
+    flex: 1,
+  },
+  blurView: {
+    flex: 1,
+  },
+});
