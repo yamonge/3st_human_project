@@ -25,14 +25,15 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 ## 🛠 기술 스택
 
 ### Core
-- **React Native:** 0.78.1
+- **React Native:** 0.78.3
 - **React:** 19.0.0
-- **TypeScript:** 5.0.4
+- **JavaScript:** ES6+ (TypeScript 설정 포함: 5.0.4)
 
 ### Navigation
 - **@react-navigation/native:** ^7.1.21
 - **@react-navigation/bottom-tabs:** ^7.0.0
-- **react-native-screens:** @latest
+- **@react-navigation/native-stack:** ^7.8.5
+- **react-native-screens:** ^4.18.0
 - **react-native-safe-area-context:** ^5.6.2
 
 ### UI/Animation
