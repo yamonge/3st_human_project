@@ -33,15 +33,15 @@ import {BlurView} from '@react-native-community/blur';
 import {
   Plus,
   Camera,
-  Video,
-  Edit2,
   Home,
   FileText,
   Flag,
   User,
   Image,
-  Music,
-  Share2,
+  Mic,
+  MapPin,
+  Sparkles,
+  Video,
 } from 'lucide-react-native';
 
 // --- Constants ---
@@ -101,13 +101,13 @@ const getBackgroundPath = (width, height, barHeight) => {
   `;
 };
 
-// --- 서브메뉴 데이터 (원형 배치) - 5개 ---
+// --- 서브메뉴 데이터 (원형 배치) - 6개 ---
 const SUB_MENU_ITEMS = [
-  {id: 'camera', icon: Camera, angle: 0, color: '#00B8DB'},
-  {id: 'video', icon: Video, angle: 72, color: '#00B8DB'},
-  {id: 'music', icon: Music, angle: 144, color: '#00B8DB'},
-  {id: 'edit', icon: Edit2, angle: 216, color: '#00B8DB'},
-  {id: 'share', icon: Share2, angle: 288, color: '#00B8DB'},
+  {id: 'location', icon: MapPin, angle: 0, color: '#00B8DB'}, // 12시 방향
+  {id: 'sparkles', icon: Sparkles, angle: 72, color: '#00B8DB'}, // 2시 방향
+  {id: 'camera', icon: Camera, angle: 144, color: '#00B8DB'}, // 4시 방향
+  {id: 'video', icon: Video, angle: 216, color: '#00B8DB'}, // 6시 방향
+  {id: 'gallery', icon: Image, angle: 288, color: '#00B8DB'}, // 8시 방향
 ];
 
 // 향후 확장을 위한 예시 (8개)
@@ -294,10 +294,12 @@ export default function MetaballNavigation({state, navigation}) {
 
   return (
     <>
-      {/* 블러 배경 */}
-      {isOpen && (
-        <Pressable style={StyleSheet.absoluteFill} onPress={closeMenu}>
-          <Animated.View style={[styles.blurBackdrop, blurStyle]}>
+      <View style={styles.container}>
+        {/* 블러 배경 - Container 안으로 이동 */}
+        {isOpen && (
+          <Animated.View
+            style={[styles.blurBackdrop, blurStyle]}
+            pointerEvents="none">
             <BlurView
               style={styles.blurView}
               blurType="light"
@@ -305,100 +307,103 @@ export default function MetaballNavigation({state, navigation}) {
               reducedTransparencyFallbackColor="rgba(240, 240, 240, 0.8)"
             />
           </Animated.View>
-        </Pressable>
-      )}
+        )}
 
-      <View style={styles.container}>
         {/* LAYER 1: Skia Canvas (메타볼 효과) */}
-        <Canvas style={styles.canvas}>
-          {/* 배경 */}
-          <Path path={backgroundPath} color="#ffffff">
-            <Shadow
-              dx={0}
-              dy={-10}
-              blur={40}
-              color="rgba(149, 168, 195, 0.15)"
-            />
-          </Path>
+        <View
+          style={styles.canvas}
+          pointerEvents={isOpen ? 'box-none' : 'none'}>
+          <Canvas style={styles.canvas}>
+            {/* 고정된 네비게이션 배경 */}
+            <Path path={backgroundPath} color="#ffffff">
+              <Shadow
+                dx={0}
+                dy={-10}
+                blur={40}
+                color="rgba(149, 168, 195, 0.15)"
+              />
+            </Path>
+            {/* 각 서브메뉴마다 독립적인 메타볼 레이어 */}
+            {SUB_MENU_ITEMS.map((item, index) => (
+              <Group key={`metaball-group-${index}`}>
+                <Group
+                  layer={
+                    <Paint>
+                      <Blur blur={20} />
+                      <ColorMatrix matrix={METABALL_MATRIX} />
+                    </Paint>
+                  }>
+                  {/* FAB 메타볼 (동적 크기 적용 - 그라데이션 적용) */}
+                  <Circle c={fabCenter} r={fabRadius}>
+                    <LinearGradient
+                      start={useDerivedValue(() =>
+                        vec(
+                          fabCenter.value.x - fabRadius.value,
+                          fabCenter.value.y,
+                        ),
+                      )}
+                      end={useDerivedValue(() =>
+                        vec(
+                          fabCenter.value.x + fabRadius.value,
+                          fabCenter.value.y,
+                        ),
+                      )}
+                      colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
+                    />
+                  </Circle>
 
-          {/* 각 서브메뉴마다 독립적인 메타볼 레이어 */}
-          {SUB_MENU_ITEMS.map((item, index) => (
-            <Group key={`metaball-group-${index}`}>
-              <Group
-                layer={
-                  <Paint>
-                    <Blur blur={20} />
-                    <ColorMatrix matrix={METABALL_MATRIX} />
-                  </Paint>
-                }>
-                {/* FAB 메타볼 (동적 크기 적용 - 그라데이션 적용) */}
-                <Circle c={fabCenter} r={fabRadius}>
-                  <LinearGradient
-                    start={useDerivedValue(() =>
-                      vec(
-                        fabCenter.value.x - fabRadius.value,
-                        fabCenter.value.y,
-                      ),
-                    )}
-                    end={useDerivedValue(() =>
-                      vec(
-                        fabCenter.value.x + fabRadius.value,
-                        fabCenter.value.y,
-                      ),
-                    )}
-                    colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
-                  />
-                </Circle>
+                  {/* 이 서브메뉴와 연결되는 브릿지들 */}
+                  {bridgeData[index].value.map((bridge, bridgeIndex) => (
+                    <Circle
+                      key={`bridge-${bridgeIndex}`}
+                      c={bridge.pos}
+                      r={bridge.radius}
+                      color={item.color}
+                    />
+                  ))}
 
-                {/* 이 서브메뉴와 연결되는 브릿지들 */}
-                {bridgeData[index].value.map((bridge, bridgeIndex) => (
+                  {/* 이 서브메뉴 메타볼 (투명하게 - 브릿지만 보이게) */}
                   <Circle
-                    key={`bridge-${bridgeIndex}`}
-                    c={bridge.pos}
-                    r={bridge.radius}
+                    c={metaballPositions[index]}
+                    r={21}
                     color={item.color}
                   />
-                ))}
-
-                {/* 이 서브메뉴 메타볼 (투명하게 - 브릿지만 보이게) */}
-                <Circle
-                  c={metaballPositions[index]}
-                  r={21}
-                  color={item.color}
-                />
+                </Group>
               </Group>
+            ))}
+
+            {/* 서브메뉴 그라데이션 원들 */}
+            {metaballPositions.map((pos, index) => (
+              <Circle key={`submenu-gradient-${index}`} c={pos} r={28}>
+                <LinearGradient
+                  start={useDerivedValue(() =>
+                    vec(pos.value.x - 28, pos.value.y),
+                  )}
+                  end={useDerivedValue(() =>
+                    vec(pos.value.x + 28, pos.value.y),
+                  )}
+                  colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
+                />
+              </Circle>
+            ))}
+
+            {/* FAB 그라데이션 원 */}
+            <Group>
+              {/* 메인 FAB */}
+              <Circle c={fabCenter} r={fabRadius}>
+                <LinearGradient
+                  start={useDerivedValue(() =>
+                    vec(fabCenter.value.x - fabRadius.value, fabCenter.value.y),
+                  )}
+                  end={useDerivedValue(() =>
+                    vec(fabCenter.value.x + fabRadius.value, fabCenter.value.y),
+                  )}
+                  colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
+                />
+              </Circle>
             </Group>
-          ))}
-
-          {/* 서브메뉴 그라데이션 원들 */}
-          {metaballPositions.map((pos, index) => (
-            <Circle key={`submenu-gradient-${index}`} c={pos} r={28}>
-              <LinearGradient
-                start={useDerivedValue(() =>
-                  vec(pos.value.x - 28, pos.value.y),
-                )}
-                end={useDerivedValue(() => vec(pos.value.x + 28, pos.value.y))}
-                colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
-              />
-            </Circle>
-          ))}
-
-          {/* FAB 그라데이션 원 */}
-          <Group>
-            {/* 메인 FAB */}
-            <Circle c={fabCenter} r={fabRadius}>
-              <LinearGradient
-                start={useDerivedValue(() =>
-                  vec(fabCenter.value.x - fabRadius.value, fabCenter.value.y),
-                )}
-                end={useDerivedValue(() =>
-                  vec(fabCenter.value.x + fabRadius.value, fabCenter.value.y),
-                )}
-                colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
-              />
-            </Circle>
-          </Group>
-        </Canvas>
+          </Canvas>
+        </View>
 
         {/* LAYER 2: React Native 오버레이 (아이콘 & 인터랙션) */}
         <View style={styles.overlay} pointerEvents="box-none">
@@ -512,6 +517,17 @@ export default function MetaballNavigation({state, navigation}) {
             </TouchableOpacity>
           </Animated.View>
         </View>
+
+        {/* 투명한 터치 레이어 - Overlay와 같은 레벨 */}
+        {isOpen && (
+          <Pressable
+            style={[
+              StyleSheet.absoluteFillObject,
+              {zIndex: 0, backgroundColor: 'transparent'},
+            ]}
+            onPress={closeMenu}
+          />
+        )}
       </View>
     </>
   );
@@ -530,6 +546,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
+    zIndex: 10,
   },
 
   // 탭 바 아이콘
@@ -595,11 +612,7 @@ const styles = StyleSheet.create({
 
   // 블러 배경 (전체 화면)
   blurBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
   backdropPress: {
