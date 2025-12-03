@@ -1,4 +1,41 @@
 package com.cucook.moc.user.vo;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString
 public class UserVO {
+    private Long userId;            // 
+    private String userEmail;       // 이메일
+    private String userName;
+    private String userNickname;
+    private String userPassword;
+    private String passwordConfirm;     // 회원가입 시 비밀번호 확인용
+    private String userProfileImageUrl;
+    private String userType;
+    private String userStatus;
+    private String suspendedReason;
+    private Integer reportedCnt;
+    private Integer shoppingCompletedCnt;
+    private Double ratingScore;
+    private Double trustScore;
+    private LocalDate userBirthDate;
+
+    private LocalDateTime lastLoginDate;
+    private String deviceOs;
+    private String deviceVersion;
+    private String fcmToken;
+
+    private Long createdId;
+    private LocalDateTime createdDate;
+    private Long updatedId;
+    private LocalDateTime updatedDate;
 }
