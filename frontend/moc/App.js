@@ -1,10 +1,13 @@
 import React, {useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
+import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 // 임시 화면 컴포넌트들
 function HomeScreen() {
@@ -91,25 +94,37 @@ function ShareScreen() {
   );
 }
 
-function App(): React.JSX.Element {
+function MainTabNavigator() {
+  return (
+    <Tab.Navigator
+      tabBar={props => <MetaballNavigation {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <Tab.Screen name="Heart" component={HomeScreen} />
+      <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="List" component={ListScreen} />
+      <Tab.Screen name="Tag" component={ProfileScreen} />
+      {/* 서브메뉴 화면들 */}
+      <Tab.Screen name="Camera" component={CameraScreen} />
+      <Tab.Screen name="Video" component={VideoScreen} />
+      <Tab.Screen name="Music" component={MusicScreen} />
+      <Tab.Screen name="Edit" component={EditScreen} />
+      <Tab.Screen name="Share" component={ShareScreen} />
+    </Tab.Navigator>
+  );
+}
+
+function App() {
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        tabBar={props => <MetaballNavigation {...props} />}
+      <Stack.Navigator
         screenOptions={{
           headerShown: false,
         }}>
-        <Tab.Screen name="Heart" component={HomeScreen} />
-        <Tab.Screen name="Chat" component={ChatScreen} />
-        <Tab.Screen name="List" component={ListScreen} />
-        <Tab.Screen name="Tag" component={ProfileScreen} />
-        {/* 서브메뉴 화면들 */}
-        <Tab.Screen name="Camera" component={CameraScreen} />
-        <Tab.Screen name="Video" component={VideoScreen} />
-        <Tab.Screen name="Music" component={MusicScreen} />
-        <Tab.Screen name="Edit" component={EditScreen} />
-        <Tab.Screen name="Share" component={ShareScreen} />
-      </Tab.Navigator>
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        <Stack.Screen name="MainApp" component={MainTabNavigator} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
