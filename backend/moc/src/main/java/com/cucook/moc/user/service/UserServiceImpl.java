@@ -171,8 +171,7 @@ public class UserServiceImpl implements UserService {
         return sb.toString();
     }
 
-    // 프론트 URL은 MailServiceImpl에서 @Value 주입해도 되고,
-    // 여기서 @Value 주입해서 써도 됨.
+    // 프론트 URL은 MailServiceImpl에서 @Value 주입해도 됨
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;
 
