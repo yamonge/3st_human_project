@@ -40,10 +40,11 @@ backend/moc/src/main/
       └─ mybatis/mappers/
 
 frontend/moc/src/
-  ├─ screens/        # 화면 컴포넌트
+  ├─ screens/        # 화면 컴포넌트 (스타일 제외, 로직만)
   ├─ navigation/     # 네비게이션 (MetaballNavigation)
   ├─ components/     # 재사용 컴포넌트
   ├─ api/            # API 통신
+  ├─ styles/         # 모든 스타일 파일 (common.js, 화면별 스타일)
   └─ assets/         # 이미지, 아이콘, 애니메이션
 ```
 
@@ -57,3 +58,12 @@ frontend/moc/src/
 4. **네비게이션**: 기존 MetaballNavigation 스타일 유지
 5. **코드 스타일**: JavaScript (`.js`) 사용, ESLint 규칙 준수
 6. **경로**: 절대 경로 사용 시 Windows 경로 형식 (`c:\project\pro_moc`)
+7. **스타일 관리**: 
+   - 모든 스타일 파일은 `src/styles/` 폴더에 위치
+   - 공통 스타일 변수는 `src/styles/common.js` 사용
+   - 화면별 스타일은 `src/styles/[화면명]Styles.js` 형식으로 작성
+   - 화면 컴포넌트 파일 내부에 스타일 작성 금지
+8. **피그마 디자인 참고 원칙**:
+   - 피그마에서 UI 구현 시 **구도와 디자인(색상, 폰트, 컴포넌트 배치)**만 참고
+   - **여백(padding, margin)은 피그마를 따르지 말고** 모바일 화면에 최적화된 여백 사용
+   - 실제 디바이스에서 자연스럽고 사용하기 편한 간격으로 조정
