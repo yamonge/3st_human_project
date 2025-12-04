@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cucook.moc.recipe.dao.RecipeDAO">
+
+    <!--
+        MyBatis INSERT 쿼리: tb_recipe 테이블에 레시피 메인 정보를 저장합니다.
+        parameterType: com.cucook.moc.recipe.vo.RecipeVO (예시 VO 클래스 경로)
+    -->
+    <insert id="insertRecipe" parameterType="com.cucook.moc.recipe.vo.RecipeVO">
+
+        <!-- Oracle 시퀀스에서 다음 값을 가져와 VO 객체의 recipeId 필드에 설정 (INSERT 전에 실행) -->
+        <selectKey keyProperty="recipeId" resultType="long" order="BEFORE">
+            SELECT seq_tb_recipe.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO tb_recipe (
+        recipe_id,
+        owner_user_id,
+        source_type,
+        external_ref_id,
+        title,
+        summary,
+        thumbnail_url,
+        difficulty_cd,
+        cook_time_min,
+        cuisine_style_cd,
+        is_public,
+        is_deleted,
+        view_cnt,
+        like_cnt,
+        report_cnt,
+        created_id
+        -- created_date, view_cnt, like_cnt, report_cnt, is_public, is_deleted는 DEFAULT 값 사용 가능
+        ) VALUES (
+        #{recipeId},
+        #{ownerUserId},
+        #{sourceType},
+        #{externalRefId},
+        #{title},
+        #{summary},
+        #{thumbnailUrl},
+        #{difficultyCd},
+        #{cookTimeMin},
+        #{cuisineStyleCd},
+        #{isPublic},
+        #{isDeleted},
+        #{viewCnt},
+        #{likeCnt},
+        #{reportCnt},
+        #{createdId}
+        )
+    </insert>
+
+</mapper>

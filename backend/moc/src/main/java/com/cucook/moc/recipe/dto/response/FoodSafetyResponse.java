@@ -1,4 +1,4 @@
-package com.cucook.moc.recipe.vo;
+package com.cucook.moc.recipe.dto.response;
 
 import lombok.Data;
 

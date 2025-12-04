@@ -13,8 +13,9 @@ public class GeminiApiUtils {
     private final Client client;
 
     public GeminiApiUtils(@Value("${gemini.api.key}") String apiKey) {
-        System.setProperty("GEMINI_API_KEY", apiKey);
-        this.client = new Client();
+        this.client = Client.builder()
+                .apiKey(apiKey) // API 키를 직접 전달
+                .build();
     }
 
     private static final String SYSTEM_INSTRUCTION_RECIPE = """

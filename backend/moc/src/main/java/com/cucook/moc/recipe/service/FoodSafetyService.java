@@ -1,6 +1,6 @@
 package com.cucook.moc.recipe.service;
 
-import com.cucook.moc.recipe.vo.FoodSafetyResponse;
+import com.cucook.moc.recipe.dto.response.FoodSafetyResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

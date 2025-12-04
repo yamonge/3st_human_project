@@ -4,6 +4,7 @@ import com.cucook.moc.recipe.vo.RecipeVO;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface RecipeDAO {
-    int insertRecipe(RecipeVO recipeVO);
+public interface RecipeStepDAO {
+    int insertRecipeStep(RecipeVO stepVO);
+
 }

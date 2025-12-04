@@ -5,6 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
+import test_CHS from './src/screens/test_CHS';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -106,7 +107,7 @@ function MainTabNavigator() {
       <Tab.Screen name="List" component={ListScreen} />
       <Tab.Screen name="Tag" component={ProfileScreen} />
       {/* 서브메뉴 화면들 */}
-      <Tab.Screen name="Camera" component={CameraScreen} />
+      <Tab.Screen name="Camera" component={test_CHS} />
       <Tab.Screen name="Video" component={VideoScreen} />
       <Tab.Screen name="Music" component={MusicScreen} />
       <Tab.Screen name="Edit" component={EditScreen} />
