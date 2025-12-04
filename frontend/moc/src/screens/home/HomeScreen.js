@@ -24,7 +24,7 @@ export default function HomeScreen({navigation}) {
       cookingTime: 15,
       difficulty: '하',
       ingredients: ['밀가루', '계란', '우유', '설탕'],
-      imageUrl: 'https://via.placeholder.com/80',
+      imageUrl: '',
       likeCount: 1205,
       isLiked: false,
     },
@@ -35,8 +35,19 @@ export default function HomeScreen({navigation}) {
       cookingTime: 15,
       difficulty: '하',
       ingredients: ['밀가루', '계란', '우유', '설탕'],
-      imageUrl: 'https://via.placeholder.com/80',
+      imageUrl: '',
       likeCount: 998,
+      isLiked: false,
+    },
+    {
+      id: 3,
+      title: '팬케이크',
+      author: '베이킹마스터',
+      cookingTime: 15,
+      difficulty: '하',
+      ingredients: ['밀가루', '계란', '우유', '설탕'],
+      imageUrl: '',
+      likeCount: 856,
       isLiked: false,
     },
   ]);
@@ -93,13 +104,6 @@ export default function HomeScreen({navigation}) {
     );
   };
 
-  // 더보기 버튼
-  const handleMorePress = () => {
-    // TODO: 전체 레시피 목록으로 이동
-    Alert.alert('더보기', '전체 레시피 목록으로 이동합니다.');
-    // navigation.navigate('RecipeBoard');
-  };
-
   return (
     <View style={homeStyles.container}>
       <ScrollView
@@ -116,55 +120,47 @@ export default function HomeScreen({navigation}) {
 
           {/* 메뉴 섹션 */}
           <View style={homeStyles.menuSection}>
-            <Text style={homeStyles.sectionTitle}>메뉴</Text>
+            <Text style={homeStyles.sectionTitleMenu}>메뉴</Text>
 
-            {/* 첫 번째 줄: 냉장고 털기 + 레시피 찾기 */}
-            <View style={homeStyles.menuRow}>
-              <MenuCard
-                type="fridge"
-                title="냉장고 털기"
-                subtitle="영수증 촬영"
-                onPress={() => handleMenuPress('fridge')}
-                style={{flex: 1}}
-              />
-              <MenuCard
-                type="search"
-                title="레시피 찾기"
-                subtitle="음성인식"
-                onPress={() => handleMenuPress('search')}
-                style={{flex: 1}}
-              />
-            </View>
-
-            {/* 두 번째 줄: 레시피 게시판 + 같이 장보기 */}
-            <View style={homeStyles.menuRow}>
-              <MenuCard
-                type="board"
-                title="레시피 게시판"
-                subtitle=""
-                onPress={() => handleMenuPress('board')}
-                style={{flex: 1}}
-              />
-              <MenuCard
-                type="shopping"
-                title="같이 장보기"
-                subtitle="지도 및 채팅"
-                onPress={() => handleMenuPress('shopping')}
-                style={{flex: 1}}
-              />
+            <View style={{flexDirection: 'row', gap: 12, height: 300}}>
+              <View style={{flex: 1, gap: 10}}>
+                <MenuCard
+                  type="fridge"
+                  title="냉장고 털기"
+                  subtitle="영수증 활용"
+                  onPress={() => handleMenuPress('fridge')}
+                  style={{flex: 1.5}}
+                />
+                <MenuCard
+                  type="board"
+                  title="레시피 게시판"
+                  subtitle=""
+                  onPress={() => handleMenuPress('board')}
+                  style={{flex: 1}}
+                />
+              </View>
+              <View style={{flex: 1, gap: 10}}>
+                <MenuCard
+                  type="search"
+                  title="레시피 찾기"
+                  subtitle="음성인식"
+                  onPress={() => handleMenuPress('search')}
+                  style={{flex: 1}}
+                />
+                <MenuCard
+                  type="shopping"
+                  title="같이 장보기"
+                  subtitle="지도 및 채팅"
+                  onPress={() => handleMenuPress('shopping')}
+                  style={{flex: 1.5}}
+                />
+              </View>
             </View>
           </View>
 
           {/* 인기 레시피 섹션 */}
           <View style={homeStyles.popularSection}>
-            <View style={homeStyles.popularHeader}>
-              <Text style={homeStyles.sectionTitle}>인기 레시피</Text>
-              <TouchableOpacity
-                style={homeStyles.moreButton}
-                onPress={handleMorePress}>
-                <Text style={homeStyles.moreButtonText}>더보기</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={homeStyles.sectionTitle}>인기 레시피</Text>
 
             {popularRecipes.map((recipe, index) => (
               <PopularRecipeCard

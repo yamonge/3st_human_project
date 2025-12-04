@@ -152,6 +152,7 @@ export const findAccountStyles = StyleSheet.create({
     fontWeight: '700',
     color: '#59168B',
     marginBottom: spacing.xs,
+    textAlign: 'center',
   },
 
   infoBoxContent: {

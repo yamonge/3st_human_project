@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {View, Text, Modal, TouchableOpacity, StyleSheet} from 'react-native';
-import WheelPicker from 'react-native-wheely';
+import {Picker} from 'react-native-wheel-pick';
 import {X} from 'lucide-react-native';
 import {
   colors,
@@ -32,35 +32,41 @@ export default function DatePickerModal({
     const currentYear = new Date().getFullYear();
     const years = [];
     for (let year = 1926; year <= currentYear; year++) {
-      years.push(year);
+      years.push(year.toString());
     }
     return years.reverse(); // 최신년도가 위로
   };
 
   const yearOptions = generateYears();
-  const monthOptions = Array.from({length: 12}, (_, i) => i + 1);
+  const monthOptions = Array.from({length: 12}, (_, i) => (i + 1).toString());
 
   // 일 목록 (선택된 년/월에 따라 동적 생성)
   const getDaysInMonth = (year, month) => {
     const daysInMonth = new Date(year, month, 0).getDate();
-    return Array.from({length: daysInMonth}, (_, i) => i + 1);
+    return Array.from({length: daysInMonth}, (_, i) => (i + 1).toString());
   };
 
-  // 선택된 년/월/일 인덱스
-  const [selectedYearIndex, setSelectedYearIndex] = useState(
-    yearOptions.indexOf(now.getFullYear()),
+  // 선택된 년/월/일 값
+  const [selectedYear, setSelectedYear] = useState(
+    now.getFullYear().toString(),
   );
-  const [selectedMonthIndex, setSelectedMonthIndex] = useState(now.getMonth());
-  const [selectedDayIndex, setSelectedDayIndex] = useState(now.getDate() - 1);
+  const [selectedMonth, setSelectedMonth] = useState(
+    (now.getMonth() + 1).toString(),
+  );
+  const [selectedDay, setSelectedDay] = useState(now.getDate().toString());
 
-  const selectedYear = yearOptions[selectedYearIndex];
-  const selectedMonth = monthOptions[selectedMonthIndex];
-  const dayOptions = getDaysInMonth(selectedYear, selectedMonth);
+  const dayOptions = getDaysInMonth(
+    parseInt(selectedYear),
+    parseInt(selectedMonth),
+  );
 
   // 완료 버튼 클릭
   const handleConfirm = () => {
-    const selectedDay = dayOptions[selectedDayIndex];
-    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+    const selectedDate = new Date(
+      parseInt(selectedYear),
+      parseInt(selectedMonth) - 1,
+      parseInt(selectedDay),
+    );
     onConfirm(selectedDate);
     onClose();
   };
@@ -104,40 +110,64 @@ export default function DatePickerModal({
           <View style={styles.pickerContainer}>
             {/* 년도 */}
             <View style={styles.pickerColumn}>
-              <WheelPicker
-                selectedIndex={selectedYearIndex}
-                options={yearOptions.map(y => `${y}년`)}
-                onChange={setSelectedYearIndex}
-                itemHeight={40}
-                containerStyle={styles.wheelContainer}
-                itemTextStyle={styles.wheelText}
-                selectedIndicatorStyle={styles.selectedIndicator}
+              <Picker
+                style={styles.picker}
+                selectedValue={selectedYear}
+                pickerData={yearOptions.map(y => `${y}년`)}
+                onValueChange={value => {
+                  const year = value.replace('년', '');
+                  setSelectedYear(year);
+                }}
+                textColor={colors.textDark}
+                textSize={18}
+                selectTextColor={colors.primary}
+                isShowSelectLine={true}
+                selectLineColor={colors.primary}
+                selectLineSize={2}
+                isShowSelectBackground={true}
+                selectBackgroundColor="rgba(59, 130, 246, 0.1)"
               />
             </View>
 
             {/* 월 */}
             <View style={styles.pickerColumn}>
-              <WheelPicker
-                selectedIndex={selectedMonthIndex}
-                options={monthOptions.map(m => `${m}월`)}
-                onChange={setSelectedMonthIndex}
-                itemHeight={40}
-                containerStyle={styles.wheelContainer}
-                itemTextStyle={styles.wheelText}
-                selectedIndicatorStyle={styles.selectedIndicator}
+              <Picker
+                style={styles.picker}
+                selectedValue={selectedMonth}
+                pickerData={monthOptions.map(m => `${m}월`)}
+                onValueChange={value => {
+                  const month = value.replace('월', '');
+                  setSelectedMonth(month);
+                }}
+                textColor={colors.textDark}
+                textSize={18}
+                selectTextColor={colors.primary}
+                isShowSelectLine={true}
+                selectLineColor={colors.primary}
+                selectLineSize={2}
+                isShowSelectBackground={true}
+                selectBackgroundColor="rgba(59, 130, 246, 0.1)"
               />
             </View>
 
             {/* 일 */}
             <View style={styles.pickerColumn}>
-              <WheelPicker
-                selectedIndex={selectedDayIndex}
-                options={dayOptions.map(d => `${d}일`)}
-                onChange={setSelectedDayIndex}
-                itemHeight={40}
-                containerStyle={styles.wheelContainer}
-                itemTextStyle={styles.wheelText}
-                selectedIndicatorStyle={styles.selectedIndicator}
+              <Picker
+                style={styles.picker}
+                selectedValue={selectedDay}
+                pickerData={dayOptions.map(d => `${d}일`)}
+                onValueChange={value => {
+                  const day = value.replace('일', '');
+                  setSelectedDay(day);
+                }}
+                textColor={colors.textDark}
+                textSize={18}
+                selectTextColor={colors.primary}
+                isShowSelectLine={true}
+                selectLineColor={colors.primary}
+                selectLineSize={2}
+                isShowSelectBackground={true}
+                selectBackgroundColor="rgba(59, 130, 246, 0.1)"
               />
             </View>
           </View>
@@ -207,17 +237,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  wheelContainer: {
-    flex: 1,
-  },
-
-  wheelText: {
-    fontSize: 18,
-    color: colors.textDark,
-  },
-
-  selectedIndicator: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderRadius: borderRadius.sm,
+  picker: {
+    backgroundColor: 'transparent',
+    width: '100%',
+    height: 200,
   },
 });

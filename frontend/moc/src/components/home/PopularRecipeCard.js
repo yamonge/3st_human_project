@@ -1,8 +1,12 @@
 import React from 'react';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
-import {User, Clock, Heart} from 'lucide-react-native';
+import {Clock, Heart, User} from 'lucide-react-native';
 import {homeStyles} from '../../styles/homeStyles';
-import {colors, spacing} from '../../styles/common';
+import {colors} from '../../styles/common';
+const FirstBadge = require('../../assets/images/main/1stBadge.png');
+const SecondBadge = require('../../assets/images/main/2stBadge.png');
+const ThirdBadge = require('../../assets/images/main/3rdBadge.png');
+const NoImage = require('../../assets/images/noImage.png');
 
 /**
  * 인기 레시피 카드 컴포넌트
@@ -13,17 +17,15 @@ import {colors, spacing} from '../../styles/common';
  * @param {function} onLike - 좋아요 클릭 핸들러
  */
 export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
-  // 순위 배지 이미지 (1위, 2위만 표시)
-  const getRankBadge = () => {
-    if (rank === 1) {
-      return require('../../assets/images/main/1stBadge.svg');
-    } else if (rank === 2) {
-      return require('../../assets/images/main/2stBadge.svg');
-    }
-    return null;
-  };
-
-  const rankBadge = getRankBadge();
+  // 순위 배지 이미지 (1위, 2위, 3위 표시)
+  const rankBadgeSource =
+    rank === 1
+      ? FirstBadge
+      : rank === 2
+      ? SecondBadge
+      : rank === 3
+      ? ThirdBadge
+      : null;
 
   // 난이도 색상
   const getDifficultyColor = () => {
@@ -52,16 +54,34 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
       onPress={onPress}
       activeOpacity={0.8}>
       {/* 레시피 이미지 */}
-      <Image
-        source={{uri: recipe.imageUrl}}
-        style={homeStyles.recipeImage}
-        defaultSource={require('../../assets/images/noImage.svg')}
-      />
+      <View style={homeStyles.recipeImage}>
+        {recipe.imageUrl ? (
+          <Image
+            source={{uri: recipe.imageUrl}}
+            style={{width: '100%', height: '100%', borderRadius: 12}}
+            resizeMode="cover"
+          />
+        ) : (
+          <Image
+            source={NoImage}
+            style={{width: 80, height: 80}}
+            resizeMode="contain"
+          />
+        )}
+      </View>
 
       {/* 레시피 정보 */}
       <View style={homeStyles.recipeInfo}>
         {/* 순위 배지 */}
-        {rankBadge && <Image source={rankBadge} style={homeStyles.rankBadge} />}
+        {rankBadgeSource && (
+          <View style={homeStyles.rankBadge}>
+            <Image
+              source={rankBadgeSource}
+              style={{width: 28, height: 28}}
+              resizeMode="contain"
+            />
+          </View>
+        )}
 
         {/* 제목 */}
         <Text style={homeStyles.recipeTitle} numberOfLines={1}>
@@ -70,9 +90,8 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
 
         {/* 작성자 */}
         <View style={homeStyles.recipeAuthor}>
-          <User size={12} color={colors.textLight} />
           <Text style={homeStyles.recipeAuthorText} numberOfLines={1}>
-            {recipe.author}
+            👨‍🍳 {recipe.author}
           </Text>
         </View>
 
@@ -117,16 +136,13 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
 
       {/* 좋아요 */}
       <View style={homeStyles.likeSection}>
-        <TouchableOpacity
-          style={homeStyles.likeButton}
-          onPress={onLike}
-          activeOpacity={0.7}>
+        <View style={homeStyles.likeButton}>
           <Heart
             size={20}
             color={recipe.isLiked ? '#FF3B8E' : colors.textLight}
             fill={recipe.isLiked ? '#FF3B8E' : 'none'}
           />
-        </TouchableOpacity>
+        </View>
         <Text style={homeStyles.likeCount}>
           {recipe.likeCount >= 1000 ? '999+' : recipe.likeCount}
         </Text>

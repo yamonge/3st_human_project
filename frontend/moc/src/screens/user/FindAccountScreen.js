@@ -98,13 +98,21 @@ export default function FindAccountScreen({navigation}) {
 
       setLoading(true);
 
-      const response = await authAPI.findId(
-        idName,
-        formatDateForAPI(idBirthDate),
-      );
+      // TODO: 백엔드 연결 시 주석 해제
+      // const response = await authAPI.findId(
+      //   idName,
+      //   formatDateForAPI(idBirthDate),
+      // );
+      // setFindIdResult(response);
 
-      // 성공 - 결과 표시
-      setFindIdResult(response);
+      // 임시 데이터 (백엔드 연결 전)
+      setTimeout(() => {
+        setFindIdResult({
+          maskedEmail: 'exam***@example.com',
+          registeredDate: '2024년 1월 15일',
+        });
+        setLoading(false);
+      }, 1000);
     } catch (err) {
       console.error('이메일 찾기 실패:', err);
 
@@ -113,7 +121,6 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '이메일 찾기 중 오류가 발생했습니다.');
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -138,15 +145,19 @@ export default function FindAccountScreen({navigation}) {
 
       setLoading(true);
 
-      const response = await authAPI.sendTemporaryPassword(
-        pwEmail,
-        pwName,
-        formatDateForAPI(pwBirthDate),
-      );
+      // TODO: 백엔드 연결 시 주석 해제
+      // const response = await authAPI.sendTemporaryPassword(
+      //   pwEmail,
+      //   pwName,
+      //   formatDateForAPI(pwBirthDate),
+      // );
 
-      // 성공
-      setPasswordSent(true);
-      Alert.alert('발송 완료', '임시 비밀번호가 이메일로 발송되었습니다.');
+      // 임시 데이터 (백엔드 연결 전)
+      setTimeout(() => {
+        setPasswordSent(true);
+        Alert.alert('발송 완료', '임시 비밀번호가 이메일로 발송되었습니다.');
+        setLoading(false);
+      }, 1000);
     } catch (err) {
       console.error('임시 비밀번호 발송 실패:', err);
 
@@ -155,7 +166,6 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '임시 비밀번호 발송 중 오류가 발생했습니다.');
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -176,7 +186,7 @@ export default function FindAccountScreen({navigation}) {
           onPress={() => navigation.goBack()}>
           <ChevronLeft size={24} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={findAccountStyles.headerTitle}>아이디·비밀번호 찾기</Text>
+        <Text style={findAccountStyles.headerTitle}>이메일·비밀번호 찾기</Text>
       </View>
 
       {/* 탭 */}

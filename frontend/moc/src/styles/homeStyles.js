@@ -17,73 +17,97 @@ export const homeStyles = StyleSheet.create({
   },
 
   content: {
-    paddingTop: spacing.lg,
-    paddingHorizontal: spacing.horizontalPadding,
+    paddingTop: 16,
+    paddingHorizontal: 24,
   },
 
   // 헤더
   headerContainer: {
-    marginBottom: spacing.md,
+    marginBottom: 4,
+    paddingBottom: 0,
+    paddingTop: 16,
   },
 
   greeting: {
-    ...typography.largeTitle,
+    fontSize: 28,
+    fontWeight: '700',
     color: '#12175E',
-    marginBottom: spacing.xs,
+    lineHeight: 42,
+    marginBottom: 4,
   },
 
   subGreeting: {
-    ...typography.caption,
     fontSize: 14,
-    color: '#575757',
-    marginBottom: spacing.lg,
+    fontWeight: '400',
+    color: '#6A7282',
+    lineHeight: 21,
+    marginBottom: 0,
   },
 
   // 섹션 타이틀
   sectionTitle: {
-    ...typography.title,
+    fontSize: 20,
+    fontWeight: '700',
     color: '#12175E',
-    marginBottom: spacing.md,
+    lineHeight: 30,
+    marginBottom: 20,
+    marginTop: 20,
   },
 
-  // 메뉴 그리드
+  sectionTitleMenu: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#12175E',
+    lineHeight: 30,
+    marginBottom: 20,
+    marginTop: 20,
+  },
+  // 메뉴 섹션
   menuSection: {
-    marginBottom: spacing.xl,
-  },
-
-  menuGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: 0,
+    paddingTop: 0,
   },
 
   menuRow: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.md,
+    gap: 12,
+    marginBottom: 10,
   },
 
   // 메뉴 카드
   menuCard: {
     flex: 1,
-    height: 116,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    justifyContent: 'space-between',
-    overflow: 'visible', // 3D 이미지가 밖으로 나갈 수 있도록
-    ...shadows.cardMedium,
+    borderRadius: 24,
+    padding: 16,
+    justifyContent: 'flex-end',
+    overflow: 'visible',
+    position: 'relative',
+  },
+
+  // 첫번째 행 카드 높이
+  menuCardRow1: {
+    height: 180,
+  },
+
+  // 두번째 행 카드 높이
+  menuCardRow2Left: {
+    height: 120,
+  },
+
+  menuCardRow2Right: {
+    height: 120,
   },
 
   menuCardTitle: {
-    ...typography.button,
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.textWhite,
-    marginBottom: spacing.xs,
+    marginBottom: 0,
   },
 
   menuCardSubtitle: {
-    ...typography.caption,
     fontSize: 12,
+    fontWeight: '400',
     color: colors.textWhite,
   },
 
@@ -92,141 +116,157 @@ export const homeStyles = StyleSheet.create({
   },
 
   menuCardSubtitleDark: {
-    color: '#12175E',
-    fontSize: 11,
+    color: '#000000',
   },
 
-  menuCard3DImage: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    resizeMode: 'contain',
-  },
-
-  // 냉장고 털기 카드 (청록색)
+  // 냉장고 털기 (청록색)
   fridgeCard: {
     backgroundColor: '#7DC8E7',
+    height: 180,
   },
 
   fridgeImage: {
-    top: -30,
-    left: -15,
-    transform: [{rotate: '15deg'}],
+    position: 'absolute',
+    top: -15,
+    left: -29,
+    overflow: 'visible',
   },
 
-  // 레시피 찾기 카드 (보라색)
+  // 레시피 찾기 (보라색)
   recipeSearchCard: {
     backgroundColor: '#8B7DD8',
+    height: 116,
   },
 
   recipeSearchImage: {
-    top: -20,
-    right: -10,
+    position: 'absolute',
+    top: -37,
+    right: -13,
   },
 
-  // 레시피 게시판 카드 (핑크색)
+  // 레시피 게시판 (핑크색)
   recipeBoardCard: {
     backgroundColor: '#F19DB5',
+    height: 120,
   },
 
   recipeBoardImage: {
-    bottom: -15,
-    left: -10,
-    width: 100,
-    height: 100,
+    position: 'absolute',
+    top: -7,
+    left: -21,
   },
 
-  // 같이 장보기 카드 (연두색)
+  // 같이 장보기 (연두색)
   shoppingCard: {
     backgroundColor: '#B5E7A0',
+    height: 174,
   },
 
   shoppingImage: {
-    top: -20,
-    right: -15,
+    position: 'absolute',
+    bottom: -7,
+    right: -17,
+  },
+
+  // 오른쪽 위 화살표 장식
+  cardArrowDecoration: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 60,
+    height: 60,
+    overflow: 'hidden',
   },
 
   // 화살표 아이콘
   arrowIcon: {
     position: 'absolute',
-    right: spacing.sm,
-    top: spacing.sm,
+    right: 10,
+    top: 10,
+    width: 20,
+    height: 20,
+    zIndex: 1,
   },
 
   // 인기 레시피 섹션
   popularSection: {
-    marginBottom: spacing.xl,
+    marginBottom: 0,
   },
 
   popularHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: 12,
   },
 
   moreButton: {
-    paddingVertical: spacing.xs,
+    paddingVertical: 4,
   },
 
   moreButtonText: {
-    ...typography.caption,
+    fontSize: 15,
+    fontWeight: '400',
     color: '#393F93',
+    marginTop: 20,
   },
 
   // 인기 레시피 카드
   popularRecipeCard: {
     backgroundColor: colors.bgWhite,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
+    borderColor: '#E8E8E8',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 10,
     flexDirection: 'row',
     ...shadows.cardSmall,
   },
 
   recipeImage: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.bgGray,
+    width: 85,
+    height: 85,
+    borderRadius: 14,
+    backgroundColor: '#ffeaeaff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
 
   recipeInfo: {
     flex: 1,
-    marginLeft: spacing.md,
+    marginLeft: 12,
+    justifyContent: 'space-between',
   },
 
   recipeTitle: {
-    ...typography.button,
+    fontSize: 17,
+    fontWeight: '700',
     color: colors.textDark,
-    marginBottom: spacing.xs,
-    marginLeft: 23, // 배지 공간 확보
+    marginBottom: 2,
+    marginLeft: 32,
   },
 
   recipeAuthor: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
 
   recipeAuthorText: {
-    ...typography.caption,
-    color: colors.textLight,
-    marginLeft: spacing.xs,
+    fontSize: 11,
+    fontWeight: '400',
+    color: '#999999',
   },
 
   recipeMetadata: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: 6,
   },
 
   recipeTime: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginRight: 10,
   },
 
   recipeDifficulty: {
@@ -235,13 +275,15 @@ export const homeStyles = StyleSheet.create({
   },
 
   recipeMetadataText: {
-    ...typography.caption,
-    color: '#4A5565',
-    marginLeft: spacing.xs,
+    fontSize: 11,
+    fontWeight: '400',
+    color: '#666666',
+    marginLeft: 3,
   },
 
   difficultyText: {
-    ...typography.caption,
+    fontSize: 11,
+    fontWeight: '600',
     color: '#00A63E',
   },
 
@@ -249,53 +291,55 @@ export const homeStyles = StyleSheet.create({
   ingredientTags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: 5,
   },
 
   ingredientTag: {
-    backgroundColor: '#FFF1F6',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 16,
+    backgroundColor: '#FFF5F8',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
 
   ingredientTagText: {
-    ...typography.caption,
-    color: colors.primary,
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#E91E63',
   },
 
   moreIngredientsTag: {
-    backgroundColor: colors.bgGray,
+    backgroundColor: '#F0F0F0',
   },
 
   moreIngredientsText: {
-    ...typography.caption,
-    color: '#4A5565',
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#666666',
   },
 
   // 좋아요 영역
   likeSection: {
     alignItems: 'center',
     justifyContent: 'flex-start',
+    marginLeft: 6,
   },
 
   likeButton: {
-    padding: spacing.xs,
+    padding: 4,
   },
 
   likeCount: {
-    ...typography.caption,
-    color: colors.textLight,
-    marginTop: spacing.xs,
+    fontSize: 11,
+    fontWeight: '400',
+    color: '#999999',
+    marginTop: 2,
   },
 
   // 순위 배지
   rankBadge: {
     position: 'absolute',
-    left: -3,
-    top: -2,
-    width: 28,
-    height: 28,
+    left: -5,
+    top: -4,
   },
 });
 
