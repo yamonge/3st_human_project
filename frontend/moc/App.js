@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 
@@ -13,6 +14,9 @@ import FindAccountScreen from './src/screens/user/FindAccountScreen';
 
 // 메인 화면
 import HomeScreen from './src/screens/home/HomeScreen';
+
+// 카메라 플로우
+import CameraCaptureScreen from './src/screens/camera/CameraCaptureScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -27,10 +31,6 @@ function NotificationScreen() {
 }
 
 function ProfileScreen() {
-  return null; // 추후 구현
-}
-
-function CameraFlowScreen() {
   return null; // 추후 구현
 }
 
@@ -60,10 +60,16 @@ function MainTabNavigator() {
       <Tab.Screen name="Profile" component={ProfileScreen} />
 
       {/* FAB 서브메뉴 화면들 */}
-      <Tab.Screen name="Camera" component={CameraFlowScreen} />
+      <Tab.Screen
+        name="Camera"
+        component={CameraCaptureScreen}
+        options={{
+          tabBarButton: () => null, // 탭 바 완전히 숨김
+        }}
+      />
       <Tab.Screen name="Voice" component={VoiceFlowScreen} />
       <Tab.Screen name="Recipe" component={RecipeBoardScreen} />
-      <Tab.Screen name="Receipt" component={CameraFlowScreen} />
+      <Tab.Screen name="Receipt" component={CameraCaptureScreen} />
       <Tab.Screen name="Map" component={MapFlowScreen} />
     </Tab.Navigator>
   );
@@ -112,25 +118,27 @@ function App() {
   };
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={getInitialRouteName()}
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-        }}>
-        {/* 온보딩 */}
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName={getInitialRouteName()}
+          screenOptions={{
+            headerShown: false,
+            animation: 'fade',
+          }}>
+          {/* 온보딩 */}
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
 
-        {/* 인증 화면들 */}
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="FindAccount" component={FindAccountScreen} />
+          {/* 인증 화면들 */}
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="FindAccount" component={FindAccountScreen} />
 
-        {/* 메인 앱 (하단 탭 네비게이션) */}
-        <Stack.Screen name="MainApp" component={MainTabNavigator} />
-      </Stack.Navigator>
-    </NavigationContainer>
+          {/* 메인 앱 (하단 탭 네비게이션) */}
+          <Stack.Screen name="MainApp" component={MainTabNavigator} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 

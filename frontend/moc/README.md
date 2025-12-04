@@ -53,7 +53,11 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 
 ### UI Components
 - **@react-native-picker/picker:** ^2.10.0
-- **react-native-wheely:** ^0.6.0
+- **react-native-wheel-pick:** ^1.2.6
+
+### Media & Camera
+- **react-native-vision-camera:** ^4.7.3
+- **react-native-image-picker:** ^7.2.0
 
 ### Network
 - **axios:** ^1.7.0

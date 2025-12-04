@@ -32,7 +32,7 @@ import Animated, {
 import {BlurView} from '@react-native-community/blur';
 import {
   Plus,
-  Camera,
+  Camera as CameraIcon,
   Home,
   FileText,
   Flag,
@@ -101,13 +101,25 @@ const getBackgroundPath = (width, height, barHeight) => {
   `;
 };
 
-// --- 서브메뉴 데이터 (원형 배치) - 6개 ---
+// --- 서브메뉴 데이터 (원형 배치) - 5개 ---
 const SUB_MENU_ITEMS = [
-  {id: 'location', icon: MapPin, angle: 0, color: '#00B8DB'}, // 12시 방향
-  {id: 'sparkles', icon: Sparkles, angle: 72, color: '#00B8DB'}, // 2시 방향
-  {id: 'camera', icon: Camera, angle: 144, color: '#00B8DB'}, // 4시 방향
-  {id: 'video', icon: Video, angle: 216, color: '#00B8DB'}, // 6시 방향
-  {id: 'gallery', icon: Image, angle: 288, color: '#00B8DB'}, // 8시 방향
+  {id: 'Map', screen: 'Map', icon: MapPin, angle: 0, color: '#00B8DB'}, // 12시 방향
+  {
+    id: 'Recipe',
+    screen: 'Recipe',
+    icon: Sparkles,
+    angle: 72,
+    color: '#00B8DB',
+  }, // 2시 방향
+  {
+    id: 'Camera',
+    screen: 'Camera',
+    icon: CameraIcon,
+    angle: 144,
+    color: '#00B8DB',
+  }, // 4시 방향
+  {id: 'Voice', screen: 'Voice', icon: Mic, angle: 216, color: '#00B8DB'}, // 6시 방향
+  {id: 'Gallery', screen: 'Home', icon: Image, angle: 288, color: '#00B8DB'}, // 8시 방향 (임시로 Home 연결)
 ];
 
 // 향후 확장을 위한 예시 (8개)
@@ -134,6 +146,12 @@ const getPosition = (angleDeg, progress, radius) => {
 };
 
 export default function MetaballNavigation({state, navigation}) {
+  // Camera 화면일 때는 네비게이션 숨김
+  const currentRoute = state.routes[state.index].name;
+  if (currentRoute === 'Camera') {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
 
   // 각 서브메뉴 아이템의 진행도
@@ -246,7 +264,7 @@ export default function MetaballNavigation({state, navigation}) {
     return 34 * fabScale.value; // 기본 34에서 스케일 적용
   });
 
-  // --- Reanimated 아이콘 스타일 ---
+  // --- Reanimated 아이콘 스타일 (위치 + 스케일) ---
   const iconStyles = SUB_MENU_ITEMS.map((item, index) =>
     useAnimatedStyle(() => {
       const pos = getPosition(
@@ -254,12 +272,15 @@ export default function MetaballNavigation({state, navigation}) {
         subMenuProgress[index].value,
         MENU_RADIUS,
       );
+
+      // 동적 중심점 계산 (FAB 이동에 따라)
+      const centerY = fabCenterY.value;
+
       return {
-        transform: [
-          {translateX: pos.x},
-          {translateY: pos.y},
-          {scale: subMenuProgress[index].value},
-        ],
+        position: 'absolute',
+        left: FAB_CENTER_X + pos.x - 28, // 아이콘 중심 기준
+        top: centerY + pos.y - 28,
+        transform: [{scale: subMenuProgress[index].value}],
         opacity: interpolate(
           subMenuProgress[index].value,
           [0, 0.3, 1],
@@ -413,7 +434,7 @@ export default function MetaballNavigation({state, navigation}) {
               <TouchableOpacity
                 onPress={() => {
                   if (isOpen) closeMenu();
-                  navigation.navigate('Heart');
+                  navigation.navigate('Home');
                 }}>
                 <Home
                   color={state.index === 0 ? '#3B82F6' : '#97A2B0'}
@@ -456,45 +477,42 @@ export default function MetaballNavigation({state, navigation}) {
             </View>
           </Animated.View>
 
-          {/* 서브메뉴 아이콘들 (동적 중심점) */}
-          <Animated.View
-            style={[
-              styles.centerAnchor,
-              useAnimatedStyle(() => ({
-                transform: [
-                  {translateY: fabCenterY.value - FAB_CENTER_Y_CLOSED},
-                ],
-              })),
-            ]}
-            pointerEvents="box-none">
+          {/* 서브메뉴 아이콘들 (절대 위치) */}
+          <View style={styles.centerAnchor} pointerEvents="box-none">
             {SUB_MENU_ITEMS.map((item, index) => (
               <Animated.View
                 key={item.id}
-                style={[styles.menuItem, iconStyles[index]]}
+                style={[
+                  iconStyles[index],
+                  {
+                    width: 56,
+                    height: 56,
+                  },
+                ]}
                 pointerEvents={isOpen ? 'auto' : 'none'}>
                 <TouchableOpacity
                   onPress={() => {
-                    // 화면 이름의 첫 글자를 대문자로 변환하여 네비게이션
-                    const screenName =
-                      item.id.charAt(0).toUpperCase() + item.id.slice(1);
-                    console.log('Navigating to:', screenName);
+                    console.log(
+                      `🎯 ${item.id} 버튼 클릭 → ${item.screen} 화면으로 이동`,
+                    );
 
                     try {
-                      navigation.navigate(screenName);
+                      navigation.navigate(item.screen);
                       closeMenu();
                     } catch (error) {
                       console.error('Navigation error:', error);
-                      Alert.alert('에러', `${screenName} 화면으로 이동 실패`);
+                      Alert.alert('에러', `${item.screen} 화면으로 이동 실패`);
                       closeMenu();
                     }
                   }}
                   style={styles.touchable}
-                  activeOpacity={0.8}>
+                  activeOpacity={0.8}
+                  hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
                   <item.icon color="white" size={24} />
                 </TouchableOpacity>
               </Animated.View>
             ))}
-          </Animated.View>
+          </View>
 
           {/* 중앙 FAB 버튼 (동적 위치 & 크기) */}
           <Animated.View
@@ -518,13 +536,10 @@ export default function MetaballNavigation({state, navigation}) {
           </Animated.View>
         </View>
 
-        {/* 투명한 터치 레이어 - Overlay와 같은 레벨 */}
+        {/* 투명한 배경 터치 레이어 - 가장 아래 */}
         {isOpen && (
           <Pressable
-            style={[
-              StyleSheet.absoluteFillObject,
-              {zIndex: 0, backgroundColor: 'transparent'},
-            ]}
+            style={[StyleSheet.absoluteFillObject, {zIndex: 5}]}
             onPress={closeMenu}
           />
         )}
@@ -576,7 +591,7 @@ const styles = StyleSheet.create({
     height: CANVAS_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 25,
+    zIndex: 30,
   },
   menuItem: {
     position: 'absolute',
@@ -601,7 +616,7 @@ const styles = StyleSheet.create({
     top: FAB_CENTER_Y_CLOSED - 28, // 기본 위치
     width: 56,
     height: 56,
-    zIndex: 20,
+    zIndex: 35,
   },
   fabTouchable: {
     flex: 1,
