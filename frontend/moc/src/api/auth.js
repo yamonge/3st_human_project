@@ -19,16 +19,14 @@ export const authAPI = {
         password,
       });
 
-      // 토큰 저장
-      if (response.accessToken) {
-        await AsyncStorage.setItem('accessToken', response.accessToken);
-      }
-      if (response.refreshToken) {
-        await AsyncStorage.setItem('refreshToken', response.refreshToken);
-      }
-      // 사용자 정보 저장 (선택사항)
+      // 사용자 정보 저장 (닉네임, 이메일, 이름)
       if (response.user) {
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
+        await AsyncStorage.setItem('userEmail', response.user.email || email);
+        await AsyncStorage.setItem(
+          'userNickname',
+          response.user.nickname || '',
+        );
+        await AsyncStorage.setItem('userName', response.user.name || '');
       }
 
       return response;
@@ -49,15 +47,14 @@ export const authAPI = {
         idToken,
       });
 
-      // 토큰 저장
-      if (response.accessToken) {
-        await AsyncStorage.setItem('accessToken', response.accessToken);
-      }
-      if (response.refreshToken) {
-        await AsyncStorage.setItem('refreshToken', response.refreshToken);
-      }
+      // 사용자 정보 저장
       if (response.user) {
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
+        await AsyncStorage.setItem('userEmail', response.user.email || '');
+        await AsyncStorage.setItem(
+          'userNickname',
+          response.user.nickname || '',
+        );
+        await AsyncStorage.setItem('userName', response.user.name || '');
       }
 
       return response;
@@ -78,15 +75,14 @@ export const authAPI = {
         accessToken,
       });
 
-      // 토큰 저장
-      if (response.accessToken) {
-        await AsyncStorage.setItem('accessToken', response.accessToken);
-      }
-      if (response.refreshToken) {
-        await AsyncStorage.setItem('refreshToken', response.refreshToken);
-      }
+      // 사용자 정보 저장
       if (response.user) {
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
+        await AsyncStorage.setItem('userEmail', response.user.email || '');
+        await AsyncStorage.setItem(
+          'userNickname',
+          response.user.nickname || '',
+        );
+        await AsyncStorage.setItem('userName', response.user.name || '');
       }
 
       return response;
@@ -107,15 +103,14 @@ export const authAPI = {
         accessToken,
       });
 
-      // 토큰 저장
-      if (response.accessToken) {
-        await AsyncStorage.setItem('accessToken', response.accessToken);
-      }
-      if (response.refreshToken) {
-        await AsyncStorage.setItem('refreshToken', response.refreshToken);
-      }
+      // 사용자 정보 저장
       if (response.user) {
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
+        await AsyncStorage.setItem('userEmail', response.user.email || '');
+        await AsyncStorage.setItem(
+          'userNickname',
+          response.user.nickname || '',
+        );
+        await AsyncStorage.setItem('userName', response.user.name || '');
       }
 
       return response;
@@ -133,46 +128,18 @@ export const authAPI = {
     try {
       await api.post('/auth/logout');
 
-      // 로컬 저장소에서 토큰 삭제
-      await AsyncStorage.removeItem('accessToken');
-      await AsyncStorage.removeItem('refreshToken');
-      await AsyncStorage.removeItem('user');
+      // 로컬 저장소에서 사용자 정보 삭제
+      await AsyncStorage.removeItem('userEmail');
+      await AsyncStorage.removeItem('userNickname');
+      await AsyncStorage.removeItem('userName');
 
       return {success: true};
     } catch (error) {
       console.error('로그아웃 에러:', error);
-      // 에러가 발생해도 로컬 토큰은 삭제
-      await AsyncStorage.removeItem('accessToken');
-      await AsyncStorage.removeItem('refreshToken');
-      await AsyncStorage.removeItem('user');
-      throw error;
-    }
-  },
-
-  /**
-   * 토큰 갱신
-   * @returns {Promise} 새로운 액세스 토큰
-   */
-  refreshToken: async () => {
-    try {
-      const refreshToken = await AsyncStorage.getItem('refreshToken');
-
-      if (!refreshToken) {
-        throw new Error('Refresh Token이 없습니다.');
-      }
-
-      const response = await api.post('/auth/refresh', {
-        refreshToken,
-      });
-
-      // 새로운 토큰 저장
-      if (response.accessToken) {
-        await AsyncStorage.setItem('accessToken', response.accessToken);
-      }
-
-      return response;
-    } catch (error) {
-      console.error('토큰 갱신 에러:', error);
+      // 에러가 발생해도 사용자 정보는 삭제
+      await AsyncStorage.removeItem('userEmail');
+      await AsyncStorage.removeItem('userNickname');
+      await AsyncStorage.removeItem('userName');
       throw error;
     }
   },
@@ -187,7 +154,12 @@ export const authAPI = {
 
       // 사용자 정보 저장
       if (response.user) {
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
+        await AsyncStorage.setItem('userEmail', response.user.email || '');
+        await AsyncStorage.setItem(
+          'userNickname',
+          response.user.nickname || '',
+        );
+        await AsyncStorage.setItem('userName', response.user.name || '');
       }
 
       return response;
