@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import com.cucook.moc.user.dao.PasswordResetTokenDAO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -153,7 +153,7 @@ public class UserServiceImpl implements UserService {
         passwordResetTokenDAO.insertToken(tokenVO);
 
         // 4) 프론트에서 사용할 URL 생성
-        //    예: http://localhost:3000/reset-password?token=xxxx
+        //    예: http://localhost:3010/reset-password?token=xxxx
         String resetUrl = buildResetUrl(resetToken);
 
         // 5) 메일 발송
