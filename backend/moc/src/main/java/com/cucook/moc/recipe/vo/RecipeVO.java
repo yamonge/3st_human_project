@@ -25,4 +25,5 @@ public class RecipeVO {
     private Timestamp createdDate;  // 생성 일시 (DB 자동 입력)
     private String updatedId;       // 최종 수정자 ID
     private Timestamp updatedDate;  // 최종 수정 일시
+    private String category;
 }

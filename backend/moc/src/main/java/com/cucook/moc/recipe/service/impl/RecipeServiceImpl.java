@@ -1,8 +1,6 @@
 package com.cucook.moc.recipe.service.impl;
 
 import com.cucook.moc.recipe.dao.RecipeDAO;
-// import com.cucook.moc.recipe.dao.RecipeIngredientDAO; // 제거: RecipeIngredientService가 대신 처리
-// import com.cucook.moc.recipe.dao.RecipeStepDAO; // 제거: RecipeStepService가 대신 처리
 import com.cucook.moc.recipe.dto.request.RecipeGenerationRequestDTO;
 import com.cucook.moc.recipe.dto.request.SelectedIngredientRequestDTO;
 import com.cucook.moc.recipe.dto.response.RecipeRecommendationResponseDTO; // 사용자 요청에 따라 이 DTO 이름 유지
@@ -31,15 +29,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service // 이 클래스를 Spring Service 컴포넌트로 등록
-public class RecipeServiceImpl implements RecipeService { // RecipeService 인터페이스 구현
+public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeDAO recipeDAO;
-    // private final RecipeStepDAO recipeStepDAO; // 제거: RecipeStepService가 대신 처리
-    // private final RecipeIngredientDAO recipeIngredientDAO; // 제거: RecipeIngredientService가 대신 처리
     private final AiRecipeLogService aiRecipeLogService;
     private final GeminiApiUtils geminiApiUtils;
     private final ObjectMapper objectMapper;
-    private final RecipeIngredientService recipeIngredientService; // 추가: RecipeIngredientService 주입
+    private final RecipeIngredientService recipeIngredientService;
     private final RecipeStepService recipeStepService; // 추가: RecipeStepService 주입
 
     @Autowired
@@ -179,10 +175,15 @@ public class RecipeServiceImpl implements RecipeService { // RecipeService 인�
     private String createGeminiPrompt(RecipeGenerationRequestDTO requestDTO) {
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append("당신은 요리 전문가 AI 입니다. 사용자가 제공한 재료와 필터 조건에 맞춰 최적의 레시피 3개를 JSON 형식으로 생성해주세요.\n");
-        promptBuilder.append("반드시 다음 JSON 형식에 맞춰 생성해야 합니다: [{\"title\":\"레시피1 제목\", \"summary\":\"간단 요약\", \"thumbnailUrl\":\"placeholder_url\", \"difficultyCd\":\"EASY\", \"cookTimeMin\":30, \"cuisineStyleCd\":\"KOR\", \"requiredIngredients\":[{\"ingredientName\":\"재료1\", \"quantityDesc\":\"수량\"}, {\"ingredientName\":\"재료2\", \"quantityDesc\":\"수량\"}], \"cookingSteps\":[{\"stepNo\":1, \"stepDesc\":\"단계1 설명\", \"imageUrl\":\"placeholder_url\"}, {\"stepNo\":2, \"stepDesc\":\"단계2 설명\", \"imageUrl\":\"placeholder_url\"}]}, ...]\n");
-        promptBuilder.append("썸네일 URL과 단계별 이미지 URL은 \"placeholder_url\" 문자열을 넣어주세요. 백엔드에서 실제 이미지로 대체됩니다.\n");
+        // JSON 형식 예시에서 thumbnailUrl과 imageUrl 제거, category 추가
+        promptBuilder.append("반드시 다음 JSON 형식에 맞춰 생성해야 합니다: [{\"title\":\"레시피1 제목\", \"summary\":\"간단 요약\", \"difficultyCd\":\"EASY\", \"cookTimeMin\":30, \"cuisineStyleCd\":\"KOR\", \"category\":\"rice_dish\", \"requiredIngredients\":[{\"ingredientName\":\"재료1\", \"quantityDesc\":\"수량\"}], \"cookingSteps\":[{\"stepNo\":1, \"stepDesc\":\"단계1 설명\"}]}, ...]\n");
 
-        promptBuilder.append("사용자 선택 재료:\n");
+        promptBuilder.append("\n[카테고리 규칙]\n"); // ⭐ 이미지 프롬프트의 카테고리 규칙 추가
+        promptBuilder.append("각 레시피마다 'category' 필드를 포함해야 합니다.\n");
+        promptBuilder.append("category는 아래 값 중 하나만 사용하세요: [\"rice_dish\",\"noodle\",\"soup_stew\",\"stir_fry\",\"grill_roast\",\"salad\",\"side_dish\",\"dessert_snack\"]\n");
+
+
+        promptBuilder.append("\n사용자 선택 재료:\n");
         requestDTO.getSelectedIngredients().forEach(ing -> {
             promptBuilder.append("- ").append(ing.getIngredientName());
             if (ing.getUsageType() != null && !ing.getUsageType().isEmpty()) {
@@ -194,15 +195,15 @@ public class RecipeServiceImpl implements RecipeService { // RecipeService 인�
             promptBuilder.append("\n");
         });
 
-        promptBuilder.append("필터 조건:\n");
+        promptBuilder.append("\n필터 조건:\n");
         promptBuilder.append("- 요리 스타일: ").append(requestDTO.getFilterCuisineCd()).append("\n");
         promptBuilder.append("- 난이도: ").append(requestDTO.getFilterDifficultyCd()).append("\n");
         promptBuilder.append("- 조리 시간: ").append(requestDTO.getFilterCookTimeCd()).append("\n");
 
-        promptBuilder.append("생성 규칙:\n");
+        promptBuilder.append("\n생성 규칙:\n");
         promptBuilder.append("- 제공된 모든 재료를 최대한 활용해주세요.\n");
         promptBuilder.append("- 레시피 3개를 생성하고, JSON 배열 형태로 반환해주세요.\n");
-        promptBuilder.append("- 각 레시피는 제목, 요약, 난이도, 조리시간(분 단위 숫자), 요리 스타일, 필요한 재료 목록, 조리 순서를 포함해야 합니다.\n");
+        promptBuilder.append("- 각 레시피는 제목, 요약, 난이도, 조리시간(분 단위 숫자), 요리 스타일, 카테고리, 필요한 재료 목록, 조리 순서를 포함해야 합니다.\n"); // ⭐ 카테고리 포함 명시
         promptBuilder.append("- 필요한 재료 목록에는 재료명과 수량설명(예: 200g, 1개, 1/2컵)이 포함되어야 합니다.\n");
         promptBuilder.append("- 조리 순서에는 단계 번호, 단계 설명이 포함되어야 합니다.\n");
         promptBuilder.append("- 부족한 재료가 있더라도 사용자가 선택한 재료를 중심으로 맛있고 창의적인 레시피를 제안해주세요.\n");
@@ -250,6 +251,8 @@ public class RecipeServiceImpl implements RecipeService { // RecipeService 인�
         vo.setSourceType("AI_GENERATED");
         vo.setTitle(dto.getTitle());
         vo.setSummary(dto.getSummary());
+        vo.setCuisineStyleCd(dto.getCuisineStyleCd());
+        vo.setCategory(dto.getCategory());
         vo.setThumbnailUrl(dto.getThumbnailUrl());
         vo.setDifficultyCd(dto.getDifficultyCd());
         vo.setCookTimeMin(dto.getCookTimeMin());
