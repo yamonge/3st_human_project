@@ -1,6 +1,5 @@
 package com.cucook.moc.user.service;
 
-import com.cucook.moc.user.dto.UpdateFcmTokenRequestDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
 import com.cucook.moc.user.dto.response.LoginResponseDTO;
@@ -15,10 +14,12 @@ public interface UserService {
 
     FindEmailResponseDTO findLoginId(FindEmailRequestDTO request);
 
+    // 1단계: 비밀번호 재설정 링크 메일 발송
     void sendPasswordResetLink(FindPasswordRequestDTO request);
 
+    // 2단계: 토큰 + 새 비번으로 실제 비밀번호 변경
     void resetPasswordByToken(ResetPasswordConfirmRequestDTO request);
 
+    // FCM Token 업데이트
     void updateFcmToken(UpdateFcmTokenRequestDTO request);
 }
-
