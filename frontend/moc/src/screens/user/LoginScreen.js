@@ -65,8 +65,11 @@ export default function LoginScreen({navigation}) {
       // // 로그인 성공
       // console.log('로그인 성공:', response);
 
-      // 메인 앱으로 이동
-      navigation.replace('MainApp');
+      // 메인 앱으로 이동 (스택 초기화)
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'MainApp'}],
+      });
     } catch (err) {
       console.error('로그인 실패:', err);
 

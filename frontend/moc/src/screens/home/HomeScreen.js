@@ -56,9 +56,11 @@ export default function HomeScreen({navigation}) {
   const handleMenuPress = type => {
     switch (type) {
       case 'fridge':
-        // TODO: 카메라 플로우 이동
-        Alert.alert('냉장고 털기', '카메라 플로우로 이동합니다.');
-        // navigation.navigate('Camera');
+        // 카메라 플로우 이동 (스택 초기화)
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Camera'}],
+        });
         break;
       case 'search':
         // TODO: 마이크 플로우 이동

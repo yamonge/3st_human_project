@@ -7,6 +7,12 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
+import Svg, {
+  Path as SvgPath,
+  Defs,
+  LinearGradient as SvgLinearGradient,
+  Stop,
+} from 'react-native-svg';
 import {
   Canvas,
   Circle,
@@ -52,7 +58,7 @@ const FAB_OFFSET_Y = 15;
 
 const FAB_SIZE = 64;
 const FAB_CENTER_X = SCREEN_WIDTH / 2;
-const FAB_CENTER_Y_CLOSED = CANVAS_HEIGHT - TAB_BAR_HEIGHT + FAB_OFFSET_Y; // 닫힌 상태 위치
+const FAB_CENTER_Y_CLOSED = CANVAS_HEIGHT - TAB_BAR_HEIGHT + FAB_OFFSET_Y + 30; // 닫힌 상태 위치
 const FAB_CENTER_Y_OPEN = SCREEN_HEIGHT / 2; // 화면 중앙
 
 const MENU_RADIUS = 120; // 원형 배치를 위해 증가
@@ -76,12 +82,13 @@ const METABALL_MATRIX = [
   1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 22, -8,
 ];
 
-// --- 배경 Path (Figma 디자인 곡선) ---
-const getBackgroundPath = (width, height, barHeight) => {
-  const center = width / 2;
-  const curveWidth = 135; // 더 넓게
-  const curveDepth = 48; // FAB와 분리되게
-  const topY = height - barHeight;
+// --- SVG 배경 Path (Figma 디자인 곡선) ---
+const getNavBarPath = () => {
+  const center = SCREEN_WIDTH / 2;
+  const curveWidth = 135;
+  const curveDepth = 48;
+  const topY = 0; // SVG 내부 좌표계 시작점
+  const barHeight = TAB_BAR_HEIGHT + curveDepth;
 
   const startX = center - curveWidth / 2;
   const endX = center + curveWidth / 2;
@@ -94,9 +101,9 @@ const getBackgroundPath = (width, height, barHeight) => {
     L ${startX} ${topY}
     C ${cp1X} ${topY}, ${cp1X} ${bottomY}, ${center} ${bottomY}
     C ${cp2X} ${bottomY}, ${cp2X} ${topY}, ${endX} ${topY}
-    L ${width} ${topY}
-    L ${width} ${height}
-    L 0 ${height}
+    L ${SCREEN_WIDTH} ${topY}
+    L ${SCREEN_WIDTH} ${barHeight}
+    L 0 ${barHeight}
     Z
   `;
 };
@@ -299,12 +306,6 @@ export default function MetaballNavigation({state, navigation}) {
     pointerEvents: isOpen ? 'auto' : 'none',
   }));
 
-  const backgroundPath = getBackgroundPath(
-    SCREEN_WIDTH,
-    CANVAS_HEIGHT,
-    TAB_BAR_HEIGHT,
-  );
-
   const blurStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
   }));
@@ -316,7 +317,7 @@ export default function MetaballNavigation({state, navigation}) {
   return (
     <>
       <View style={styles.container}>
-        {/* 블러 배경 - Container 안으로 이동 */}
+        {/* 블러 배경 */}
         {isOpen && (
           <Animated.View
             style={[styles.blurBackdrop, blurStyle]}
@@ -330,20 +331,30 @@ export default function MetaballNavigation({state, navigation}) {
           </Animated.View>
         )}
 
-        {/* LAYER 1: Skia Canvas (메타볼 효과) */}
+        {/* LAYER 1: SVG 네비게이션 바 배경 (고정) */}
+        <View style={styles.navBarBackground}>
+          <Svg
+            width={SCREEN_WIDTH}
+            height={TAB_BAR_HEIGHT}
+            style={styles.navBarSvg}>
+            <Defs>
+              <SvgLinearGradient id="shadow" x1="0" y1="1" x2="0" y2="0">
+                <Stop offset="0" stopColor="rgba(0, 0, 0, 0)" />
+                <Stop offset="0.3" stopColor="rgba(149, 168, 195, 0.25)" />
+              </SvgLinearGradient>
+            </Defs>
+            {/* 그림자 효과 */}
+            <SvgPath d={getNavBarPath()} fill="url(#shadow)" />
+            {/* 실제 배경 */}
+            <SvgPath d={getNavBarPath()} fill="#200707ff" />
+          </Svg>
+        </View>
+
+        {/* LAYER 2: Skia Canvas (메타볼 애니메이션만) */}
         <View
           style={styles.canvas}
           pointerEvents={isOpen ? 'box-none' : 'none'}>
           <Canvas style={styles.canvas}>
-            {/* 고정된 네비게이션 배경 */}
-            <Path path={backgroundPath} color="#ffffff">
-              <Shadow
-                dx={0}
-                dy={-10}
-                blur={40}
-                color="rgba(149, 168, 195, 0.15)"
-              />
-            </Path>
             {/* 각 서브메뉴마다 독립적인 메타볼 레이어 */}
             {SUB_MENU_ITEMS.map((item, index) => (
               <Group key={`metaball-group-${index}`}>
@@ -497,7 +508,11 @@ export default function MetaballNavigation({state, navigation}) {
                     );
 
                     try {
-                      navigation.navigate(item.screen);
+                      // FAB 서브메뉴는 항상 스택 초기화하고 시작
+                      navigation.reset({
+                        index: 0,
+                        routes: [{name: item.screen}],
+                      });
                       closeMenu();
                     } catch (error) {
                       console.error('Navigation error:', error);
@@ -550,15 +565,35 @@ export default function MetaballNavigation({state, navigation}) {
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH,
-    height: CANVAS_HEIGHT,
     position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     bottom: 0,
     justifyContent: 'flex-end',
   },
+
+  // SVG 네비게이션 바 배경 (LAYER 1)
+  navBarBackground: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: TAB_BAR_HEIGHT,
+    zIndex: 1,
+  },
+  navBarSvg: {
+    position: 'absolute',
+    bottom: 0,
+  },
+
+  // Canvas 메타볼 레이어 (LAYER 2)
   canvas: {
     flex: 1,
+    zIndex: 5,
   },
+
+  // 아이콘 오버레이 (LAYER 3)
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
@@ -627,7 +662,11 @@ const styles = StyleSheet.create({
 
   // 블러 배경 (전체 화면)
   blurBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 0,
   },
   backdropPress: {

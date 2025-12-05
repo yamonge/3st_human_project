@@ -50,7 +50,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 50,
+    paddingBottom: 15,
     backgroundColor: 'rgba(30, 42, 58, 0.7)',
     zIndex: 10,
   },
@@ -156,6 +157,28 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: '#00B8DB',
+  },
+
+  // AI 인식 로딩 오버레이
+  recognizingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  recognizingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 20,
+    fontFamily: 'NotoSansKR-Bold',
+  },
+  recognizingSubText: {
+    fontSize: 14,
+    color: '#CCCCCC',
+    marginTop: 8,
+    fontFamily: 'NotoSansKR-Regular',
   },
 
   // 모달 스타일

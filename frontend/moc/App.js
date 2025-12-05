@@ -1,8 +1,9 @@
 import React, {useState, useEffect} from 'react';
+import {StatusBar} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 
@@ -17,6 +18,10 @@ import HomeScreen from './src/screens/home/HomeScreen';
 
 // 카메라 플로우
 import CameraCaptureScreen from './src/screens/camera/CameraCaptureScreen';
+import IngredientResultScreen from './src/screens/camera/IngredientResultScreen';
+import SaveOptionScreen from './src/screens/camera/SaveOptionScreen';
+import RecipeFilterScreen from './src/screens/camera/RecipeFilterScreen';
+import IngredientSelectionScreen from './src/screens/camera/IngredientSelectionScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -71,6 +76,36 @@ function MainTabNavigator() {
       <Tab.Screen name="Recipe" component={RecipeBoardScreen} />
       <Tab.Screen name="Receipt" component={CameraCaptureScreen} />
       <Tab.Screen name="Map" component={MapFlowScreen} />
+
+      {/* 카메라 플로우 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="IngredientResult"
+        component={IngredientResultScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="SaveOption"
+        component={SaveOptionScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="RecipeFilter"
+        component={RecipeFilterScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="IngredientSelection"
+        component={IngredientSelectionScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -119,6 +154,11 @@ function App() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <NavigationContainer>
         <Stack.Navigator
           initialRouteName={getInitialRouteName()}
