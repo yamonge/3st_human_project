@@ -53,14 +53,6 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **react-native-vector-icons:** ^10.2.0
 - **lucide-react-native:** ^0.554.0
 
-<<<<<<< Updated upstream
-=======
-### State & Storage
-
-- **@react-native-async-storage/async-storage:** ^2.1.0
-
-### UI Components
-
 - **@react-native-picker/picker:** ^2.10.0
 - **react-native-wheely:** ^0.6.0
 
@@ -68,19 +60,15 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 
 - **axios:** ^1.7.0
 
->>>>>>> Stashed changes
+
 ### Performance
 
 - **react-native-worklets:** ^0.6.1
 
-<<<<<<< Updated upstream
 =======
 ### Development Tools
-
 - **react-native-svg-transformer:** ^1.5.2 (SVG 파일을 React 컴포넌트로 변환)
 
->>>>>>> Stashed changes
----
 
 ## 💻 개발 환경 설정
 
