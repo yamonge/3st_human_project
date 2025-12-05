@@ -34,4 +34,10 @@ public interface UserDAO {
 
     // 마지막 로그인 시간 갱신
     void updateLastLoginDate(@Param("userId") Long userId);
+
+    // FCM Token 업데이트
+    void updateFcmToken(@Param("userId") Long userId,
+                        @Param("fcmToken") String fcmToken,
+                        @Param("deviceOs") String deviceOs,
+                        @Param("deviceVersion") String deviceVersion);
 }

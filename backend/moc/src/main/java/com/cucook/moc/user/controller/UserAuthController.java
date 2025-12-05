@@ -1,5 +1,6 @@
 package com.cucook.moc.user.controller;
 
+import com.cucook.moc.user.dto.UpdateFcmTokenRequestDTO;
 import com.cucook.moc.user.dto.request.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,17 +50,24 @@ public class UserAuthController {
         userService.sendPasswordResetLink(request);
         return ResponseEntity.ok().build();
     }
-
+    
     /*
     * 프론트에서 /reset-password?token=xxxx 페이지에서
     * 새 비밀번호 입력받고, 이 엔드포인트로 전송
     * */
-    @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(
-            @RequestBody ResetPasswordConfirmRequestDTO request) {
+    // @PostMapping("/reset-password")
+    // public ResponseEntity<Void> resetPassword(
+    //         @RequestBody ResetPasswordConfirmRequestDTO request) {
 
-        userService.resetPasswordByToken(request);
-        return ResponseEntity.ok().build();
-    }
+    //     userService.resetPasswordByToken(request);
+    //     return ResponseEntity.ok().build();
+    // }
 
+    @PostMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+        @RequestBody UpdateFcmTokenRequestDTO request) {
+
+    userService.updateFcmToken(request);
+    return ResponseEntity.ok().build();
+}
 }
