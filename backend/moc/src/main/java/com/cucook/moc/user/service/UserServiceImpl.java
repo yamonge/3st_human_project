@@ -1,9 +1,12 @@
 package com.cucook.moc.user.service;
 
 import java.security.SecureRandom;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import com.cucook.moc.user.dao.PasswordResetTokenDAO;
+import com.cucook.moc.user.dto.UpdateFcmTokenRequestDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import org.springframework.beans.factory.annotation.Value;
@@ -138,13 +141,15 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("일치하는 사용자가 없습니다.");
         }
 
-        // 2) 토큰 생성
+        // 2) 토큰 생성 (원본 토큰은 이메일로 전달)
         String resetToken = createResetToken();
 
-        // 3) 토큰 DB 저장 (유효시간 예: 1시간)
+        // 3) 토큰 해시화 후 DB 저장 (유효시간 예: 1시간)
+        String hashedToken = hashToken(resetToken);
+
         PasswordResetTokenVO tokenVO = PasswordResetTokenVO.builder()
                 .userId(user.getUserId())
-                .resetToken(resetToken)
+                .resetToken(hashedToken)
                 .expireDate(LocalDateTime.now().plusHours(1))
                 .usedYn("N")
                 .createdDate(LocalDateTime.now())
@@ -152,7 +157,7 @@ public class UserServiceImpl implements UserService {
 
         passwordResetTokenDAO.insertToken(tokenVO);
 
-        // 4) 프론트에서 사용할 URL 생성
+        // 4) 프론트에서 사용할 URL 생성 (원본 토큰 사용)
         //    예: http://localhost:3010/reset-password?token=xxxx
         String resetUrl = buildResetUrl(resetToken);
 
@@ -170,9 +175,32 @@ public class UserServiceImpl implements UserService {
         }
         return sb.toString();
     }
+    /**
+     * 비밀번호 재설정 토큰을 해시(SHA-256)로 변환
+     * - 원본 토큰은 이메일 링크에 사용
+     * - DB에는 해시값만 저장해서 보안 강화
+     */
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encoded = digest.digest(token.getBytes(StandardCharsets.UTF_8));
 
-    // 프론트 URL은 MailServiceImpl에서 @Value 주입해도 되고,
-    // 여기서 @Value 주입해서 써도 됨.
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : encoded) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("토큰 해시 처리 중 오류가 발생했습니다.", e);
+        }
+    }
+
+
+    // 프론트 URL은 MailServiceImpl에서 @Value 주입해도 됨
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;
 
@@ -190,7 +218,8 @@ public class UserServiceImpl implements UserService {
         }
 
         // 2) 토큰 조회
-        PasswordResetTokenVO tokenVO = passwordResetTokenDAO.findByToken(request.getToken());
+        String hashedToken = hashToken(request.getToken());
+        PasswordResetTokenVO tokenVO = passwordResetTokenDAO.findByToken(hashedToken);
         if (tokenVO == null) {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
@@ -213,5 +242,19 @@ public class UserServiceImpl implements UserService {
         passwordResetTokenDAO.markTokenUsed(tokenVO.getResetTokenId());
     }
 
+    // FCM Token 업데이트
+    @Override
+    public void updateFcmToken(UpdateFcmTokenRequestDTO request) {
 
+        if (request.getUserId() == null || request.getFcmToken() == null) {
+            throw new IllegalArgumentException("userId와 fcmToken은 필수입니다.");
+        }
+
+        userDAO.updateFcmToken(
+                request.getUserId(),
+                request.getFcmToken(),
+                request.getDeviceOs(),
+                request.getDeviceVersion()
+        );
+    }
 }

@@ -15,18 +15,28 @@ export const authAPI = {
   login: async (email, password) => {
     try {
       const response = await api.post('/auth/login', {
-        email,
-        password,
+        userEmail: email,
+        userPassword: password,
       });
 
       // 사용자 정보 저장 (닉네임, 이메일, 이름)
       if (response.user) {
-        await AsyncStorage.setItem('userEmail', response.user.email || email);
+        await AsyncStorage.setItem(
+          'userEmail',
+          response.user.userEmail || user.email || email,
+        );
         await AsyncStorage.setItem(
           'userNickname',
-          response.user.nickname || '',
+          response.user.userNickname || user.nickname || '',
         );
-        await AsyncStorage.setItem('userName', response.user.name || '');
+        await AsyncStorage.setItem(
+          'userName',
+          response.user.userName || user.name || '',
+        );
+        await AsyncStorage.setItem(
+          'userId',
+          String(response.user.userId || ''),
+        );
       }
 
       return response;
@@ -220,11 +230,11 @@ export const authAPI = {
    * @param {string} birthDate - 생년월일 (YYYY-MM-DD)
    * @returns {Promise} 마스킹된 이메일 정보
    */
-  findId: async (name, birthDate) => {
+  findEmail: async (userName, userBirthDate) => {
     try {
-      const response = await api.post('/auth/find-id', {
-        name,
-        birthDate,
+      const response = await api.post('/auth/find-email', {
+        userName: userName,
+        userBirthDate: userBirthDate,
       });
       return response; // { maskedEmail: 'abc***@example.com', registeredDate: '2024-01-01' }
     } catch (error) {
@@ -240,12 +250,12 @@ export const authAPI = {
    * @param {string} birthDate - 생년월일 (YYYY-MM-DD)
    * @returns {Promise} 발송 결과
    */
-  sendTemporaryPassword: async (email, name, birthDate) => {
+  sendPasswordResetLink: async (email, name, birthDate) => {
     try {
-      const response = await api.post('/auth/send-temp-password', {
-        email,
-        name,
-        birthDate,
+      const response = await api.post('/auth/password/reset-link', {
+        userEmail,
+        userName,
+        userBirthDate,
       });
       return response; // { success: true, message: '임시 비밀번호가 발송되었습니다.' }
     } catch (error) {
@@ -253,6 +263,18 @@ export const authAPI = {
       throw error;
     }
   },
+
+  /**
+   * 비밀번호 재설정 (토큰 확인 후 새 비번 저장)
+   * POST /api/auth/password/reset-confirm
+   * Request: { token, newPassword, newPasswordConfirm }
+   */
+  resetPasswordByToken: ({token, newPassword, newPasswordConfirm}) =>
+    api.post('/auth/password/reset-confirm', {
+      token,
+      newPassword,
+      newPasswordConfirm,
+    }),
 };
 
 export default authAPI;
