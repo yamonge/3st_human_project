@@ -1,9 +1,18 @@
 spring:
+  application:
+    name: moc
+
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@localhost:1521:XE
+    username: c##cucook_moc
+    password: moc
+
   mail:
-    host: smtp.gmail.com          # 예: smtp.gmail.com, smtp.naver.com 등
-    port: 587                       # 보통 TLS는 587
-    username: yun.junseo6365@gmail.com  # 보내는 메일 주소
-    password: aoneljumcyihfumd    # 메일 계정 비밀번호 또는 앱 비밀번호
+    host: smtp.gmail.com
+    port: 587
+    username: yun.junseo6365@gmail.com
+    password: aoneljumcyihfumd            # Gmail 앱 비밀번호 여기 넣기
     properties:
       mail:
         smtp:
@@ -11,6 +20,18 @@ spring:
           starttls:
             enable: true
 
-# 프론트엔드 베이스 URL (비밀번호 재설정 페이지)
+server:
+  port: 8090
+
+mybatis:
+  mapper-locations: classpath:mybatis/mappers/*.xml
+  type-aliases-package: com.cucook.moc.*.vo
+  configuration:
+    map-underscore-to-camel-case: true
+
+gemini:
+  api:
+    key: "AIzaSyDgPV2RHgKjKiVeFaUEXEzpTZNLYECHDBg"
+
 app:
   frontend-base-url: http://localhost:3010

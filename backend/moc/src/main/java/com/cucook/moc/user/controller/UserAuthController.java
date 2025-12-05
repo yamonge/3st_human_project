@@ -1,6 +1,5 @@
 package com.cucook.moc.user.controller;
 
-import com.cucook.moc.user.dto.UpdateFcmTokenRequestDTO;
 import com.cucook.moc.user.dto.request.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

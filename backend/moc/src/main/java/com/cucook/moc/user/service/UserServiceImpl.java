@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import com.cucook.moc.user.dao.PasswordResetTokenDAO;
-import com.cucook.moc.user.dto.UpdateFcmTokenRequestDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import org.springframework.beans.factory.annotation.Value;
