@@ -54,7 +54,7 @@ import {
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const CANVAS_HEIGHT = SCREEN_HEIGHT; // 전체 화면 높이
 const TAB_BAR_HEIGHT = 60;
-const FAB_OFFSET_Y = 15;
+const FAB_OFFSET_Y = 5;
 
 const FAB_SIZE = 64;
 const FAB_CENTER_X = SCREEN_WIDTH / 2;
@@ -343,10 +343,15 @@ export default function MetaballNavigation({state, navigation}) {
                 <Stop offset="0.3" stopColor="rgba(149, 168, 195, 0.25)" />
               </SvgLinearGradient>
             </Defs>
-            {/* 그림자 효과 */}
-            <SvgPath d={getNavBarPath()} fill="url(#shadow)" />
             {/* 실제 배경 */}
-            <SvgPath d={getNavBarPath()} fill="#200707ff" />
+            <SvgPath d={getNavBarPath()} fill="#ffffff" />
+            {/* 상단 테두리 */}
+            <SvgPath
+              d={getNavBarPath()}
+              fill="none"
+              stroke="rgba(0, 0, 0, 0.08)"
+              strokeWidth="1"
+            />
           </Svg>
         </View>
 
@@ -581,6 +586,13 @@ const styles = StyleSheet.create({
     right: 0,
     height: TAB_BAR_HEIGHT,
     zIndex: 1,
+    // 그림자 효과 (iOS)
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: -3},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    // 그림자 효과 (Android)
+    elevation: 8,
   },
   navBarSvg: {
     position: 'absolute',

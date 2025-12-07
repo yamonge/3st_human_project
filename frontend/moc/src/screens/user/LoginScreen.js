@@ -13,8 +13,8 @@ import {Mail, Lock, Eye, EyeOff} from 'lucide-react-native';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import SocialButton from '../../components/common/SocialButton';
-import {loginStyles} from '../../styles/loginStyles';
-import {colors} from '../../styles/common';
+import {loginStyles} from '../../../styles/screens/user/loginStyles';
+import {colors} from '../../../styles/common';
 import {authAPI} from '../../api/auth';
 import LoginLogo from '../../assets/images/user/loginLogo.svg';
 

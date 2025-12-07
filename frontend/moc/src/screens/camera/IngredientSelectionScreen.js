@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {ChevronLeft, ChevronRight, Check} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../styles/ingredientSelectionStyles';
+import {styles} from '../../../styles/screens/camera/ingredientSelectionStyles';
 
 export default function IngredientSelectionScreen({route, navigation}) {
   const {ingredients = [], filters = {}} = route.params || {};

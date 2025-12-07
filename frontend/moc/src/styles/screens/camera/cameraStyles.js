@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 15,
     backgroundColor: 'rgba(30, 42, 58, 0.7)',
     zIndex: 10,

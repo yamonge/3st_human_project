@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {ChevronLeft, ChevronRight} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../styles/recipeFilterStyles';
+import {styles} from '../../../styles/screens/home/recipeFilterStyles';
 
 export default function RecipeFilterScreen({route, navigation}) {
   const {ingredients = []} = route.params || {};

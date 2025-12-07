@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, Modal, TextInput, TouchableOpacity} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../styles/IngredientModalStyles';
+import {styles} from '../../styles/components/IngredientModalStyles';
 
 /**
  * 재료 관리용 재사용 가능한 모달 컴포넌트

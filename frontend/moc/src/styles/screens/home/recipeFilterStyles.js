@@ -8,10 +8,9 @@ export const styles = StyleSheet.create({
 
   // 상단 헤더
   header: {
-    height: 134,
+    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 50,
   },
   headerContent: {
     flexDirection: 'row',

@@ -18,7 +18,7 @@ import {
   Star,
 } from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../styles/ingredientResultStyles';
+import {styles} from '../../../styles/screens/camera/ingredientResultStyles';
 import IngredientModal from '../../components/common/IngredientModal';
 
 export default function IngredientResultScreen({route, navigation}) {

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {ChevronLeft, ChevronRight, Check, Sparkles} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../styles/saveOptionStyles';
+import {styles} from '../../../styles/screens/camera/saveOptionStyles';
 import {saveIngredients} from '../../api/camera';
 
 export default function SaveOptionScreen({route, navigation}) {

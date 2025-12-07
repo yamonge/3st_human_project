@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
-import {homeStyles} from '../../styles/homeStyles';
+import {homeStyles} from '../../../styles/screens/home/homeStyles';
 
 /**
  * 메인 홈 화면

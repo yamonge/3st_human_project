@@ -14,7 +14,7 @@ import {
 import {Camera, useCameraDevice} from 'react-native-vision-camera';
 import {X, Camera as CameraIcon} from 'lucide-react-native';
 import {useFocusEffect} from '@react-navigation/native';
-import {styles} from '../../styles/cameraStyles';
+import {styles} from '../../../styles/screens/camera/cameraStyles';
 import LinearGradient from 'react-native-linear-gradient';
 import {recognizeIngredients} from '../../api/camera';
 

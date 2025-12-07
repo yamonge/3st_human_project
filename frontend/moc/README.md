@@ -30,7 +30,7 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **JavaScript:** ES6+ (TypeScript 설정 포함: 5.0.4)
 
 ### Navigation
-- **@react-navigation/native:** ^7.1.21
+- **@react-navigation/native:** ^7.1.24
 - **@react-navigation/bottom-tabs:** ^7.0.0
 - **@react-navigation/native-stack:** ^7.8.5
 - **react-native-screens:** ^4.18.0
@@ -68,6 +68,10 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 ### Development Tools
 - **react-native-svg-transformer:** ^1.5.2 (SVG 파일을 React 컴포넌트로 변환)
 
+### 한방 설치 명령어
+- npm install @react-navigation/native@^7.1.24 @react-navigation/bottom-tabs@^7.0.0 @react-navigation/native-stack@^7.8.5 react-native-screens@^4.18.0 react-native-safe-area-context@^5.6.2 react-native-reanimated@^4.1.5 @shopify/react-native-skia@^2.4.6 lottie-react-native@^7.3.4 react-native-linear-gradient@^2.8.3 @react-native-community/blur@^4.4.1 react-native-svg@^15.15.0 react-native-vector-icons@^10.2.0 lucide-react-native@^0.554.0 @react-native-async-storage/async-storage@^2.1.0 @react-native-picker/picker@^2.10.0 react-native-wheel-pick@^1.2.6 react-native-vision-camera@^4.7.3 react-native-image-picker@^7.2.0 axios@^1.7.0 react-native-worklets@^0.6.1
+
+- npm install --save-dev react-native-svg-transformer
 ---
 
 ## 💻 개발 환경 설정
