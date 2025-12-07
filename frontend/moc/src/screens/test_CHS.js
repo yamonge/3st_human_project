@@ -17,7 +17,7 @@ const testRecipeGeneration = async (
   filterCookTime,
   userId,
 ) => {
-  const API_URL = 'http://localhost:8090/api/v1/recipes/recommend'; // 엔드포인트 수정!
+  const API_URL = 'http://192.168.35.21:8090/api/v1/recipes/recommend'; // 엔드포인트 수정!
 
   // 3. 백엔드 서비스의 RecipeGenerationRequestDTO에 맞게 데이터 전송
   const requestBody = {
@@ -58,7 +58,7 @@ const testRecipeGeneration = async (
   }
 };
 
-const test_CHS = () => {
+const Test_CHS = () => {
   // 컴포넌트 이름은 파스칼 케이스(PascalCase)가 관례입니다.
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null); // API 응답 전체를 저장
@@ -69,7 +69,7 @@ const test_CHS = () => {
   const [testCuisine] = useState('KOR'); // 한식
   const [testDifficulty] = useState('EASY'); // 쉬움
   const [testCookTime] = useState('30M'); // 30분 이내
-  const [testUserId] = useState('testuser123'); // 임시 사용자 ID
+  const [testUserId] = useState('123'); // 임시 사용자 ID
 
   const handleTestPress = async () => {
     setIsLoading(true);
@@ -250,4 +250,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default test_CHS;
+export default Test_CHS;

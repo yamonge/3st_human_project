@@ -11,6 +11,6 @@ public class RecipeStepVO {
     private Integer stepNo;         // 단계 번호 (1, 2, 3...)
     private String stepDesc;        // 단계 설명
     private String imageUrl;        // 단계별 이미지 URL
-    private String createdId;       // 생성자 ID
+    private Long createdId;       // 생성자 ID
     private Timestamp createdDate;  // 생성 일시 (DB 자동 입력)
 }

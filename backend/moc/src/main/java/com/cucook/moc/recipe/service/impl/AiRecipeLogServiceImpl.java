@@ -8,9 +8,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import org.slf4j.Logger; // Logger 임포트
+import org.slf4j.LoggerFactory; // LoggerFactory 임포트
 
 @Service
 public class AiRecipeLogServiceImpl implements AiRecipeLogService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AiRecipeLogServiceImpl.class); // 로거 선언
 
     private final AiRecipeLogDAO aiRecipeLogDAO;
 
@@ -30,6 +34,27 @@ public class AiRecipeLogServiceImpl implements AiRecipeLogService {
     @Override
     @Transactional
     public int saveAiRecipeLog(AiRecipeLogVO aiRecipeLogVO) {
+        // --- 여기부터 디버깅을 위한 로그 추가 ---
+        if (aiRecipeLogVO != null) {
+            logger.info("Saving AiRecipeLog: aiRecipeLogId={}, userId={}, resultCnt={}",
+                    aiRecipeLogVO.getAiRecipeLogId(),
+                    aiRecipeLogVO.getUserId(),
+                    aiRecipeLogVO.getResultCnt()); // resultCnt 값 출력
+            if (aiRecipeLogVO.getResultCnt() != null) {
+                if (aiRecipeLogVO.getResultCnt() > 99999 || aiRecipeLogVO.getResultCnt() < -99999) {
+                    logger.error("!!! Critical: resultCnt value {} is out of NUMBER(5,0) range in Oracle DB. !!!",
+                            aiRecipeLogVO.getResultCnt());
+                }
+            } else {
+                // resultCnt가 null인 경우에도 로그를 남깁니다.
+                // 컬럼이 NULL을 허용하므로 이 자체는 오류가 아니지만, 혹시 다른 문제의 단서가 될 수 있습니다.
+                logger.warn("AiRecipeLogVO.resultCnt is null. DB column is NUMBER(5,0) NULLABLE. Proceeding with null.");
+            }
+        } else {
+            logger.warn("Attempting to save a null AiRecipeLogVO.");
+        }
+        // --- 여기까지 디버깅을 위한 로그 추가 ---
+
         return aiRecipeLogDAO.insertAiRecipeLog(aiRecipeLogVO);
     }
 

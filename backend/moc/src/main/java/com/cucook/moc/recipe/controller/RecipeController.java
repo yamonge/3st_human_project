@@ -38,16 +38,21 @@ public class RecipeController {
     public ResponseEntity<RecipeRecommendationResponseDTO> recommendRecipes(@RequestBody RecipeGenerationRequestDTO requestDTO) {
         try {
             // 서비스 계층의 레시피 추천 로직 호출
+            System.out.println("30");
             RecipeRecommendationResponseDTO response = recipeService.recommendRecipes(requestDTO);
 
             // 성공적으로 레시피가 생성되었는지 확인
             if ("SUCCESS".equals(response.getStatus()) && !response.getRecommendedRecipes().isEmpty()) {
+                System.out.println("31");
                 return new ResponseEntity<>(response, HttpStatus.OK); // 200 OK
+
             } else if ("SUCCESS".equals(response.getStatus()) && response.getRecommendedRecipes().isEmpty()) {
                 // 레시피가 생성되었지만, 조건에 맞는 레시피가 없거나 저장 중 오류로 인해 결과가 비어있을 경우
+                System.out.println("32");
                 return new ResponseEntity<>(new RecipeRecommendationResponseDTO(
                         null, "NO_CONTENT", "조건에 맞는 레시피를 찾을 수 없습니다."), HttpStatus.NO_CONTENT); // 204 No Content
             } else {
+                System.out.println("33");
                 // 서비스 내부에서 오류가 발생했으나 예외로 던지지 않고 response.status에 담아 반환하는 경우
                 return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
             }
