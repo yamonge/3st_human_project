@@ -1,5 +1,6 @@
 package com.cucook.moc.user.service;
 
+import com.cucook.moc.user.dto.UserProfileDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
 import com.cucook.moc.user.dto.response.LoginResponseDTO;
@@ -22,4 +23,7 @@ public interface UserService {
 
     // FCM Token 업데이트
     void updateFcmToken(UpdateFcmTokenRequestDTO request);
+
+    // 마이페이지: 내 프로필 조회 (닉네임 + 마스킹된 이메일)
+    UserProfileDTO getMyProfile(Long userId);
 }

@@ -5,7 +5,9 @@ import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
+import com.cucook.moc.common.EmailMaskingUtil;
 import com.cucook.moc.user.dao.PasswordResetTokenDAO;
+import com.cucook.moc.user.dto.UserProfileDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import org.springframework.beans.factory.annotation.Value;
@@ -121,10 +123,15 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("일치하는 사용자가 없습니다.");
         }
 
+        // 이메일 마스킹 적용
+        String maskedEmail = EmailMaskingUtil.maskEmail(user.getUserEmail());
+
         return FindEmailResponseDTO.builder()
-                .userEmail(user.getUserEmail())
+                // DTO 필드명이 userEmail이라도, 값은 마스킹된 문자열을 내려주면 됨
+                .userEmail(maskedEmail)
                 .build();
     }
+
 
     @Override
     public void sendPasswordResetLink(FindPasswordRequestDTO request) {
@@ -255,5 +262,21 @@ public class UserServiceImpl implements UserService {
                 request.getDeviceOs(),
                 request.getDeviceVersion()
         );
+    }
+    // 유저 프로필 정보
+    @Transactional(readOnly = true)
+    public UserProfileDTO getMyProfile(Long userId) {
+        UserVO user = userDAO.selectById(userId);
+
+        if (user == null) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setUserId(user.getUserId());
+        dto.setUserEmail(user.getUserEmail());         // 전체 이메일
+        dto.setUserNickname(user.getUserNickname());   // 닉네임
+
+        return dto;
     }
 }
