@@ -228,11 +228,12 @@ export default function SignupScreen({navigation}) {
 
       // 회원가입 API 호출
       const userData = {
-        email,
-        name,
-        nickname,
-        birthDate: birthDate.toISOString().split('T')[0], // YYYY-MM-DD
-        password,
+        userEmail: email,
+        userName: name,
+        userNickname: nickname,
+        userBirthDate: birthDate.toISOString().split('T')[0], // 'YYYY-MM-DD'
+        userPassword: password,
+        passwordConfirm: passwordConfirm,
         agreeMarketing,
       };
 
