@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cucook.moc.recipe.dao.AiRecipeLogDAO">
-
-    <!--
-        MyBatis INSERT 쿼리: tb_ai_recipe_log 테이블에 AI 레시피 생성 로그를 저장합니다.
-        parameterType: com.cucook.moc.recipe.vo.AiRecipeLogVO (예시 VO 클래스 경로)
-    -->
     <insert id="insertAiRecipeLog" parameterType="com.cucook.moc.recipe.vo.AiRecipeLogVO">
 
         <!-- Oracle 시퀀스에서 다음 값을 가져와 VO 객체의 aiRecipeLogId 필드에 설정 (INSERT 전에 실행) -->
-        <selectKey keyProperty="aiRecipeLogId" resultType="long" order="BEFORE">
+        <selectKey keyProperty="aiRecipeLogId" resultType="java.lang.Long" order="BEFORE">
             SELECT seq_tb_ai_recipe_log.NEXTVAL FROM DUAL
         </selectKey>
 
@@ -32,7 +27,7 @@
         #{aiRecipeLogId},
         #{userId},
         #{baseSourceCd},
-        #{cameraSessionId},
+        #{cameraSessionId, jdbcType=VARCHAR},
         #{manualIngredients},
         #{filterCuisineCd},
         #{filterDiffCd},
@@ -40,12 +35,12 @@
         #{govApiRaw},
         #{aiRequest},
         #{aiResponse},
-        #{resultCnt},
+        #{resultCnt, jdbcType=NUMERIC},
         #{createdId}
         )
     </insert>
 
-    <select id="searchAiRecipeLogs" parameterType="AiRecipeLogVO" resultType="AiRecipeLogVO">
+    <select id="searchAiRecipeLogs" parameterType="com.cucook.moc.recipe.vo.AiRecipeLogVO" resultType="com.cucook.moc.recipe.vo.AiRecipeLogVO">
         SELECT
         ai_recipe_log_id as aiRecipeLigId,
         user_id as userId,
