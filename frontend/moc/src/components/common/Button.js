@@ -30,7 +30,7 @@ import {
  * @param {ReactNode} rightIcon - 우측 아이콘
  */
 export default function Button({
-  title,
+  title,ㅇㅇ
   onPress,
   variant = 'gradient',
   size = 'medium',
