@@ -3,6 +3,7 @@
 AI 레시피 추천 / 공동구매 앱 프로젝트의 React Native 애플리케이션입니다.
 
 ## 📋 목차
+
 - [프로젝트 개요](#프로젝트-개요)
 - [기술 스택](#기술-스택)
 - [개발 환경 설정](#개발-환경-설정)
@@ -25,6 +26,7 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 ## 🛠 기술 스택
 
 ### Core
+
 - **React Native:** 0.78.3
 - **React:** 19.0.0
 - **JavaScript:** ES6+ (TypeScript 설정 포함: 5.0.4)
@@ -37,6 +39,7 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **react-native-safe-area-context:** ^5.6.2
 
 ### UI/Animation
+
 - **react-native-reanimated:** ^4.1.5
 - **@shopify/react-native-skia:** ^2.4.6
 - **lottie-react-native:** ^7.3.4
@@ -44,14 +47,11 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **@react-native-community/blur:** ^4.4.1
 
 ### Graphics & Icons
+
 - **react-native-svg:** ^15.15.0
 - **react-native-vector-icons:** ^10.2.0
 - **lucide-react-native:** ^0.554.0
 
-### State & Storage
-- **@react-native-async-storage/async-storage:** ^2.1.0
-
-### UI Components
 - **@react-native-picker/picker:** ^2.10.0
 - **react-native-wheel-pick:** ^1.2.6
 
@@ -60,11 +60,15 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **react-native-image-picker:** ^7.2.0
 
 ### Network
+
 - **axios:** ^1.7.0
 
+
 ### Performance
+
 - **react-native-worklets:** ^0.6.1
 
+=======
 ### Development Tools
 - **react-native-svg-transformer:** ^1.5.2 (SVG 파일을 React 컴포넌트로 변환)
 
@@ -77,6 +81,7 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 ## 💻 개발 환경 설정
 
 ### 필수 요구사항
+
 - Node.js 18 이상
 - npm 9 이상
 - JDK 17 (Android)
@@ -92,7 +97,9 @@ npm --version   # v9.x 이상
 ### 2. 개발 도구 설치
 
 #### Android 개발 환경 (Windows/macOS/Linux)
+
 1. **JDK 17 설치**
+
    - [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) 또는 [OpenJDK](https://adoptium.net/)
    - 환경변수 `JAVA_HOME` 설정
 
@@ -107,6 +114,7 @@ npm --version   # v9.x 이상
      - `PATH`에 추가: `platform-tools`
 
 #### iOS 개발 환경 (macOS만)
+
 1. **Xcode 설치** (App Store)
 2. **Command Line Tools 설치**
    ```bash
@@ -177,6 +185,7 @@ npm run android
 ```
 
 **에뮬레이터가 없는 경우:**
+
 1. Android Studio 실행
 2. AVD Manager에서 가상 기기 생성 및 실행
 3. `npm run android` 재실행
@@ -228,11 +237,11 @@ import Animated, {
 
 function AnimatedComponent() {
   const offset = useSharedValue(0);
-  
+
   const animatedStyles = useAnimatedStyle(() => ({
     transform: [{translateX: withSpring(offset.value * 255)}],
   }));
-  
+
   return <Animated.View style={animatedStyles} />;
 }
 ```
@@ -243,13 +252,7 @@ function AnimatedComponent() {
 import LottieView from 'lottie-react-native';
 
 function Animation() {
-  return (
-    <LottieView
-      source={require('./animation.json')}
-      autoPlay
-      loop
-    />
-  );
+  return <LottieView source={require('./animation.json')} autoPlay loop />;
 }
 ```
 
@@ -340,12 +343,14 @@ npm install
 ### 5. 포트 8081 충돌
 
 **Windows:**
+
 ```cmd
 netstat -ano | findstr :8081
 taskkill /PID [PID번호] /F
 ```
 
 **macOS/Linux:**
+
 ```bash
 lsof -ti:8081 | xargs kill
 ```
@@ -359,6 +364,7 @@ brew install watchman
 ### 7. Gradle 메모리 오류 (Android)
 
 `android/gradle.properties`에 추가:
+
 ```properties
 org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
 ```
@@ -388,12 +394,14 @@ pro/
 ## 🔍 개발 도구 추천
 
 ### VS Code Extensions
+
 - React Native Tools
 - ESLint
 - Prettier - Code formatter
 - React Native Snippet
 
 ### 디버깅 도구
+
 - **React Native Debugger**: 전용 디버거
 - **Flipper**: 네이티브 디버깅 및 네트워크 모니터링
 

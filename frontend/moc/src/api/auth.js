@@ -8,25 +8,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const authAPI = {
   /**
    * 일반 로그인 (이메일 + 비밀번호)
-   * @param {string} email - 사용자 이메일
-   * @param {string} password - 비밀번호
-   * @returns {Promise} 로그인 결과 (토큰 포함)
+   * 백엔드: POST /api/auth/login
+   * Request: { userEmail, userPassword }
+   * Response: LoginResponseDTO 또는 { user: LoginResponseDTO }
    */
   login: async (email, password) => {
     try {
       const response = await api.post('/auth/login', {
-        email,
-        password,
+        userEmail: email,
+        userPassword: password,
       });
 
       // 사용자 정보 저장 (닉네임, 이메일, 이름)
       if (response.user) {
-        await AsyncStorage.setItem('userEmail', response.user.email || email);
+        await AsyncStorage.setItem(
+          'userEmail',
+          response.user.userEmail || user.email || email,
+        );
         await AsyncStorage.setItem(
           'userNickname',
-          response.user.nickname || '',
+          response.user.userNickname || user.nickname || '',
         );
-        await AsyncStorage.setItem('userName', response.user.name || '');
+        await AsyncStorage.setItem(
+          'userName',
+          response.user.userName || user.name || '',
+        );
+        await AsyncStorage.setItem(
+          'userId',
+          String(response.user.userId || ''),
+        );
       }
 
       return response;
@@ -122,7 +132,6 @@ export const authAPI = {
 
   /**
    * 로그아웃
-   * @returns {Promise} 로그아웃 결과
    */
   logout: async () => {
     try {
@@ -171,8 +180,7 @@ export const authAPI = {
 
   /**
    * 회원가입
-   * @param {Object} userData - 사용자 정보 (email, password, nickname 등)
-   * @returns {Promise} 회원가입 결과
+   * SignupScreen에서 DTO 형식에 맞게 userData 구성해서 넘겨줌
    */
   signup: async userData => {
     try {
@@ -186,23 +194,33 @@ export const authAPI = {
 
   /**
    * 이메일 중복 체크
-   * @param {string} email - 확인할 이메일
-   * @returns {Promise<boolean>} 사용 가능 여부 (true: 사용 가능, false: 중복)
+   * 백엔드: GET /api/auth/check-email?email=...
+   * Response: true = 중복, false = 사용 가능
    */
   checkEmail: async email => {
     try {
-      const response = await api.post('/auth/check-email', {email});
-      return response; // { available: true/false }
+      // ✅ GET + query param 방식으로 호출
+      const duplicate = await api.get('/auth/check-email', {
+        params: {email},
+      });
+
+      // axiosConfig 응답 인터셉터에서 response.data만 넘기므로
+      // duplicate는 boolean (true/false)
+      // 프론트는 { available: boolean } 형식을 기대하니까 이렇게 감싸서 반환
+      return {available: !duplicate}; // true = 사용 가능
     } catch (error) {
-      console.error('이메일 중복 체크 에러:', error);
+      console.error(
+        '이메일 중복 체크 에러:',
+        error.message,
+        error.response?.status,
+        error.response?.data,
+      );
       throw error;
     }
   },
 
   /**
    * 닉네임 중복 체크
-   * @param {string} nickname - 확인할 닉네임
-   * @returns {Promise<boolean>} 사용 가능 여부 (true: 사용 가능, false: 중복)
    */
   checkNickname: async nickname => {
     try {
@@ -215,16 +233,16 @@ export const authAPI = {
   },
 
   /**
-   * 아이디 찾기 (이름 + 생년월일)
-   * @param {string} name - 사용자 이름
-   * @param {string} birthDate - 생년월일 (YYYY-MM-DD)
-   * @returns {Promise} 마스킹된 이메일 정보
+   * 아이디(이메일) 찾기 (이름 + 생년월일)
+   * POST /api/auth/find-email
+   * Request: { userName, userBirthDate }
+   * Response: { userEmail }
    */
-  findId: async (name, birthDate) => {
+  findEmail: async (userName, userBirthDate) => {
     try {
-      const response = await api.post('/auth/find-id', {
-        name,
-        birthDate,
+      const response = await api.post('/auth/find-email', {
+        userName,
+        userBirthDate,
       });
       return response; // { maskedEmail: 'abc***@example.com', registeredDate: '2024-01-01' }
     } catch (error) {
@@ -235,24 +253,35 @@ export const authAPI = {
 
   /**
    * 임시 비밀번호 발송 (이메일 + 이름 + 생년월일)
-   * @param {string} email - 사용자 이메일
-   * @param {string} name - 사용자 이름
-   * @param {string} birthDate - 생년월일 (YYYY-MM-DD)
-   * @returns {Promise} 발송 결과
+   *비밀번호 재설정 링크 발송
+   * POST /api/auth/password/reset-link
+   * Request: { userEmail, userName, userBirthDate }
    */
-  sendTemporaryPassword: async (email, name, birthDate) => {
+  sendPasswordResetLink: async (email, name, birthDate) => {
     try {
-      const response = await api.post('/auth/send-temp-password', {
-        email,
-        name,
-        birthDate,
+      const response = await api.post('/auth/password/reset-link', {
+        userEmail: email,
+        userName: name,
+        userBirthDate: birthDate, // 'YYYY-MM-DD'
       });
-      return response; // { success: true, message: '임시 비밀번호가 발송되었습니다.' }
+      return response;
     } catch (error) {
       console.error('임시 비밀번호 발송 에러:', error);
       throw error;
     }
   },
+
+  /**
+   * 비밀번호 재설정 (토큰 확인 후 새 비번 저장)
+   * POST /api/auth/password/reset-confirm
+   * Request: { token, newPassword, newPasswordConfirm }
+   */
+  resetPasswordByToken: ({token, newPassword, newPasswordConfirm}) =>
+    api.post('/auth/password/reset-confirm', {
+      token,
+      newPassword,
+      newPasswordConfirm,
+    }),
 };
 
 export default authAPI;

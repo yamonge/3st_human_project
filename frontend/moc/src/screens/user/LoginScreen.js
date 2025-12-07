@@ -44,26 +44,26 @@ export default function LoginScreen({navigation}) {
   // 일반 로그인 처리
   const handleLogin = async () => {
     try {
-      // setLoading(true);
-      // setError('');
+      setLoading(true);
+      setError('');
 
-      // // 이메일 유효성 검사
-      // if (!validateEmail(email)) {
-      //   setError('올바른 이메일 형식을 입력해주세요.');
-      //   return;
-      // }
+      // 이메일 유효성 검사
+      if (!validateEmail(email)) {
+        setError('올바른 이메일 형식을 입력해주세요.');
+        return;
+      }
 
-      // // 비밀번호 길이 검사
-      // if (password.length < 6) {
-      //   setError('비밀번호는 최소 6자 이상이어야 합니다.');
-      //   return;
-      // }
+      // 비밀번호 길이 검사
+      if (password.length < 6) {
+        setError('비밀번호는 최소 6자 이상이어야 합니다.');
+        return;
+      }
 
-      // // API 호출
-      // const response = await authAPI.login(email, password);
+      // API 호출
+      const data = await authAPI.login(email, password);
 
-      // // 로그인 성공
-      // console.log('로그인 성공:', response);
+      // 로그인 성공
+      console.log('로그인 성공:', response);
 
       // 메인 앱으로 이동 (스택 초기화)
       navigation.reset({
@@ -72,6 +72,12 @@ export default function LoginScreen({navigation}) {
       });
     } catch (err) {
       console.error('로그인 실패:', err);
+
+      const msg = err.response?.data?.message;
+      if (msg) {
+        setError(msg);
+        return;
+      }
 
       // 에러 메시지 설정
       if (err.response?.status === 401) {
