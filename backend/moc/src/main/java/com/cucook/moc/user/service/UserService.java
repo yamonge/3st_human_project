@@ -19,4 +19,7 @@ public interface UserService {
 
     // 2단계: 토큰 + 새 비번으로 실제 비밀번호 변경
     void resetPasswordByToken(ResetPasswordConfirmRequestDTO request);
+
+    // FCM Token 업데이트
+    void updateFcmToken(UpdateFcmTokenRequestDTO request);
 }
