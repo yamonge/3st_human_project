@@ -6,7 +6,7 @@ import {
   borderRadius,
   shadows,
   layout,
-} from './common';
+} from '../../common';
 
 /**
  * 회원가입 화면 전용 스타일

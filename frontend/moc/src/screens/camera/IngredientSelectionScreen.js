@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {ChevronLeft, ChevronRight, Check} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../../styles/screens/camera/ingredientSelectionStyles';
+import {styles} from '../../styles/screens/camera/ingredientSelectionStyles';
 
 export default function IngredientSelectionScreen({route, navigation}) {
   const {ingredients = [], filters = {}} = route.params || {};
@@ -55,12 +55,36 @@ export default function IngredientSelectionScreen({route, navigation}) {
         name: item.name,
         usage: item.usage,
         amount: item.amount,
+        checked: item.checked,
       }));
 
-    console.log('선택된 재료:', selectedIngredients);
-    console.log('필터:', filters);
-    // TODO: 레시피 추천 결과 화면으로 이동
-    // navigation.navigate('RecipeResult', { ingredients: selectedIngredients, filters });
+    if (selectedIngredients.length === 0) {
+      Alert.alert('안내', '최소 1개 이상의 재료를 선택해주세요.');
+      return;
+    }
+
+    console.log('🎯 레시피 추천 요청:', {
+      ingredients: selectedIngredients,
+      filters,
+    });
+
+    // 기존 추천 화면이 있다면 제거
+    if (navigation.canGoBack()) {
+      const state = navigation.getState();
+      const recommendedRecipesRoute = state.routes.find(
+        r => r.name === 'RecommendedRecipes',
+      );
+      if (recommendedRecipesRoute) {
+        navigation.navigate('IngredientSelection');
+      }
+    }
+
+    // AI 레시피 추천 화면으로 이동 (카메라 플로우 6단계)
+    navigation.navigate('RecommendedRecipes', {
+      ingredients: selectedIngredients,
+      filters,
+      refresh: Date.now(), // params 변경으로 강제 갱신
+    });
   };
 
   return (

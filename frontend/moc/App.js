@@ -22,6 +22,8 @@ import IngredientResultScreen from './src/screens/camera/IngredientResultScreen'
 import SaveOptionScreen from './src/screens/camera/SaveOptionScreen';
 import RecipeFilterScreen from './src/screens/camera/RecipeFilterScreen';
 import IngredientSelectionScreen from './src/screens/camera/IngredientSelectionScreen';
+import RecommendedRecipesScreen from './src/screens/camera/RecommendedRecipesScreen';
+import RecipeDetailScreen from './src/screens/camera/RecipeDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -102,6 +104,20 @@ function MainTabNavigator() {
       <Tab.Screen
         name="IngredientSelection"
         component={IngredientSelectionScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="RecommendedRecipes"
+        component={RecommendedRecipesScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="RecipeDetail"
+        component={RecipeDetailScreen}
         options={{
           tabBarButton: () => null,
         }}

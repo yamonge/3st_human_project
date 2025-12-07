@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {ChevronLeft, ChevronRight} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {styles} from '../../../styles/screens/home/recipeFilterStyles';
+import {styles} from '../../styles/screens/camera/recipeFilterStyles';
 
 export default function RecipeFilterScreen({route, navigation}) {
   const {ingredients = []} = route.params || {};
@@ -61,13 +61,7 @@ export default function RecipeFilterScreen({route, navigation}) {
         end={{x: 1, y: 0}}
         style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.navigate('Home')}>
-            <ChevronLeft color="#FFFFFF" size={24} />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>레시피 필터</Text>
-          <View style={styles.headerSpacer} />
         </View>
       </LinearGradient>
 
