@@ -11,7 +11,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: yun.junseo6365@gmail.com
-    password: qzuigkadfwilpoeo # Gmail 앱 비밀번호 여기 넣기(16자리 띄어쓰기 없이 보안이슈로 유출되면 안됌 "" 없이 그대로 집어넣기 )
+    password:  # Gmail 앱 비밀번호 여기 넣기(16자리 띄어쓰기 없이 보안이슈로 유출되면 안됌 "" 없이 그대로 집어넣기 )
     properties:
       mail:
         smtp:

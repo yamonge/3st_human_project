@@ -18,7 +18,7 @@
 
     <!-- 메시지 insert -->
     <insert id="insertMessage"
-            parameterType="com.cucook.moc.chat.vo.ChatMessageVO">
+            parameterType="ChatMessageVO">
         <selectKey keyProperty="chatMessageId"
                    resultType="long"
                    order="BEFORE">

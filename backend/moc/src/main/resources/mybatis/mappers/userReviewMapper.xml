@@ -18,7 +18,7 @@
 
     <!-- 리뷰 INSERT -->
     <insert id="insert"
-            parameterType="com.cucook.moc.user.vo.UserReviewVO">
+            parameterType="UserReviewVO">
         <selectKey keyProperty="userReviewId"
                    resultType="long"
                    order="BEFORE">
