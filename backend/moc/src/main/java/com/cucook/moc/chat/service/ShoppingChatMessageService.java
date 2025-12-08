@@ -26,8 +26,8 @@ public class ShoppingChatMessageService {
     @Autowired
     private UserDAO userDAO;  // 닉네임 조회용 (이메일 X)
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+//    @Autowired
+//    private SimpMessagingTemplate messagingTemplate;
 
     /**
      * 채팅 메시지 전송
@@ -63,10 +63,10 @@ public class ShoppingChatMessageService {
         dto.setSenderNickname(senderNickname);
         dto.setSentDate(messageVO.getSentDate());
 
-        messagingTemplate.convertAndSend(
-                "/sub/shopping/chat/room/" + dto.getChatRoomId(),
-                dto
-        );
+//        messagingTemplate.convertAndSend(
+//                "/sub/shopping/chat/room/" + dto.getChatRoomId(),
+//                dto
+//        );
     }
     
     // 과거 메시지 조회
