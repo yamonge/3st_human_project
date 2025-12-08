@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import {ChevronLeft, Camera as CameraIcon} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {styles} from '../../styles/screens/camera/recommendedRecipesStyles.js';
 import {recommendRecipes} from '../../api/camera';
 
@@ -45,6 +46,14 @@ export default function RecommendedRecipesScreen({route, navigation}) {
   const fetchRecommendedRecipes = async () => {
     setIsLoading(true);
     setError(null);
+
+    // 새로운 AI 추천 시작 - 이전 저장 상태 초기화
+    try {
+      await AsyncStorage.removeItem('savedRecipes');
+      console.log('✅ AsyncStorage 초기화 (새로운 AI 추천)');
+    } catch (error) {
+      console.error('❌ AsyncStorage 초기화 실패:', error);
+    }
 
     // 선택된 재료만 필터링
     const selectedIngredients = ingredients.filter(item => item.checked);

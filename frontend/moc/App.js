@@ -25,6 +25,9 @@ import IngredientSelectionScreen from './src/screens/camera/IngredientSelectionS
 import RecommendedRecipesScreen from './src/screens/camera/RecommendedRecipesScreen';
 import RecipeDetailScreen from './src/screens/camera/RecipeDetailScreen';
 
+// 레시피 플로우
+import RecipeSelectionScreen from './src/screens/recipe/RecipeSelectionScreen';
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -75,7 +78,7 @@ function MainTabNavigator() {
         }}
       />
       <Tab.Screen name="Voice" component={VoiceFlowScreen} />
-      <Tab.Screen name="Recipe" component={RecipeBoardScreen} />
+      <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
       <Tab.Screen name="Receipt" component={CameraCaptureScreen} />
       <Tab.Screen name="Map" component={MapFlowScreen} />
 

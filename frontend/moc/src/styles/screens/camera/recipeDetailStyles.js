@@ -66,7 +66,7 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 17,
-    paddingBottom: 140,
+    paddingBottom: 150,
   },
 
   // 레시피 이미지 (최상단 추가)
@@ -231,6 +231,17 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textWhite,
     fontFamily: 'Noto Sans KR',
+  },
+
+  // 저장됨 버튼 스타일
+  savedButton: {
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+
+  savedButtonText: {
+    color: '#6B7280',
   },
 
   // 로딩 상태

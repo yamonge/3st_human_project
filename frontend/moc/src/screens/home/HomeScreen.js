@@ -118,7 +118,6 @@ export default function HomeScreen({navigation}) {
             <Text style={homeStyles.subGreeting}>
               My Own Chef에 어서오세요!
             </Text>
-            <Test_CHS />
           </View>
 
           {/* 메뉴 섹션 */}

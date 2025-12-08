@@ -236,3 +236,99 @@ export const saveIngredients = async ingredients => {
     };
   }
 };
+
+/**
+ * 레시피 저장 API
+ * 사용자가 선택한 레시피를 내 레시피에 저장
+ *
+ * @param {number} recipeId - 레시피 ID
+ * @param {boolean} shareToBoard - 게시판 공개 여부
+ * @returns {Promise<Object>} { success: boolean, message?: string, error?: string }
+ * @example
+ * const result = await saveRecipe(123, true);
+ * if (result.success) {
+ *   console.log(result.message);
+ * } else {
+ *   console.error(result.error);
+ * }
+ */
+export const saveRecipe = async (recipeId, shareToBoard = false) => {
+  try {
+    console.log('📤 레시피 저장 API 호출:', {recipeId, shareToBoard});
+
+    const response = await axios.post('/api/recipes/save', {
+      recipeId,
+      shareToBoard,
+    });
+
+    console.log('✅ 레시피 저장 성공:', response.data);
+    return {
+      success: true,
+      message: response.data.message || '레시피가 저장되었습니다.',
+    };
+  } catch (error) {
+    console.error('❌ 레시피 저장 API 에러:', error);
+
+    let errorMessage = '레시피 저장에 실패했습니다.';
+
+    if (error.response) {
+      errorMessage =
+        error.response.data?.message || '서버 오류가 발생했습니다.';
+    } else if (error.request) {
+      errorMessage = '서버에 연결할 수 없습니다.\n인터넷 연결을 확인해주세요.';
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+/**
+ * 재료 소비 API (레시피 시작 시 사용)
+ * 레시피를 시작할 때 사용된 재료를 DB에서 소비 처리 (used_flag = true)
+ *
+ * @param {number} recipeId - 레시피 ID
+ * @param {Array} ingredientIds - 소비할 재료 ID 목록 [1, 2, 3, ...]
+ * @returns {Promise<Object>} { success: boolean, message?: string, error?: string }
+ * @example
+ * const result = await consumeIngredients(123, [1, 2, 3]);
+ * if (result.success) {
+ *   console.log(result.message);
+ * } else {
+ *   console.error(result.error);
+ * }
+ */
+export const consumeIngredients = async (recipeId, ingredientIds) => {
+  try {
+    console.log('📤 재료 소비 API 호출:', {recipeId, ingredientIds});
+
+    const response = await axios.post('/api/ingredients/consume', {
+      recipeId,
+      ingredientIds,
+    });
+
+    console.log('✅ 재료 소비 성공:', response.data);
+    return {
+      success: true,
+      message: response.data.message || '재료가 소비되었습니다.',
+    };
+  } catch (error) {
+    console.error('❌ 재료 소비 API 에러:', error);
+
+    let errorMessage = '재료 소비 처리에 실패했습니다.';
+
+    if (error.response) {
+      errorMessage =
+        error.response.data?.message || '서버 오류가 발생했습니다.';
+    } else if (error.request) {
+      errorMessage = '서버에 연결할 수 없습니다.\n인터넷 연결을 확인해주세요.';
+    }
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};

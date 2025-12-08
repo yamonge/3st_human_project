@@ -12,6 +12,7 @@ import Svg, {
   Defs,
   LinearGradient as SvgLinearGradient,
   Stop,
+  ClipPath,
 } from 'react-native-svg';
 import {
   Canvas,
@@ -86,7 +87,7 @@ const METABALL_MATRIX = [
 const getNavBarPath = () => {
   const center = SCREEN_WIDTH / 2;
   const curveWidth = 135;
-  const curveDepth = 48;
+  const curveDepth = 40;
   const topY = 0; // SVG 내부 좌표계 시작점
   const barHeight = TAB_BAR_HEIGHT + curveDepth;
 
@@ -342,15 +343,20 @@ export default function MetaballNavigation({state, navigation}) {
                 <Stop offset="0" stopColor="rgba(0, 0, 0, 0)" />
                 <Stop offset="0.3" stopColor="rgba(149, 168, 195, 0.25)" />
               </SvgLinearGradient>
+              {/* 클립 패스 정의 (테두리용) */}
+              <ClipPath id="borderClip">
+                <SvgPath d={getNavBarPath()} />
+              </ClipPath>
             </Defs>
             {/* 실제 배경 */}
             <SvgPath d={getNavBarPath()} fill="#ffffff" />
-            {/* 상단 테두리 */}
+            {/* 상단 테두리 - 더 넓게 그리고 클립 */}
             <SvgPath
               d={getNavBarPath()}
               fill="none"
-              stroke="rgba(0, 0, 0, 0.08)"
-              strokeWidth="1"
+              stroke="rgba(0, 0, 0, 0.2)"
+              strokeWidth="2"
+              clipPath="url(#borderClip)"
             />
           </Svg>
         </View>
