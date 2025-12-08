@@ -24,5 +24,8 @@ public interface ShoppingPostDAO {
     );
 
     ShoppingPostDetailDTO selectPostDetail(@Param("postId") Long postId);
+
+    // 리뷰/DONE 체크용: 게시글 단건 조회
+    ShoppingPostVO selectById(@Param("postId") Long postId);
 }
 

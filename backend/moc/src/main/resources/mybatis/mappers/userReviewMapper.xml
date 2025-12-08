@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cucook.moc.user.dao.UserReviewDAO">
+
+    <!-- VO 매핑 -->
+    <resultMap id="UserReviewResultMap" type="com.cucook.moc.user.vo.UserReviewVO">
+        <id     property="userReviewId"  column="user_review_id"/>
+        <result property="targetUserId"  column="target_user_id"/>
+        <result property="writerUserId"  column="writer_user_id"/>
+        <result property="shoppingPostId" column="shopping_post_id"/>
+        <result property="rating"        column="rating"/>
+        <result property="comment"       column="comment"/>
+        <result property="createdDate"   column="created_date"/>
+    </resultMap>
+
+    <!-- 리뷰 INSERT -->
+    <insert id="insert"
+            parameterType="com.cucook.moc.user.vo.UserReviewVO">
+        <selectKey keyProperty="userReviewId"
+                   resultType="long"
+                   order="BEFORE">
+            SELECT seq_tb_user_review.NEXTVAL FROM dual
+        </selectKey>
+
+        INSERT INTO tb_user_review (
+        user_review_id,
+        target_user_id,
+        writer_user_id,
+        shopping_post_id,
+        rating,
+        comment,
+        created_date
+        ) VALUES (
+        #{userReviewId},
+        #{targetUserId},
+        #{writerUserId},
+        #{shoppingPostId},
+        #{rating},
+        #{comment},
+        SYSTIMESTAMP
+        )
+    </insert>
+
+    <!-- 같은 장보기에서 같은 작성자가 같은 대상에게 이미 리뷰를 쓴 적 있는지 -->
+    <select id="countExisting"
+            resultType="int">
+        SELECT COUNT(*)
+        FROM tb_user_review
+        WHERE shopping_post_id = #{shoppingPostId}
+        AND writer_user_id   = #{writerUserId}
+        AND target_user_id   = #{targetUserId}
+    </select>
+
+    <!-- 특정 유저에 대한 리뷰 목록 (작성자 닉네임 포함) -->
+    <resultMap id="UserReviewDtoMap" type="com.cucook.moc.user.dto.UserReviewDTO">
+        <id     property="userReviewId"   column="user_review_id"/>
+        <result property="writerUserId"   column="writer_user_id"/>
+        <result property="writerNickname" column="writer_nickname"/>
+        <result property="rating"         column="rating"/>
+        <result property="comment"        column="comment"/>
+        <result property="createdDate"    column="created_date"/>
+    </resultMap>
+
+    <select id="selectReviewsForUser"
+            parameterType="long"
+            resultMap="UserReviewDtoMap">
+        SELECT
+        r.user_review_id,
+        r.writer_user_id,
+        u.user_nickname AS writer_nickname,
+        r.rating,
+        r.comment,
+        r.created_date
+        FROM tb_user_review r
+        JOIN tb_user u
+        ON r.writer_user_id = u.user_id
+        WHERE r.target_user_id = #{targetUserId}
+        ORDER BY r.created_date DESC
+    </select>
+
+</mapper>

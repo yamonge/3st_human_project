@@ -2,7 +2,7 @@ package com.cucook.moc.chat.vo;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -17,6 +17,6 @@ public class ChatMessageVO {
     private Long senderUserId;
     private String messageTypeCd;   // TEXT / SYSTEM 등
     private String messageText;
-    private LocalDateTime sentDate;
+    private Timestamp sentDate;
 }
 

@@ -1,9 +1,13 @@
 package com.cucook.moc.user.service;
 
+import com.cucook.moc.user.dto.PublicProfileDTO;
 import com.cucook.moc.user.dto.UserProfileDTO;
+import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
 import com.cucook.moc.user.dto.response.LoginResponseDTO;
+
+import java.util.List;
 
 public interface UserService {
 
@@ -26,4 +30,13 @@ public interface UserService {
 
     // 마이페이지: 내 프로필 조회 (닉네임 + 마스킹된 이메일)
     UserProfileDTO getMyProfile(Long userId);
+
+    // 다른 사람 프로필 조회 (닉네임 + 평점 + 장보기 횟수)
+    PublicProfileDTO getPublicProfile(Long targetUserId);
+
+    // 특정 유저에 대한 리뷰 목록
+    List<UserReviewDTO> getUserReviews(Long targetUserId);
+
+    // 특정 유저에 대한 리뷰 작성 (writerUserId는 컨트롤러에서 전달)
+    void writeReview(Long writerUserId, Long targetUserId, UserReviewCreateRequestDTO request);
 }

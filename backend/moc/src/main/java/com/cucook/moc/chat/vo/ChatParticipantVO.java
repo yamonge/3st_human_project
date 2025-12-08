@@ -2,7 +2,7 @@ package com.cucook.moc.chat.vo;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -14,7 +14,7 @@ public class ChatParticipantVO {
     private Long shoppingParticipantId;
     private Long chatRoomId;
     private Long userId;
-    private LocalDateTime joinDate;
-    private LocalDateTime leaveDate;
+    private Timestamp joinDate;
+    private Timestamp leaveDate;
 }
 

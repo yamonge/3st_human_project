@@ -34,29 +34,7 @@
     <select id="findByUserEmail"
             parameterType="string"
             resultMap="UserResultMap">
-        SELECT
-        user_id,
-        user_email,
-        user_name,
-        user_nickname,
-        user_password,
-        user_birth_date,
-        user_profile_image_url,
-        user_type,
-        user_status,
-        suspended_reason,
-        reported_cnt,
-        shopping_completed_cnt,
-        rating_score,
-        trust_score,
-        last_login_date,
-        device_os,
-        device_version,
-        fcm_token,
-        created_id,
-        created_date,
-        updated_id,
-        updated_date
+        SELECT *
         FROM tb_user
         WHERE user_email = #{userEmail}
     </select>
@@ -73,52 +51,40 @@
     <!-- 3) 회원가입 -->
     <insert id="insertUser"
             parameterType="com.cucook.moc.user.vo.UserVO">
+        <selectKey keyProperty="userId"
+                   resultType="long"
+                   order="BEFORE">
+            SELECT seq_tb_user.NEXTVAL FROM dual
+        </selectKey>
+
         INSERT INTO tb_user (
-        user_id,
-        user_email,
-        user_name,
-        user_nickname,
-        user_password,
-        user_birth_date,
-        user_profile_image_url,
-        user_type,
-        user_status,
-        suspended_reason,
-        reported_cnt,
-        shopping_completed_cnt,
-        rating_score,
-        trust_score,
-        last_login_date,
-        device_os,
-        device_version,
-        fcm_token,
-        created_id,
-        created_date,
-        updated_id,
-        updated_date
+            user_id,
+            user_email,
+            user_name,
+            user_nickname,
+            user_password,
+            user_birth_date,
+            user_type,
+            user_status,
+            reported_cnt,
+            shopping_completed_cnt,
+            rating_score,
+            trust_score,
+            created_date
         ) VALUES (
-        seq_tb_user.NEXTVAL,
-        #{userEmail},
-        #{userName},
-        #{userNickname},
-        #{userPassword},
-        #{userBirthDate},
-        #{userProfileImageUrl},
-        #{userType},
-        #{userStatus},
-        #{suspendedReason},
-        #{reportedCnt},
-        #{shoppingCompletedCnt},
-        #{ratingScore},
-        #{trustScore},
-        #{lastLoginDate},
-        #{deviceOs},
-        #{deviceVersion},
-        #{fcmToken},
-        #{createdId},
-        #{createdDate},
-        #{updatedId},
-        #{updatedDate}
+            #{userId},
+            #{userEmail},
+            #{userName},
+            #{userNickname},
+            #{userPassword},
+            #{userBirthDate, jdbcType=DATE},
+            #{userType},
+            #{userStatus},
+            #{reportedCnt},
+            #{shoppingCompletedCnt},
+            #{ratingScore},
+            #{trustScore},
+            #{createdDate, jdbcType=TIMESTAMP}
         )
     </insert>
 
@@ -126,65 +92,21 @@
     <select id="findByNameAndBirthDate"
             parameterType="map"
             resultMap="UserResultMap">
-        SELECT
-        user_id,
-        user_email,
-        user_name,
-        user_nickname,
-        user_password,
-        user_birth_date,
-        user_profile_image_url,
-        user_type,
-        user_status,
-        suspended_reason,
-        reported_cnt,
-        shopping_completed_cnt,
-        rating_score,
-        trust_score,
-        last_login_date,
-        device_os,
-        device_version,
-        fcm_token,
-        created_id,
-        created_date,
-        updated_id,
-        updated_date
+        SELECT *
         FROM tb_user
         WHERE user_name = #{userName}
-        AND user_birth_date = #{userBirthDate}
+            AND user_birth_date = #{userBirthDate}
     </select>
 
-    <!-- 5) 비밀번호 찾기용 사용자 조회 -->
+    <!-- 5) 비밀번호 찾기용 사용자 조회 (이메일 + 이름 + 생년월일) -->
     <select id="findForPasswordReset"
             parameterType="map"
             resultMap="UserResultMap">
-        SELECT
-        user_id,
-        user_email,
-        user_name,
-        user_nickname,
-        user_password,
-        user_birth_date,
-        user_profile_image_url,
-        user_type,
-        user_status,
-        suspended_reason,
-        reported_cnt,
-        shopping_completed_cnt,
-        rating_score,
-        trust_score,
-        last_login_date,
-        device_os,
-        device_version,
-        fcm_token,
-        created_id,
-        created_date,
-        updated_id,
-        updated_date
+        SELECT *
         FROM tb_user
         WHERE user_email      = #{userEmail}
-        AND user_name       = #{userName}
-        AND user_birth_date = #{userBirthDate}
+            AND user_name       = #{userName}
+            AND user_birth_date = #{userBirthDate}
     </select>
 
     <!-- 6) 비밀번호 변경 -->
@@ -212,7 +134,27 @@
         device_os      = #{deviceOs},
         device_version = #{deviceVersion},
         updated_date   = SYSTIMESTAMP
+        updated_id     = #{userId}
         WHERE user_id = #{userId}
     </update>
 
+    <!-- userId로 조회 (마이프로필/채팅 senderNickname용) -->
+    <select id="selectById"
+            parameterType="long"
+            resultMap="UserResultMap">
+        SELECT *
+        FROM tb_user
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 같이 장보기 유저 평점 평균 -->
+    <update id="updateRatingScoreByAvg">
+        UPDATE tb_user u
+        SET rating_score = (
+            SELECT NVL(AVG(r.rating), 0)
+            FROM tb_user_review r
+            WHERE r.target_user_id = #{targetUserId}
+        )
+        WHERE u.user_id = #{targetUserId}
+    </update>
 </mapper>

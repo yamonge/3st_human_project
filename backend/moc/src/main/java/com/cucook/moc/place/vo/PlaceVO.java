@@ -2,7 +2,7 @@ package com.cucook.moc.place.vo;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -18,6 +18,9 @@ public class PlaceVO {
     private String address;
     private Double latitude;
     private Double longitude;
-    private LocalDateTime createdDate;
-    private LocalDateTime updatedDate;
+
+    private Long createdId;
+    private Timestamp createdDate;
+    private Long updatedId;
+    private Timestamp updatedDate;
 }

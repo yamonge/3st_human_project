@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class ShoppingChatMessageService {
         messageVO.setSenderUserId(dto.getSenderUserId());
         messageVO.setMessageTypeCd(dto.getMessageTypeCd());
         messageVO.setMessageText(dto.getMessageText());
-        messageVO.setSentDate(LocalDateTime.now());
+        messageVO.setSentDate(new Timestamp(System.currentTimeMillis()));
 
         chatMessageDAO.insertMessage(messageVO);
 

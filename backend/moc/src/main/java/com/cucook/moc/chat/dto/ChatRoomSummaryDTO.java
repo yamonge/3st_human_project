@@ -2,7 +2,7 @@ package com.cucook.moc.chat.dto;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -20,5 +20,5 @@ public class ChatRoomSummaryDTO {
     private String lastSenderNickname; // 마지막 보낸 사람 닉네임
     private Integer unreadCount;     // 안 읽은 메시지 수 (선택)
     private String statusCd;         // OPEN / DONE / CANCELED
-    private LocalDateTime updatedAt; // 마지막 활동 시간
+    private Timestamp updatedAt; // 마지막 활동 시간
 }

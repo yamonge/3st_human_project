@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 
 // 온보딩 & 인증 화면
+import TestJunseo from './src/screens/test_junseo';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import LoginScreen from './src/screens/user/LoginScreen';
 import SignupScreen from './src/screens/user/SignupScreen';
@@ -108,7 +109,8 @@ function App() {
 
   // 초기 화면 결정 - 항상 온보딩부터 시작
   const getInitialRouteName = () => {
-    return 'Onboarding'; // 항상 온보딩
+    // return 'Onboarding'; // 항상 온보딩
+    return 'TestJunseo'; // ✅ 개발 중에는 테스트용 화면부터
   };
 
   return (
@@ -119,14 +121,13 @@ function App() {
           headerShown: false,
           animation: 'fade',
         }}>
+        <Stack.Screen name="TestJunseo" component={TestJunseo} />
         {/* 온보딩 */}
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-
         {/* 인증 화면들 */}
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="FindAccount" component={FindAccountScreen} />
-
         {/* 메인 앱 (하단 탭 네비게이션) */}
         <Stack.Screen name="MainApp" component={MainTabNavigator} />
       </Stack.Navigator>

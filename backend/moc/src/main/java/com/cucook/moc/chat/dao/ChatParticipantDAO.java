@@ -18,4 +18,8 @@ public interface ChatParticipantDAO {
 
     //  채팅방 참가자 목록 (닉네임/평점 조회용)
     List<ChatParticipantDTO> selectParticipantInfos(@Param("chatRoomId") Long chatRoomId);
+
+    // 특정 장보기(shopping_post)에 해당 유저가 참여했는지 여부
+    boolean existsByPostAndUser(@Param("shoppingPostId") Long shoppingPostId,
+                                @Param("userId") Long userId);
 }

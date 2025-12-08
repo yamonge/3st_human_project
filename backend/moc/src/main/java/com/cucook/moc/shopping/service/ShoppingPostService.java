@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,7 +46,9 @@ public class ShoppingPostService {
         ShoppingPostVO postVO = new ShoppingPostVO();
         postVO.setPlaceId(placeId);
         postVO.setWriterUserId(writerUserId);
-        postVO.setMeetDatetime(LocalDateTime.parse(dto.getMeetDateTime()));
+        postVO.setMeetDatetime(
+                Timestamp.valueOf(LocalDateTime.parse(dto.getMeetDateTime()))
+        );
         postVO.setMinPersonCnt(dto.getMinPersonCnt() != null ? dto.getMinPersonCnt() : 2);
         postVO.setMaxPersonCnt(dto.getMaxPersonCnt());
         postVO.setCurrentPersonCnt(1);

@@ -2,6 +2,7 @@ package com.cucook.moc.chat.dto;
 
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,5 +18,5 @@ public class ChatMessageDTO {
     private String senderNickname;   // 프론트에 보여줄 닉네임
     private String messageTypeCd;    // TEXT / SYSTEM 등
     private String messageText;
-    private LocalDateTime sentDate;  // 서버에서 세팅
+    private Timestamp sentDate;  // 서버에서 세팅
 }

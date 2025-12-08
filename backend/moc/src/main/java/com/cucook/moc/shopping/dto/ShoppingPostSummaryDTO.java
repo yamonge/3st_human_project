@@ -2,6 +2,7 @@ package com.cucook.moc.shopping.dto;
 
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 // 지도 목록 요약
@@ -18,7 +19,7 @@ public class ShoppingPostSummaryDTO {
     private Double latitude;
     private Double longitude;
 
-    private LocalDateTime meetDatetime;
+    private Timestamp meetDatetime;
     private Integer maxPersonCnt;
     private Integer currentPersonCnt;
     private String statusCd;

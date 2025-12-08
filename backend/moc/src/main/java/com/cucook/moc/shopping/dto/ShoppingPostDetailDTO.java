@@ -2,8 +2,7 @@ package com.cucook.moc.shopping.dto;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import java.sql.Timestamp;
 
 // 상세화면
 @Getter
@@ -20,7 +19,7 @@ public class ShoppingPostDetailDTO {
     private Double latitude;
     private Double longitude;
 
-    private LocalDateTime meetDatetime;
+    private Timestamp meetDatetime;
     private Integer minPersonCnt;
     private Integer maxPersonCnt;
     private Integer currentPersonCnt;

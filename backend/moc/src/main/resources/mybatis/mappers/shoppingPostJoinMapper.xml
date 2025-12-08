@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cucook.moc.shopping.dao.ShoppingPostJoinDAO">
+
+    <resultMap id="ShoppingPostResultMap" type="com.cucook.moc.shopping.vo.ShoppingPostVO">
+        <id     property="shoppingPostId"   column="shopping_post_id"/>
+        <result property="placeId"          column="place_id"/>
+        <result property="writerUserId"     column="writer_user_id"/>
+        <result property="meetDatetime"     column="meet_datetime"/>
+        <result property="minPersonCnt"     column="min_person_cnt"/>
+        <result property="maxPersonCnt"     column="max_person_cnt"/>
+        <result property="currentPersonCnt" column="current_person_cnt"/>
+        <result property="description"      column="description"/>
+        <result property="statusCd"         column="status_cd"/>
+        <result property="createdId"        column="created_id"/>
+        <result property="createdDate"      column="created_date"/>
+        <result property="updatedId"        column="updated_id"/>
+        <result property="updatedDate"      column="updated_date"/>
+    </resultMap>
+
+    <!-- 참여 시, 게시글 락걸고 조회 -->
+    <select id="selectPostForUpdate"
+            parameterType="long"
+            resultMap="ShoppingPostResultMap">
+        SELECT *
+        FROM tb_shopping_post
+        WHERE shopping_post_id = #{postId}
+        FOR UPDATE
+    </select>
+
+    <!-- current_person_cnt + 1 -->
+    <update id="increaseCurrentPersonCnt"
+            parameterType="long">
+        UPDATE tb_shopping_post
+        SET current_person_cnt = current_person_cnt + 1,
+            updated_date       = SYSTIMESTAMP
+        WHERE shopping_post_id = #{postId}
+    </update>
+
+    <!-- 게시글 ↔ 채팅방 매핑 -->
+    <select id="selectChatRoomIdByPostId"
+            parameterType="long"
+            resultType="long">
+        SELECT chat_room_id
+        FROM tb_shopping_chat_room
+        WHERE shopping_post_id = #{postId}
+    </select>
+
+    <select id="selectById"
+            parameterType="long"
+            resultMap="ShoppingPostResultMap">
+        SELECT *
+        FROM tb_shopping_post
+        WHERE shopping_post_id = #{postId}
+    </select>
+
+</mapper>

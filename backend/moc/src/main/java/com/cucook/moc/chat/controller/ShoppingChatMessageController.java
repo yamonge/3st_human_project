@@ -25,4 +25,11 @@ public class ShoppingChatMessageController {
     ) {
         return shoppingChatMessageService.getRecentMessages(chatRoomId, limit);
     }
+
+    // 테스트용: REST로 채팅 메시지 전송
+    @PostMapping("/send")
+    public void sendMessage(@RequestBody ChatMessageDTO dto) {
+        // dto.chatRoomId, dto.senderUserId, dto.messageTypeCd, dto.messageText 필요
+        shoppingChatMessageService.sendMessage(dto);
+    }
 }
