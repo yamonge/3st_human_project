@@ -14,7 +14,7 @@ import {ChevronLeft, User, Calendar, Mail} from 'lucide-react-native';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import DatePickerModal from '../../components/common/DatePickerModal';
-import {findAccountStyles} from '../../styles/findAccountStyles';
+import {findAccountStyles} from '../../styles/screens/user/findAccountStyles';
 import {colors} from '../../styles/common';
 import {authAPI} from '../../api/auth';
 

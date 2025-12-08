@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, Image, TouchableOpacity} from 'react-native';
 import {Clock, Heart, User} from 'lucide-react-native';
-import {homeStyles} from '../../styles/homeStyles';
+import {homeStyles} from '../../styles/screens/home/homeStyles';
 import {colors} from '../../styles/common';
 const FirstBadge = require('../../assets/images/main/1stBadge.png');
 const SecondBadge = require('../../assets/images/main/2stBadge.png');

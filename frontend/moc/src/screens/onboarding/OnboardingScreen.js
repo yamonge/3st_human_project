@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   backgroundAnimation: {
     position: 'absolute',
     width: '80%',
-    height: '100%',
+    height: '110%',
     top: 0,
     left: 0,
     right: 0,
