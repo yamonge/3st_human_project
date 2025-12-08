@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cucook.moc.receipt.dao.ReceiptDAO"> <!-- ⭐ 패키지 경로 및 DAO 인터페이스 이름 가정 -->
+
+    <!-- ReceiptVO와 tb_receipt 테이블 컬럼 매핑을 위한 ResultMap -->
+    <resultMap id="ReceiptResultMap" type="com.cucook.moc.receipt.vo.ReceiptVO">
+        <id     property="receiptId"      column="receipt_id"/>
+        <result property="userId"         column="user_id"/>
+        <result property="cameraSessionId" column="camera_session_id"/>
+        <result property="storeName"      column="store_name"/>
+        <result property="storeAddress"   column="store_address"/>
+        <result property="payAmount"      column="pay_amount"/>
+        <result property="payDate"        column="pay_date"/>
+        <result property="rawText"        column="raw_text"/>
+        <result property="createdId"      column="created_id"/>
+        <result property="createdDate"    column="created_date"/>
+        <result property="updatedId"      column="updated_id"/>
+        <result property="updatedDate"    column="updated_date"/>
+    </resultMap>
+
+    <!--
+        MyBatis INSERT 쿼리: tb_receipt 테이블에 영수증 메타 정보를 저장합니다.
+        parameterType: com.cucook.moc.receipt.vo.ReceiptVO
+    -->
+    <insert id="insertReceipt" parameterType="com.cucook.moc.receipt.vo.ReceiptVO">
+        <selectKey keyProperty="receiptId" resultType="long" order="BEFORE">
+            SELECT seq_tb_receipt.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO tb_receipt (
+        receipt_id,
+        user_id,
+        camera_session_id,
+        store_name,
+        store_address,
+        pay_amount,
+        pay_date,
+        raw_text,
+        created_id
+        ) VALUES (
+        #{receiptId},
+        #{userId},
+        #{cameraSessionId},
+        #{storeName},
+        #{storeAddress},
+        #{payAmount},
+        #{payDate},
+        #{rawText},
+        #{createdId}
+        )
+    </insert>
+
+    <select id="selectReceiptById" parameterType="long" resultMap="ReceiptResultMap">
+        SELECT
+            receipt_id,
+            user_id,
+            camera_session_id,
+            store_name,
+            store_address,
+            pay_amount,
+            pay_date,
+            raw_text,
+            created_id,
+            created_date,
+            updated_id,
+            updated_date
+        FROM
+            tb_receipt
+        WHERE
+            receipt_id = #{receiptId}
+    </select>
+
+    <select id="selectReceiptsByUserId" parameterType="long" resultMap="ReceiptResultMap">
+        SELECT
+            receipt_id,
+            user_id,
+            camera_session_id,
+            store_name,
+            store_address,
+            pay_amount,
+            pay_date,
+            raw_text,
+            created_id,
+            created_date,
+            updated_id,
+            updated_date
+        FROM
+            tb_receipt
+        WHERE
+            user_id = #{userId}
+        ORDER BY
+            pay_date DESC, created_date DESC -- 최신 결제일 또는 생성일 순
+    </select>
+
+    <update id="updateReceipt" parameterType="com.cucook.moc.receipt.vo.ReceiptVO">
+        UPDATE tb_receipt
+        <set>
+            <if test="storeName != null and storeName != ''">
+                store_name = #{storeName},
+            </if>
+            <if test="storeAddress != null and storeAddress != ''">
+                store_address = #{storeAddress},
+            </if>
+            <if test="payAmount != null">
+                pay_amount = #{payAmount},
+            </if>
+            <if test="payDate != null">
+                pay_date = #{payDate},
+            </if>
+            <if test="rawText != null">
+                raw_text = #{rawText},
+            </if>
+            <if test="updatedId != null">
+                updated_id = #{updatedId},
+            </if>
+            updated_date = SYSTIMESTAMP
+        </set>
+        WHERE
+        receipt_id = #{receiptId}
+        AND user_id = #{userId} -- 해당 사용자의 영수증만 수정하도록 권한 확인
+    </update>
+
+    <delete id="deleteReceipt" parameterType="map">
+        DELETE FROM tb_receipt
+        WHERE receipt_id = #{receiptId}
+          AND user_id = #{userId} -- 해당 사용자의 영수증만 삭제하도록 권한 확인
+    </delete>
+
+    <select id="countReceiptsByUserId" parameterType="long" resultType="int">
+        SELECT
+            COUNT(receipt_id)
+        FROM
+            tb_receipt
+        WHERE
+            user_id = #{userId}
+    </select>
+
+</mapper>
