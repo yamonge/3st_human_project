@@ -5,9 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Linking,
   ActivityIndicator,
-  Modal,
   SafeAreaView,
   StatusBar,
 } from 'react-native';
@@ -15,8 +13,8 @@ import {Camera, useCameraDevice} from 'react-native-vision-camera';
 import {X, Camera as CameraIcon} from 'lucide-react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {styles} from '../../styles/screens/camera/cameraStyles';
-import LinearGradient from 'react-native-linear-gradient';
 import {recognizeIngredients} from '../../api/camera';
+import PermissionModal from '../../components/common/PermissionModal';
 
 export default function CameraCaptureScreen({navigation}) {
   const [hasPermission, setHasPermission] = useState(false);
@@ -109,49 +107,21 @@ export default function CameraCaptureScreen({navigation}) {
         {isLoading && <ActivityIndicator size="large" color="#00B8DB" />}
 
         {/* 권한 요청 모달 */}
-        <Modal
+        <PermissionModal
           visible={showPermissionModal}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => {
+          title="카메라 권한 필요"
+          message={
+            '영수증 촬영을 위해 카메라 권한이 필요합니다.\n설정에서 권한을 허용해주세요.'
+          }
+          onCancel={() => {
             setShowPermissionModal(false);
             navigation.goBack();
-          }}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>카메라 권한 필요</Text>
-              <Text style={styles.modalMessage}>
-                영수증 촬영을 위해 카메라 권한이 필요합니다.{'\n'}
-                설정에서 권한을 허용해주세요.
-              </Text>
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    setShowPermissionModal(false);
-                    navigation.goBack();
-                  }}>
-                  <Text style={styles.cancelButtonText}>취소</Text>
-                </TouchableOpacity>
-                <LinearGradient
-                  colors={['#00B8DB', '#0095D5', '#0080CC', '#155DFC']}
-                  start={{x: 0, y: 0}}
-                  end={{x: 1, y: 0}}
-                  style={styles.confirmButton}>
-                  <TouchableOpacity
-                    style={styles.confirmButtonInner}
-                    onPress={() => {
-                      setShowPermissionModal(false);
-                      Linking.openSettings();
-                      navigation.goBack();
-                    }}>
-                    <Text style={styles.confirmButtonText}>설정으로 이동</Text>
-                  </TouchableOpacity>
-                </LinearGradient>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          }}
+          onConfirm={() => {
+            setShowPermissionModal(false);
+            navigation.goBack();
+          }}
+        />
       </View>
     );
   }

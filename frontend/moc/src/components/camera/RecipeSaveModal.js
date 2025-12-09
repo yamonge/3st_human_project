@@ -8,6 +8,7 @@ const RecipeSaveModal = ({
   onClose,
   onNavigateToRecipe,
   recipeName = '소고기 덮밥',
+  hideStartButton = false, // 레시피->직접입력일 때 시작 버튼 숨김
 }) => {
   return (
     <Modal
@@ -32,13 +33,15 @@ const RecipeSaveModal = ({
 
           {/* 버튼 그룹 */}
           <View style={styles.buttonGroup}>
-            {/* 바로 시작하러 가기 버튼 */}
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={onNavigateToRecipe}
-              activeOpacity={0.8}>
-              <Text style={styles.primaryButtonText}>바로 시작하러 가기</Text>
-            </TouchableOpacity>
+            {/* 바로 시작하러 가기 버튼 (레시피->직접입력일 때 숨김) */}
+            {!hideStartButton && (
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={onNavigateToRecipe}
+                activeOpacity={0.8}>
+                <Text style={styles.primaryButtonText}>바로 시작하러 가기</Text>
+              </TouchableOpacity>
+            )}
 
             {/* 더 둘러보기 버튼 */}
             <TouchableOpacity

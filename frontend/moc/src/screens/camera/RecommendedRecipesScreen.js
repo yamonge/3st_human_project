@@ -24,7 +24,7 @@ import {recommendRecipes} from '../../api/camera';
  * - filters: 필터 정보 {style, difficulty, time}
  */
 export default function RecommendedRecipesScreen({route, navigation}) {
-  const {ingredients = [], filters = {}} = route.params || {};
+  const {ingredients = [], filters = {}, from = 'camera'} = route.params || {};
 
   const [recipes, setRecipes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,6 +81,7 @@ export default function RecommendedRecipesScreen({route, navigation}) {
     navigation.navigate('RecipeDetail', {
       recipe, // 전체 레시피 데이터 전달 (API 재호출 불필요)
       ingredients: ingredients.filter(item => item.checked),
+      from, // from prop 전달
     });
   };
 
@@ -118,6 +119,7 @@ export default function RecommendedRecipesScreen({route, navigation}) {
               navigation.navigate('IngredientSelection', {
                 ingredients,
                 filters,
+                from, // from prop 전달
               })
             }>
             <ChevronLeft color="white" size={24} />

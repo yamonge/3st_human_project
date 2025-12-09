@@ -55,7 +55,7 @@ import {
 const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 const CANVAS_HEIGHT = SCREEN_HEIGHT; // 전체 화면 높이
 const TAB_BAR_HEIGHT = 60;
-const FAB_OFFSET_Y = 5;
+const FAB_OFFSET_Y = -25;
 
 const FAB_SIZE = 64;
 const FAB_CENTER_X = SCREEN_WIDTH / 2;
@@ -127,7 +127,7 @@ const SUB_MENU_ITEMS = [
     color: '#00B8DB',
   }, // 4시 방향
   {id: 'Voice', screen: 'Voice', icon: Mic, angle: 216, color: '#00B8DB'}, // 6시 방향
-  {id: 'Gallery', screen: 'Home', icon: Image, angle: 288, color: '#00B8DB'}, // 8시 방향 (임시로 Home 연결)
+  {id: 'Receipt', screen: 'Receipt', icon: Image, angle: 288, color: '#00B8DB'}, // 8시 방향 (영수증)
 ];
 
 // 향후 확장을 위한 예시 (8개)
@@ -154,9 +154,9 @@ const getPosition = (angleDeg, progress, radius) => {
 };
 
 export default function MetaballNavigation({state, navigation}) {
-  // Camera 화면일 때는 네비게이션 숨김
+  // Camera, Gallery 화면일 때는 네비게이션 숨김
   const currentRoute = state.routes[state.index].name;
-  if (currentRoute === 'Camera') {
+  if (currentRoute === 'Camera' || currentRoute === 'Gallery') {
     return null;
   }
 

@@ -22,7 +22,7 @@ import {styles} from '../../styles/screens/camera/ingredientResultStyles';
 import IngredientModal from '../../components/common/IngredientModal';
 
 export default function IngredientResultScreen({route, navigation}) {
-  const {photoPath, recognizedIngredients = []} = route.params || {};
+  const {photoPath, recognizedIngredients = [], from} = route.params || {};
 
   // AI 인식 결과 또는 더미 데이터
   const [ingredients, setIngredients] = useState(
@@ -100,7 +100,12 @@ export default function IngredientResultScreen({route, navigation}) {
 
   // 재촬영
   const handleRetake = () => {
-    navigation.navigate('Camera');
+    // 갤러리에서 왔으면 갤러리로, 아니면 카메라로
+    if (from === 'gallery') {
+      navigation.navigate('Gallery');
+    } else {
+      navigation.navigate('Camera');
+    }
   };
 
   // 다음 단계
@@ -126,7 +131,14 @@ export default function IngredientResultScreen({route, navigation}) {
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.navigate('Camera')}>
+            onPress={() => {
+              // 갤러리에서 왔으면 갤러리로, 아니면 카메라로
+              if (from === 'gallery') {
+                navigation.navigate('Gallery');
+              } else {
+                navigation.navigate('Camera');
+              }
+            }}>
             <ChevronLeft color="#FFFFFF" size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>재료 인식 결과</Text>
@@ -143,7 +155,13 @@ export default function IngredientResultScreen({route, navigation}) {
         <View style={styles.imageContainer}>
           {photoPath ? (
             <Image
-              source={{uri: `file://${photoPath}`}}
+              source={{
+                uri:
+                  photoPath.startsWith('file://') ||
+                  photoPath.startsWith('content://')
+                    ? photoPath
+                    : `file://${photoPath}`,
+              }}
               style={styles.capturedImage}
             />
           ) : (
@@ -210,7 +228,9 @@ export default function IngredientResultScreen({route, navigation}) {
           {/* 재촬영 버튼 */}
           <TouchableOpacity style={styles.retakeButton} onPress={handleRetake}>
             <RotateCcw color="#FFFFFF" size={20} />
-            <Text style={styles.retakeButtonText}>재촬영</Text>
+            <Text style={styles.retakeButtonText}>
+              {from === 'gallery' ? '다시 가져오기' : '재촬영'}
+            </Text>
           </TouchableOpacity>
 
           {/* 다음 버튼 */}
