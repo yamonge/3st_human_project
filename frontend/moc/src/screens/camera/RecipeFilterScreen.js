@@ -11,7 +11,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {styles} from '../../styles/screens/camera/recipeFilterStyles';
 
 export default function RecipeFilterScreen({route, navigation}) {
-  const {ingredients = []} = route.params || {};
+  const {ingredients = [], from = 'camera'} = route.params || {};
 
   // 필터 상태
   const [selectedStyle, setSelectedStyle] = useState('한식');
@@ -42,8 +42,8 @@ export default function RecipeFilterScreen({route, navigation}) {
     };
     console.log('선택된 필터:', filters);
     console.log('재료 목록:', ingredients);
-    // 재료 선택 화면으로 이동
-    navigation.navigate('IngredientSelection', {ingredients, filters});
+    // 재료 선택 화면으로 이동 (from 전달)
+    navigation.navigate('IngredientSelection', {ingredients, filters, from});
   };
 
   return (
@@ -71,17 +71,22 @@ export default function RecipeFilterScreen({route, navigation}) {
         <View style={styles.filterSection}>
           <Text style={styles.filterTitle}>요리 스타일</Text>
           <View style={styles.filterButtonsRow}>
-            {['한식', '중식', '양식', '일식', '퓨전'].map(style => (
-              <TouchableOpacity
-                key={style}
-                onPress={() => selectStyle(style)}
-                activeOpacity={0.7}>
-                {selectedStyle === style ? (
-                  <LinearGradient
-                    colors={['#00D084', '#00B86D']}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}
-                    style={[styles.filterButton, styles.filterButtonSelected]}>
+            {['한식', '중식', '양식', '일식', '퓨전'].map(style =>
+              selectedStyle === style ? (
+                <LinearGradient
+                  key={style}
+                  colors={['#00D084', '#00B86D']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={[styles.filterButton, styles.filterButtonSelected]}>
+                  <TouchableOpacity
+                    onPress={() => selectStyle(style)}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
                     <Text
                       style={[
                         styles.filterButtonText,
@@ -89,14 +94,18 @@ export default function RecipeFilterScreen({route, navigation}) {
                       ]}>
                       {style}
                     </Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>{style}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                </LinearGradient>
+              ) : (
+                <TouchableOpacity
+                  key={style}
+                  onPress={() => selectStyle(style)}
+                  activeOpacity={0.7}
+                  style={styles.filterButton}>
+                  <Text style={styles.filterButtonText}>{style}</Text>
+                </TouchableOpacity>
+              ),
+            )}
           </View>
         </View>
 
@@ -104,18 +113,26 @@ export default function RecipeFilterScreen({route, navigation}) {
         <View style={styles.filterSection}>
           <Text style={styles.filterTitle}>난이도</Text>
           <View style={styles.filterButtonsRow}>
-            {['쉬움', '보통', '어려움'].map(difficulty => (
-              <TouchableOpacity
-                key={difficulty}
-                onPress={() => selectDifficulty(difficulty)}
-                activeOpacity={0.7}
-                style={{flex: 1}}>
-                {selectedDifficulty === difficulty ? (
-                  <LinearGradient
-                    colors={['#00D084', '#00B86D']}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}
-                    style={[styles.filterButton, styles.filterButtonSelected]}>
+            {['쉬움', '보통', '어려움'].map(difficulty =>
+              selectedDifficulty === difficulty ? (
+                <LinearGradient
+                  key={difficulty}
+                  colors={['#00D084', '#00B86D']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={[
+                    styles.filterButton,
+                    styles.filterButtonSelected,
+                    {flex: 1},
+                  ]}>
+                  <TouchableOpacity
+                    onPress={() => selectDifficulty(difficulty)}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
                     <Text
                       style={[
                         styles.filterButtonText,
@@ -123,14 +140,18 @@ export default function RecipeFilterScreen({route, navigation}) {
                       ]}>
                       {difficulty}
                     </Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>{difficulty}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                </LinearGradient>
+              ) : (
+                <TouchableOpacity
+                  key={difficulty}
+                  onPress={() => selectDifficulty(difficulty)}
+                  activeOpacity={0.7}
+                  style={[styles.filterButton, {flex: 1}]}>
+                  <Text style={styles.filterButtonText}>{difficulty}</Text>
+                </TouchableOpacity>
+              ),
+            )}
           </View>
         </View>
 
@@ -138,18 +159,26 @@ export default function RecipeFilterScreen({route, navigation}) {
         <View style={styles.filterSection}>
           <Text style={styles.filterTitle}>조리 시간</Text>
           <View style={styles.filterButtonsRow}>
-            {['10분', '30분'].map(time => (
-              <TouchableOpacity
-                key={time}
-                onPress={() => selectTime(time)}
-                activeOpacity={0.7}
-                style={{flex: 1}}>
-                {selectedTime === time ? (
-                  <LinearGradient
-                    colors={['#00D084', '#00B86D']}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}
-                    style={[styles.filterButton, styles.filterButtonSelected]}>
+            {['10분', '30분'].map(time =>
+              selectedTime === time ? (
+                <LinearGradient
+                  key={time}
+                  colors={['#00D084', '#00B86D']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={[
+                    styles.filterButton,
+                    styles.filterButtonSelected,
+                    {flex: 1},
+                  ]}>
+                  <TouchableOpacity
+                    onPress={() => selectTime(time)}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
                     <Text
                       style={[
                         styles.filterButtonText,
@@ -157,28 +186,40 @@ export default function RecipeFilterScreen({route, navigation}) {
                       ]}>
                       {time}
                     </Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>{time}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                </LinearGradient>
+              ) : (
+                <TouchableOpacity
+                  key={time}
+                  onPress={() => selectTime(time)}
+                  activeOpacity={0.7}
+                  style={[styles.filterButton, {flex: 1}]}>
+                  <Text style={styles.filterButtonText}>{time}</Text>
+                </TouchableOpacity>
+              ),
+            )}
           </View>
           <View style={[styles.filterButtonsRow, {marginTop: 8}]}>
-            {['1시간', '2시간+'].map(time => (
-              <TouchableOpacity
-                key={time}
-                onPress={() => selectTime(time)}
-                activeOpacity={0.7}
-                style={{flex: 1}}>
-                {selectedTime === time ? (
-                  <LinearGradient
-                    colors={['#00D084', '#00B86D']}
-                    start={{x: 0, y: 0}}
-                    end={{x: 1, y: 1}}
-                    style={[styles.filterButton, styles.filterButtonSelected]}>
+            {['1시간', '2시간+'].map(time =>
+              selectedTime === time ? (
+                <LinearGradient
+                  key={time}
+                  colors={['#00D084', '#00B86D']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={[
+                    styles.filterButton,
+                    styles.filterButtonSelected,
+                    {flex: 1},
+                  ]}>
+                  <TouchableOpacity
+                    onPress={() => selectTime(time)}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
                     <Text
                       style={[
                         styles.filterButtonText,
@@ -186,37 +227,37 @@ export default function RecipeFilterScreen({route, navigation}) {
                       ]}>
                       {time}
                     </Text>
-                  </LinearGradient>
-                ) : (
-                  <View style={styles.filterButton}>
-                    <Text style={styles.filterButtonText}>{time}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                  </TouchableOpacity>
+                </LinearGradient>
+              ) : (
+                <TouchableOpacity
+                  key={time}
+                  onPress={() => selectTime(time)}
+                  activeOpacity={0.7}
+                  style={[styles.filterButton, {flex: 1}]}>
+                  <Text style={styles.filterButtonText}>{time}</Text>
+                </TouchableOpacity>
+              ),
+            )}
           </View>
         </View>
       </ScrollView>
 
       {/* 하단 다음 버튼 */}
       <View style={styles.bottomButtonContainer}>
-        <LinearGradient
-          colors={['#00B8DB', '#155DFC']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 0}}
-          style={styles.nextButton}>
-          <TouchableOpacity
-            onPress={handleNext}
-            activeOpacity={0.7}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-            }}>
+        <TouchableOpacity
+          onPress={handleNext}
+          activeOpacity={0.7}
+          style={{width: '100%'}}>
+          <LinearGradient
+            colors={['#00B8DB', '#155DFC']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.nextButton}>
             <Text style={styles.nextButtonText}>다음</Text>
             <ChevronRight color="#FFFFFF" size={20} />
-          </TouchableOpacity>
-        </LinearGradient>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     </View>
   );

@@ -30,7 +30,11 @@ export default function RecipeDetailScreen({route, navigation}) {
     recipe: initialRecipe,
     ingredients = [],
     mode = 'view',
+    from = 'camera',
   } = route.params || {};
+
+  // 레시피->직접입력 플로우인지 확인
+  const isRecipeDirectInput = from === 'recipe-direct-input';
 
   const [recipe, setRecipe] = useState(initialRecipe);
   const [isLoading, setIsLoading] = useState(false);
@@ -384,6 +388,7 @@ export default function RecipeDetailScreen({route, navigation}) {
         onClose={handleCloseModal}
         onNavigateToRecipe={handleNavigateToRecipe}
         recipeName={recipe?.title || '레시피'}
+        hideStartButton={isRecipeDirectInput} // 레시피->직접입력일 때 시작 버튼 숨김
       />
 
       {/* 재료 소비 확인 모달 */}

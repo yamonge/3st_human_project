@@ -27,6 +27,11 @@ import RecipeDetailScreen from './src/screens/camera/RecipeDetailScreen';
 
 // 레시피 플로우
 import RecipeSelectionScreen from './src/screens/recipe/RecipeSelectionScreen';
+import IngredientInputScreen from './src/screens/recipe/IngredientInputScreen';
+
+// 영수증 플로우
+import ReceiptSelectionScreen from './src/screens/receipt/ReceiptSelectionScreen';
+import GalleryScreen from './src/screens/receipt/GalleryScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -79,7 +84,7 @@ function MainTabNavigator() {
       />
       <Tab.Screen name="Voice" component={VoiceFlowScreen} />
       <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
-      <Tab.Screen name="Receipt" component={CameraCaptureScreen} />
+      <Tab.Screen name="Receipt" component={ReceiptSelectionScreen} />
       <Tab.Screen name="Map" component={MapFlowScreen} />
 
       {/* 카메라 플로우 서브 화면들 (탭바 숨김) */}
@@ -121,6 +126,24 @@ function MainTabNavigator() {
       <Tab.Screen
         name="RecipeDetail"
         component={RecipeDetailScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
+      {/* 레시피 플로우 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="IngredientInput"
+        component={IngredientInputScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
+      {/* 영수증 플로우 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="Gallery"
+        component={GalleryScreen}
         options={{
           tabBarButton: () => null,
         }}

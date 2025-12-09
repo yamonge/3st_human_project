@@ -50,6 +50,21 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
+  // 빈 상태
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    fontFamily: 'NotoSansKR-Medium',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
   // 재료 카드
   ingredientCard: {
     backgroundColor: '#FFFFFF',
