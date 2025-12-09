@@ -10,10 +10,10 @@ import axios from 'axios';
 
 // 아래 키들은 예시야. 실제 값은 네 키로 교체
 const NAVER_SEARCH_CLIENT_ID = '9xZ4R3cFY8IXyoPAlj5j'; // 검색(Local API) client id
-const NAVER_SEARCH_CLIENT_SECRET = 'JBqepvncQn';
+const NAVER_SEARCH_CLIENT_SECRET = 'hfHHrJeRB7';
 
-const NCP_MAP_KEY_ID = 'pq3dgwzbry'; // NCP 지도 Geocoding key id
-const NCP_MAP_KEY = 'iDterb1Jia2wPNTRq6GGnOcLLTUvW1BfhSWGXp2D';
+const NCP_MAP_KEY_ID = '3sie0gdb7q'; // NCP 지도 Geocoding key id
+const NCP_MAP_KEY = 'pLQvyzpRibkG478hufVZT8KAa2uV6pqxICV01rVQ';
 
 export async function searchMarts(query) {
   try {

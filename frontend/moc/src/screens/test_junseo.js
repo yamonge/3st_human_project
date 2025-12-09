@@ -1,4 +1,3 @@
-// src/screens/test_junseo.js
 import React, {useState} from 'react';
 import {
   View,

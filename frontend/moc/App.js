@@ -210,6 +210,7 @@ function App() {
             headerShown: false,
             animation: 'fade',
           }}>
+          <Stack.Screen name="TestJunseo" component={TestJunseo} />
           {/* 온보딩 */}
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
 
