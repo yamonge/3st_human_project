@@ -2,8 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
-import {homeStyles} from '../../styles/homeStyles';
-import UserIngredientTestScreen from '../UserIngredientTestScreen';
+import {homeStyles} from '../../styles/screens/home/homeStyles';
 
 /**
  * 메인 홈 화면
@@ -57,9 +56,11 @@ export default function HomeScreen({navigation}) {
   const handleMenuPress = type => {
     switch (type) {
       case 'fridge':
-        // TODO: 카메라 플로우 이동
-        Alert.alert('냉장고 털기', '카메라 플로우로 이동합니다.');
-        // navigation.navigate('Camera');
+        // 카메라 플로우 이동 (스택 초기화)
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Camera'}],
+        });
         break;
       case 'search':
         // TODO: 마이크 플로우 이동
@@ -117,7 +118,6 @@ export default function HomeScreen({navigation}) {
             <Text style={homeStyles.subGreeting}>
               My Own Chef에 어서오세요!
             </Text>
-            <UserIngredientTestScreen />
           </View>
 
           {/* 메뉴 섹션 */}

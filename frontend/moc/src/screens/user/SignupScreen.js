@@ -25,7 +25,7 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import Checkbox from '../../components/common/Checkbox';
 import DatePickerModal from '../../components/common/DatePickerModal';
-import {signupStyles} from '../../styles/signupStyles';
+import {signupStyles} from '../../styles/screens/user/signupStyles';
 import {colors} from '../../styles/common';
 import {authAPI} from '../../api/auth';
 

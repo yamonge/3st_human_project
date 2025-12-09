@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, TouchableOpacity, Image} from 'react-native';
 import {ChevronRight} from 'lucide-react-native';
-import {homeStyles} from '../../styles/homeStyles';
+import {homeStyles} from '../../styles/screens/home/homeStyles';
 import {colors} from '../../styles/common';
 const FryingPan = require('../../assets/images/main/mainFryingPan.png');
 const Mice = require('../../assets/images/main/mainMice.png');

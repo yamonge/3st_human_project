@@ -1,5 +1,5 @@
 import {StyleSheet} from 'react-native';
-import {colors, typography, spacing, borderRadius, shadows} from './common';
+import {colors, typography, spacing, borderRadius, shadows} from '../../common';
 
 /**
  * 메인 홈 화면 전용 스타일
