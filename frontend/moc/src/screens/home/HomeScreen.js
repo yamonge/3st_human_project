@@ -4,9 +4,7 @@ import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
 import {homeStyles} from '../../styles/homeStyles';
 import UserIngredientTestScreen from '../UserIngredientTestScreen';
-import Test_CHS from '../Test_CHS';
-import RecipeBookmarkTestScreen from '../RecipeBookmarkTestScreen';
-import ReceiptItemTestScreen from '../ReceiptItemTestScreen';
+
 /**
  * 메인 홈 화면
  * 로그인 완료 후 진입하는 첫 화면
@@ -119,8 +117,7 @@ export default function HomeScreen({navigation}) {
             <Text style={homeStyles.subGreeting}>
               My Own Chef에 어서오세요!
             </Text>
-            <ReceiptItemTestScreen />
-            <RecipeBookmarkTestScreen />
+            <UserIngredientTestScreen />
           </View>
 
           {/* 메뉴 섹션 */}

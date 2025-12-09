@@ -14,7 +14,7 @@ import axios from 'axios'; // ⭐ axios 임포트 추가
 
 // ⭐ 백엔드 API 기본 URL (Android 에뮬레이터용)
 // UserIngredientController와 RecipeBookmarkController 모두 /api/v1/users/{userId}/... 경로를 사용한다고 가정합니다.
-const API_BASE_URL = 'http://192.168.35.21:8090/api/v1/users';
+const API_BASE_URL = 'http://192.168.1.49:8090/api/v1/users';
 
 const RecipeBookmarkTestScreen = () => {
   const [isLoading, setIsLoading] = useState(false);

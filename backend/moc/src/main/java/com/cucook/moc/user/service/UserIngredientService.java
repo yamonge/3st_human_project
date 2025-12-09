@@ -64,4 +64,18 @@ public interface UserIngredientService {
      * @return 보유 재료의 총 개수
      */
     int countUserIngredients(Long userId);
+
+    /**
+     * 영수증 인식 결과로 얻은 재료명 리스트를 사용자의 '내 재료'로 추가합니다.
+     *
+     * @param userId 재료를 추가할 사용자의 ID
+     * @param ingredientNames 영수증에서 인식된 재료명 리스트
+     * @param createdId 생성자 ID
+     * @return 추가된 '내 재료' 정보를 담은 응답 DTO 리스트
+     */
+    List<UserIngredientResponseDTO> addIngredientsFromRecognizedReceipt(
+            Long userId,
+            List<String> ingredientNames,
+            Long createdId
+    );
 }

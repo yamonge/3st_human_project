@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -182,5 +183,44 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         // DAO에 countByUserId(Long userId) 메서드를 추가하는 것이 더 효율적일 수 있습니다.
         List<UserIngredientVO> ingredients = userIngredientDAO.selectUserIngredientsByUserId(userId);
         return ingredients.size();
+    }
+    /**
+     * 영수증 인식 결과로 얻은 재료명 리스트를 사용자의 '내 재료'로 추가합니다.
+     *
+     * @param userId 재료를 추가할 사용자의 ID
+     * @param ingredientNames 영수증에서 인식된 재료명 리스트
+     * @param createdId 생성자 ID
+     * @return 추가된 '내 재료' 정보를 담은 응답 DTO 리스트
+     */
+    @Override
+    @Transactional
+    public List<UserIngredientResponseDTO> addIngredientsFromRecognizedReceipt(
+            Long userId,
+            List<String> ingredientNames,
+            Long createdId
+    ) {
+        if (ingredientNames == null || ingredientNames.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<UserIngredientResponseDTO> addedIngredients = new ArrayList<>();
+        for (String ingredientName : ingredientNames) {
+            UserIngredientRequestDTO request = new UserIngredientRequestDTO();
+            request.setIngredientName(ingredientName);
+            request.setQuantityDesc("1개"); // 기본 수량 (영수증에서 정확한 수량 파악이 어려울 경우)
+            request.setUsedFlag("N");
+            request.setExpiredDate(LocalDate.now().plusMonths(1)); // 기본 유통기한 (예시)
+            request.setMemo("영수증 인식으로 추가됨");
+
+            try {
+                // 기존의 단일 재료 추가 메서드 재활용
+                UserIngredientResponseDTO response = addUserIngredient(userId, request);
+                addedIngredients.add(response);
+            } catch (Exception e) {
+                System.err.println("영수증 인식 재료 ('" + ingredientName + "')를 사용자 재료로 추가 실패: " + e.getMessage());
+                // 부분 실패를 허용하고 계속 진행
+            }
+        }
+        return addedIngredients;
     }
 }

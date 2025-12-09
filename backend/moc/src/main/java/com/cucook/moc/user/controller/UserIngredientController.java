@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 사용자 재료 정보(인벤토리)에 대한 REST API를 처리하는 컨트롤러입니다.
  * 마이페이지의 '재료 관리' 기능을 담당합니다.
@@ -171,6 +173,31 @@ public class UserIngredientController {
             return new ResponseEntity<>(count, HttpStatus.OK); // 200 OK
         } catch (Exception e) {
             System.err.println("재료 개수 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    /**
+     * 영수증 인식 결과로 얻은 재료명 리스트를 사용자의 '내 재료'로 일괄 추가합니다.
+     * POST /api/v1/users/{userId}/ingredients/from-receipt
+     *
+     * @param userId 경로 변수에서 가져온 사용자 ID
+     * @param ingredientNames 영수증에서 인식된 재료명 리스트 (RequestBody)
+     * @return 추가된 '내 재료' 정보를 담은 응답 DTO 리스트
+     */
+    @PostMapping("/from-receipt")
+    public ResponseEntity<List<UserIngredientResponseDTO>> addIngredientsFromReceipt(
+            @PathVariable("userId") Long userId,
+            @RequestBody List<String> ingredientNames) { // ⭐ List<String>을 직접 받음
+        try {
+            // createdId는 userId와 동일하게 설정
+            List<UserIngredientResponseDTO> responses = userIngredientService.addIngredientsFromRecognizedReceipt(userId, ingredientNames, userId);
+            if (responses.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(responses, HttpStatus.CREATED);
+        } catch (Exception e) {
+            System.err.println("영수증 인식 재료를 내 재료로 추가 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
