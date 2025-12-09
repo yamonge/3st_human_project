@@ -1,23 +1,20 @@
-package com.cucook.moc.receipt.vo;
+package com.cucook.moc.receipt.dto.request;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 
 @Data
-public class ReceiptVO {
-
+@NoArgsConstructor
+@AllArgsConstructor
+public class ReceiptRequestDTO {
     private Long receiptId;
-    private Long userId;
     private Long cameraSessionId;
     private String storeName;
     private String storeAddress;
     private BigDecimal payAmount;
     private Timestamp payDate;
     private String rawText;
-    private Long createdId;
-    private Timestamp createdDate;
-    private Long updatedId;
-    private Timestamp updatedDate;
 }
