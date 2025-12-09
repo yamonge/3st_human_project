@@ -1,346 +1,235 @@
-// 파일: src/screens/test_junseo.js
-
+// src/screens/test_junseo.js
 import React, {useState} from 'react';
 import {
   View,
   Text,
-  TextInput,
   Button,
-  ScrollView,
   StyleSheet,
-  Platform,
+  ActivityIndicator,
+  ScrollView,
 } from 'react-native';
-import axios from 'axios';
+import Geolocation from '@react-native-community/geolocation';
+import {
+  NaverMapView,
+  RenderAfterNavermapsLoaded,
+  NaverMap,
+  NaverMapMarkerOverlay,
+} from '@mj-studio/react-native-naver-map';
 
-const BASE_URL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:8090' : 'http://localhost:8090';
+import {searchMarts, geocodeAddress} from '../api/naverPlaceApi';
 
-const TestJunseo = () => {
-  // 로그인용
-  const [userEmail, setUserEmail] = useState('');
-  const [userPassword, setUserPassword] = useState('');
+function TestJunseo() {
+  const [location, setLocation] = useState(null); // { latitude, longitude }
+  const [marts, setMarts] = useState([]); // [{ id, name, address, latitude, longitude }]
+  const [selectedMart, setSelectedMart] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  // 현재 로그인된 유저
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [currentNickname, setCurrentNickname] = useState(null);
-
-  // 게시글/채팅방 관련
-  const [shoppingPostId, setShoppingPostId] = useState(null);
-  const [chatRoomId, setChatRoomId] = useState(null);
-  const [maxPersonCnt, setMaxPersonCnt] = useState('3');
-  const [description, setDescription] =
-    useState('테스트 같이 장보기 방입니다.');
-
-  // 채팅 메시지 관련
-  const [messageText, setMessageText] = useState('');
-
-  const [log, setLog] = useState('');
-
-  const appendLog = msg => {
-    console.log(msg);
-    setLog(prev => prev + msg + '\n');
-  };
-
-  // =========================
-  // 1. 로그인
-  // =========================
-  const handleLogin = async () => {
-    if (!userEmail || !userPassword) {
-      appendLog('이메일/비밀번호를 입력하세요.');
-      return;
-    }
-
-    try {
-      appendLog(`로그인 요청 중... (${userEmail})`);
-      const body = {
-        userEmail,
-        userPassword,
-      };
-
-      const res = await axios.post(`${BASE_URL}/api/auth/login`, body);
-      setCurrentUserId(res.data.userId);
-      setCurrentNickname(res.data.userNickname);
-
-      appendLog(
-        `✅ 로그인 성공 → userId=${res.data.userId}, nickname=${res.data.userNickname}`,
-      );
-    } catch (e) {
-      appendLog(
-        '❌ 로그인 실패: ' +
-          (e.response?.data?.message || e.message || '알 수 없는 오류'),
-      );
-    }
-  };
-
-  // =========================
-  // 2. (관리자) 게시글 + 채팅방 생성
-  // =========================
-  const handleCreateShoppingPostAndRoom = async () => {
-    if (!currentUserId) {
-      appendLog(
-        '먼저 로그인해서 currentUserId를 확보하세요. (관리자 계정으로)',
-      );
-      return;
-    }
-
-    try {
-      appendLog(
-        `같이 장보기 게시글 + 채팅방 생성 요청 중... (writerUserId=${currentUserId})`,
-      );
-
-      const now = new Date();
-      const meet = new Date(now.getTime() + 60 * 60 * 1000);
-      const meetIso = meet.toISOString().slice(0, 19); // "YYYY-MM-DDTHH:mm:ss"
-
-      // body에는 컨트롤러의 ShoppingPostCreateRequestDTO 필드만
-      const body = {
-        placeId: 1, // 테스트용 place_id (DB에 있는 값으로 맞춰줘)
-        meetDatetime: meetIso,
-        minPersonCnt: 2,
-        maxPersonCnt: parseInt(maxPersonCnt || '3', 10),
-        description: description || '테스트 방',
-      };
-
-      // userId는 @RequestParam 으로 쿼리스트링에
-      const res = await axios.post(`${BASE_URL}/api/shopping-posts`, body, {
-        params: {
-          userId: currentUserId, // ← 여기!
+  // 1) 현재 위치 한 번 가져오기
+  const getCurrentPositionOnce = () => {
+    return new Promise((resolve, reject) => {
+      Geolocation.getCurrentPosition(
+        pos => {
+          const {latitude, longitude} = pos.coords;
+          resolve({latitude, longitude});
         },
-      });
-
-      setShoppingPostId(res.data.shoppingPostId);
-      setChatRoomId(res.data.chatRoomId);
-
-      appendLog(
-        `✅ 게시글 + 채팅방 생성 완료 → shoppingPostId=${res.data.shoppingPostId}, chatRoomId=${res.data.chatRoomId}`,
+        err => {
+          reject(err);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+        },
       );
-    } catch (e) {
-      appendLog(
-        '❌ 게시글/채팅방 생성 실패: ' +
-          (e.response?.data?.message || e.message || '알 수 없는 오류'),
-      );
-    }
+    });
   };
 
-  // =========================
-  // 3. 게시글(=채팅방)에 참여
-  // =========================
-  const handleJoinShoppingPost = async () => {
-    if (!currentUserId || !shoppingPostId) {
-      appendLog(
-        'currentUserId와 shoppingPostId가 필요합니다. (로그인 + 방 생성부터 진행)',
-      );
-      return;
-    }
-
+  // 2) 현재 위치 기준으로 네이버에서 '마트' 검색 + 주소를 좌표로 변환 + 마커 데이터 구성
+  const handleLoadNearbyMarts = async () => {
     try {
-      appendLog(
-        `게시글 참여 요청 중... (postId=${shoppingPostId}, userId=${currentUserId})`,
-      );
+      setLoading(true);
+      setErrorMsg(null);
 
-      await axios.post(
-        `${BASE_URL}/api/shopping-posts/${shoppingPostId}/join`,
-        null,
-        {params: {userId: currentUserId}},
-      );
+      // (1) 위치 없으면 먼저 GPS 한 번 찍기
+      let baseLocation = location;
+      if (!baseLocation) {
+        baseLocation = await getCurrentPositionOnce();
+        setLocation(baseLocation);
+      }
 
-      appendLog('✅ 게시글/채팅방 참여 성공');
+      // (2) 네이버 지역 검색 API로 "마트" 검색
+      const localItems = await searchMarts('마트'); // 간단 테스트용 검색어
+
+      // (3) 각 결과의 주소를 Geocoding 해서 위/경도로 변환
+      const martsWithCoords = [];
+      for (const item of localItems) {
+        const cleanTitle = item.title.replace(/<[^>]+>/g, ''); // <b> 태그 제거
+        const addr = item.roadAddress || item.address; // 도로명 우선
+
+        const coords = await geocodeAddress(addr);
+        if (!coords) continue;
+
+        martsWithCoords.push({
+          id: item.link || `${cleanTitle}-${addr}`,
+          name: cleanTitle,
+          address: addr,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
+      }
+
+      setMarts(martsWithCoords);
+      if (martsWithCoords.length > 0) {
+        setSelectedMart(martsWithCoords[0]);
+      }
     } catch (e) {
-      appendLog(
-        '❌ 게시글 참여 실패: ' +
-          (e.response?.data?.message || e.message || '알 수 없는 오류'),
-      );
+      console.log(e);
+      setErrorMsg(e.message || '마트 검색 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // =========================
-  // 4. 채팅 메시지 전송
-  // =========================
-  const handleSendMessage = async () => {
-    if (!currentUserId || !chatRoomId) {
-      appendLog(
-        'currentUserId와 chatRoomId가 필요합니다. (로그인 + 방 생성/참여부터 진행)',
-      );
-      return;
-    }
-    if (!messageText.trim()) {
-      appendLog('보낼 메시지를 입력하세요.');
-      return;
-    }
-
-    try {
-      appendLog(
-        `메시지 전송 중... (room=${chatRoomId}, user=${currentUserId}, text="${messageText}")`,
-      );
-
-      const body = {
-        senderUserId: currentUserId,
-        messageText,
-      };
-
-      await axios.post(
-        `${BASE_URL}/api/chat/rooms/${chatRoomId}/messages`,
-        body,
-      );
-
-      appendLog('✅ 메시지 전송 성공');
-      setMessageText('');
-    } catch (e) {
-      appendLog(
-        '❌ 메시지 전송 실패: ' +
-          (e.response?.data?.message || e.message || '알 수 없는 오류'),
-      );
-    }
-  };
-
-  // =========================
-  // 5. 채팅 메시지 목록 조회
-  // =========================
-  const handleLoadMessages = async () => {
-    if (!chatRoomId) {
-      appendLog('chatRoomId를 먼저 확인하세요.');
-      return;
-    }
-
-    try {
-      appendLog(`메시지 목록 조회 중... (room=${chatRoomId})`);
-
-      const res = await axios.get(
-        `${BASE_URL}/api/chat/rooms/${chatRoomId}/messages`,
-      );
-
-      appendLog('📨 메시지 목록:');
-      res.data.forEach(m => {
-        appendLog(
-          ` - [${m.sentDate}] user=${m.senderUserId}, text="${m.messageText}"`,
-        );
-      });
-    } catch (e) {
-      appendLog(
-        '❌ 메시지 조회 실패: ' +
-          (e.response?.data?.message || e.message || '알 수 없는 오류'),
-      );
-    }
-  };
+  // 지도 카메라 기준 좌표 (선택된 마트 우선, 없으면 내 위치)
+  const center = selectedMart || location;
+  const camera = center
+    ? {
+        latitude: center.latitude,
+        longitude: center.longitude,
+        zoom: 14,
+      }
+    : null;
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>test_junseo – 로그인 → 채팅 테스트</Text>
-      <Text style={styles.baseUrl}>BASE_URL: {BASE_URL}</Text>
-
-      <Text style={styles.info}>
-        현재 로그인: userId={currentUserId ?? '없음'} / nickname=
-        {currentNickname ?? '없음'}
-      </Text>
-      <Text style={styles.info}>
-        shoppingPostId={shoppingPostId ?? '없음'} / chatRoomId=
-        {chatRoomId ?? '없음'}
-      </Text>
-
-      {/* 로그인 영역 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>1. 로그인</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="이메일 (userEmail)"
-          value={userEmail}
-          onChangeText={setUserEmail}
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="비밀번호 (userPassword)"
-          value={userPassword}
-          onChangeText={setUserPassword}
-          secureTextEntry
-        />
-        <Button title="로그인" onPress={handleLogin} />
-      </View>
-
-      {/* 게시글 + 채팅방 생성 (관리자 계정으로) */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          2. (관리자) 같이 장보기 게시글 + 채팅방 생성
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="최대 인원수 (maxPersonCnt)"
-          value={maxPersonCnt}
-          onChangeText={setMaxPersonCnt}
-          keyboardType="numeric"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="게시글 설명"
-          value={description}
-          onChangeText={setDescription}
-        />
+    <View style={styles.container}>
+      {/* 상단: 버튼 + 상태 */}
+      <View style={styles.topPanel}>
         <Button
-          title="게시글 + 채팅방 생성"
-          onPress={handleCreateShoppingPostAndRoom}
+          title="현재 위치 + 주변 '마트' 검색"
+          onPress={handleLoadNearbyMarts}
         />
+        {loading && (
+          <View style={styles.rowCenter}>
+            <ActivityIndicator size="small" />
+            <Text style={{marginLeft: 8}}>불러오는 중...</Text>
+          </View>
+        )}
+        {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+        {location && (
+          <Text style={styles.coordText}>
+            내 위치: {location.latitude.toFixed(5)},{' '}
+            {location.longitude.toFixed(5)}
+          </Text>
+        )}
       </View>
 
-      {/* 게시글(채팅방) 참여 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          3. 현재 로그인 계정으로 게시글(채팅방) 참여
-        </Text>
-        <Button title="게시글 참여" onPress={handleJoinShoppingPost} />
+      {/* 중앙: 네이버 지도 */}
+      <View style={styles.mapContainer}>
+        {camera ? (
+          <NaverMap
+            style={StyleSheet.absoluteFill}
+            camera={camera}
+            // showsMyLocationButton={true} // 필요하면 주석 해제
+            onCameraChange={() => {}}
+            onMapClick={() => setSelectedMart(null)}>
+            {/* 내 위치 마커 */}
+            {location && (
+              <NaverMapMarkerOverlay
+                latitude={location.latitude}
+                longitude={location.longitude}
+                caption={{text: '내 위치'}}
+                onTap={() => setSelectedMart(null)}
+              />
+            )}
+
+            {/* 마트 마커들 */}
+            {marts.map(mart => (
+              <NaverMapMarkerOverlay
+                key={mart.id}
+                latitude={mart.latitude}
+                longitude={mart.longitude}
+                caption={{text: mart.name}}
+                onTap={() => setSelectedMart(mart)}
+              />
+            ))}
+          </NaverMap>
+        ) : (
+          <View style={styles.mapPlaceholder}>
+            <Text>버튼을 눌러 현재 위치와 마트를 불러와 주세요.</Text>
+          </View>
+        )}
       </View>
 
-      {/* 채팅 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>4. 채팅 보내기 / 조회</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="보낼 메시지"
-          value={messageText}
-          onChangeText={setMessageText}
-        />
-        <Button title="메시지 전송" onPress={handleSendMessage} />
-        <View style={{height: 8}} />
-        <Button title="메시지 목록 조회" onPress={handleLoadMessages} />
-      </View>
+      {/* 하단: 선택된 마트 정보 + 리스트 */}
+      <View style={styles.bottomPanel}>
+        {selectedMart && (
+          <View style={styles.selectedBox}>
+            <Text style={styles.selectedTitle}>{selectedMart.name}</Text>
+            <Text style={styles.selectedAddr}>{selectedMart.address}</Text>
+            {/* TODO: 여기서 "이 마트에서 같이 장보기 글쓰기" 버튼 추가 → 백엔드에 place 정보 + 좌표 보내기 */}
+          </View>
+        )}
 
-      {/* 로그 */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>로그</Text>
-        <Text style={styles.log}>{log}</Text>
+        <ScrollView style={styles.list}>
+          {marts.map(mart => (
+            <View key={mart.id} style={styles.listItem}>
+              <Text
+                style={styles.listTitle}
+                onPress={() => setSelectedMart(mart)}>
+                {mart.name}
+              </Text>
+              <Text style={styles.listAddr}>{mart.address}</Text>
+            </View>
+          ))}
+        </ScrollView>
       </View>
-    </ScrollView>
+    </View>
   );
-};
+}
 
 export default TestJunseo;
 
 const styles = StyleSheet.create({
-  container: {flex: 1, padding: 16, backgroundColor: '#fff'},
-  title: {fontSize: 20, fontWeight: 'bold', marginBottom: 4},
-  baseUrl: {fontSize: 12, color: '#666', marginBottom: 8},
-  info: {fontSize: 12, color: '#333'},
-  section: {
-    marginTop: 16,
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  container: {flex: 1},
+  topPanel: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#f8f8f8',
   },
-  sectionTitle: {fontSize: 16, fontWeight: 'bold', marginBottom: 8},
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+  rowCenter: {flexDirection: 'row', alignItems: 'center', marginTop: 8},
+  errorText: {color: 'red', marginTop: 8},
+  coordText: {marginTop: 4, color: '#555'},
+  mapContainer: {
+    flex: 1.3,
+    backgroundColor: '#ddd',
+  },
+  mapPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottomPanel: {
+    flex: 1,
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    padding: 8,
+  },
+  selectedBox: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#fafafa',
     marginBottom: 8,
   },
-  log: {
-    minHeight: 120,
-    fontSize: 12,
-    color: '#333',
-    backgroundColor: '#f7f7f7',
-    padding: 8,
-    borderRadius: 6,
+  selectedTitle: {fontWeight: 'bold', fontSize: 16},
+  selectedAddr: {fontSize: 13, color: '#666', marginTop: 2},
+  list: {marginTop: 4},
+  listItem: {
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
   },
+  listTitle: {fontWeight: 'bold'},
+  listAddr: {fontSize: 12, color: '#555'},
 });

@@ -23,7 +23,7 @@
 
     <!-- 게시글 insert -->
     <insert id="insertPost"
-            parameterType="com.cucook.moc.shopping.vo.ShoppingPostVO">
+            parameterType="ShoppingPostVO">
         <selectKey keyProperty="shoppingPostId"
                    resultType="long"
                    order="BEFORE">
@@ -31,29 +31,28 @@
         </selectKey>
 
         INSERT INTO tb_shopping_post (
-            shopping_post_id,
-            place_id,
-            writer_user_id,
-            meet_datetime,
-            min_person_cnt,
-            max_person_cnt,
-            current_person_cnt,
-            description,
-            status_cd,
-            created_id,
-            created_date
+        shopping_post_id,
+        place_id,
+        writer_user_id,
+        meet_datetime,
+        min_person_cnt,
+        max_person_cnt,
+        current_person_cnt,
+        description,
+        status_cd,
+        created_date
         ) VALUES (
-            #{shoppingPostId},
-            #{placeId},
-            #{writerUserId},
-            #{meetDatetime},
-            #{minPersonCnt},
-            #{maxPersonCnt},
-            #{currentPersonCnt},
-            #{description},
-            #{statusCd},
-            #{createdId},
-            SYSTIMESTAMP
+        #{shoppingPostId},
+        #{placeId},
+        #{writerUserId},
+        #{meetDatetime},
+        #{minPersonCnt},
+        #{maxPersonCnt},
+        #{currentPersonCnt},
+        #{description},
+        #{statusCd},
+        #{createdId},
+        SYSTIMESTAMP
         )
     </insert>
 
