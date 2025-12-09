@@ -6,24 +6,24 @@ import java.sql.Timestamp;
 @Data
 public class RecipeVO {
 
-    private Long recipeId;          // 레시피 ID (Oracle 시퀀스 사용)
-    private String ownerUserId;     // 레시피 소유자 사용자 ID
-    private String sourceType;      // 레시피 출처 타입 (예: AI_GENERATED, GOV_API, USER_UPLOAD)
-    private String externalRefId;   // 외부 참조 ID (예: 정부 API 레시피 ID)
-    private String title;           // 레시피 제목
-    private String summary;         // 레시피 요약/간략 설명
-    private String thumbnailUrl;    // 레시피 대표 썸네일 이미지 URL
-    private String difficultyCd;    // 난이도 코드 (예: EASY, NORMAL, HARD)
-    private Integer cookTimeMin;    // 조리 시간 (분 단위)
-    private String cuisineStyleCd;  // 요리 스타일 코드 (예: KOR, CHN, JPN, WES)
-    private String isPublic;        // 공개 여부 (Y/N)
-    private String isDeleted;       // 삭제 여부 (Y/N)
-    private Integer viewCnt;        // 조회수
-    private Integer likeCnt;        // 좋아요 수
-    private Integer reportCnt;      // 신고 수
-    private String createdId;       // 생성자 ID
-    private Timestamp createdDate;  // 생성 일시 (DB 자동 입력)
-    private String updatedId;       // 최종 수정자 ID
-    private Timestamp updatedDate;  // 최종 수정 일시
+    private Long recipeId;          // DDL: NUMBER(19) -> VO: Long (정상 매핑)
+    private Long ownerUserId;       // DDL: NUMBER(19) -> VO: Long (정상 매핑)
+    private String sourceType;      // DDL: VARCHAR2(20) -> VO: String (정상 매핑)
+    private String externalRefId;   // DDL: VARCHAR2(100) -> VO: String (정상 매핑)
+    private String title;           // DDL: VARCHAR2(200) -> VO: String (정상 매핑)
+    private String summary;         // DDL: VARCHAR2(1000) -> VO: String (정상 매핑)
+    private String thumbnailUrl;    // DDL: VARCHAR2(500) -> VO: String (정상 매핑)
+    private String difficultyCd;    // DDL: VARCHAR2(20) -> VO: String (정상 매핑)
+    private Integer cookTimeMin;    // DDL: NUMBER(5) -> VO: Integer (정상 매핑)
+    private String cuisineStyleCd;  // DDL: VARCHAR2(20) -> VO: String (정상 매핑)
     private String category;
+    private String isPublic;        // DDL: CHAR(1) -> VO: String (정상 매핑)
+    private String isDeleted;       // DDL: CHAR(1) -> VO: String (정상 매핑)
+    private Integer viewCnt;        // DDL: NUMBER(10) -> VO: Integer (정상 매핑)
+    private Integer likeCnt;        // DDL: NUMBER(10) -> VO: Integer (정상 매핑)
+    private Integer reportCnt;      // DDL: NUMBER(10) -> VO: Integer (정상 매핑)
+    private Long createdId;         // DDL: NUMBER(19) -> VO: Long (정상 매핑)
+    private Timestamp createdDate;  // DDL: TIMESTAMP(6) -> VO: Timestamp (정상 매핑)
+    private Long updatedId;         // DDL: NUMBER(19) -> VO: Long (정상 매핑)
+    private Timestamp updatedDate;  // DDL: TIMESTAMP(6) -> VO: Timestamp (정상 매핑)
 }

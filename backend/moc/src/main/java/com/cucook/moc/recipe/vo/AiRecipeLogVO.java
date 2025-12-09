@@ -3,21 +3,21 @@ package com.cucook.moc.recipe.vo;
 import lombok.Data;
 import java.sql.Timestamp;
 
-@Data
+@Data // Lombok의 @Data 어노테이션으로 Getter, Setter, toString, equals, hashCode 자동 생성
 public class AiRecipeLogVO {
 
-    private Long aiRecipeLogId;         // AI 레시피 로그 ID (Oracle 시퀀스 사용)
-    private String userId;              // 사용자 ID
-    private String baseSourceCd;        // 기본 재료 소스 코드 (예: CAMERA, MANUAL)
-    private String cameraSessionId;     // 카메라 세션 ID (카메라로 재료 입력 시)
-    private String manualIngredients;   // 수동 입력 재료 목록 (콤마 구분 또는 JSON 형태)
-    private String filterCuisineCd;     // 필터: 요리 스타일 코드 (예: KOR, CHN, JPN)
-    private String filterDiffCd;        // 필터: 난이도 코드 (예: EASY, NORMAL, HARD)
-    private String filterTimeCd;        // 필터: 조리 시간 코드 (예: 10M, 30M, 1H)
-    private String govApiRaw;           // 정부 API 원본 응답 데이터 (JSON/XML)
-    private String aiRequest;           // Gemini AI 요청 프롬프트
-    private String aiResponse;          // Gemini AI 응답 데이터 (JSON)
-    private Integer resultCnt;          // AI 레시피 추천 결과 개수
-    private String createdId;           // 생성자 ID
-    private Timestamp createdDate;      // 생성 일시 (DB 자동 입력)
+    private Long aiRecipeLogId;         // DDL: NUMBER(19) -> VO: Long (OK)
+    private Long userId;                // ⭐ 수정: String -> Long (Oracle NUMBER(19)에 맞춤)
+    private String baseSourceCd;        // DDL: VARCHAR2(20) -> VO: String (OK)
+    private Long cameraSessionId;       // ⭐ 수정: String -> Long (Oracle NUMBER(19)에 맞춤)
+    private String manualIngredients;   // DDL: CLOB -> VO: String (OK)
+    private String filterCuisineCd;     // DDL: VARCHAR2(20) -> VO: String (OK)
+    private String filterDiffCd;        // DDL: VARCHAR2(20) -> VO: String (OK)
+    private String filterTimeCd;        // DDL: VARCHAR2(20) -> VO: String (OK)
+    private String govApiRaw;           // DDL: CLOB -> VO: String (OK)
+    private String aiRequest;           // DDL: CLOB -> VO: String (OK)
+    private String aiResponse;          // DDL: CLOB -> VO: String (OK)
+    private Integer resultCnt;          // DDL: NUMBER(5) -> VO: Integer (OK)
+    private Long createdId;             // DDL: NUMBER(19) -> VO: Long (OK)
+    private Timestamp createdDate;      // DDL: TIMESTAMP(6) -> VO: Timestamp (OK)
 }

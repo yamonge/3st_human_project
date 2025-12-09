@@ -13,7 +13,6 @@
         quantity_desc,
         is_owned_default,
         created_id
-        -- created_date는 테이블 정의에 따라 DEFAULT SYSTIMESTAMP로 자동 입력됩니다.
         ) VALUES (
         #{recipeIngredientId},
         #{recipeId},
@@ -24,12 +23,6 @@
         )
     </insert>
 
-    <!--
-        MyBatis SELECT 쿼리: 특정 recipe_id에 해당하는 모든 재료 목록을 조회합니다.
-        AI 추천 결과에서 필요한 재료 목록을 표시할 때 사용됩니다.
-        parameterType: long (조회할 레시피 ID)
-        resultType: com.cucook.moc.recipe.vo.RecipeIngredientVO
-    -->
     <select id="selectRecipeIngredientsByRecipeId" parameterType="long" resultType="com.cucook.moc.recipe.vo.RecipeIngredientVO">
         SELECT
         recipe_ingredient_id AS recipeIngredientId,

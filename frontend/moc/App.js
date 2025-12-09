@@ -1,7 +1,9 @@
 import React, {useState, useEffect} from 'react';
+import {StatusBar} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 
@@ -14,6 +16,23 @@ import FindAccountScreen from './src/screens/user/FindAccountScreen';
 
 // 메인 화면
 import HomeScreen from './src/screens/home/HomeScreen';
+
+// 카메라 플로우
+import CameraCaptureScreen from './src/screens/camera/CameraCaptureScreen';
+import IngredientResultScreen from './src/screens/camera/IngredientResultScreen';
+import SaveOptionScreen from './src/screens/camera/SaveOptionScreen';
+import RecipeFilterScreen from './src/screens/camera/RecipeFilterScreen';
+import IngredientSelectionScreen from './src/screens/camera/IngredientSelectionScreen';
+import RecommendedRecipesScreen from './src/screens/camera/RecommendedRecipesScreen';
+import RecipeDetailScreen from './src/screens/camera/RecipeDetailScreen';
+
+// 레시피 플로우
+import RecipeSelectionScreen from './src/screens/recipe/RecipeSelectionScreen';
+import IngredientInputScreen from './src/screens/recipe/IngredientInputScreen';
+
+// 영수증 플로우
+import ReceiptSelectionScreen from './src/screens/receipt/ReceiptSelectionScreen';
+import GalleryScreen from './src/screens/receipt/GalleryScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -28,10 +47,6 @@ function NotificationScreen() {
 }
 
 function ProfileScreen() {
-  return null; // 추후 구현
-}
-
-function CameraFlowScreen() {
   return null; // 추후 구현
 }
 
@@ -61,11 +76,79 @@ function MainTabNavigator() {
       <Tab.Screen name="Profile" component={ProfileScreen} />
 
       {/* FAB 서브메뉴 화면들 */}
-      <Tab.Screen name="Camera" component={CameraFlowScreen} />
+      <Tab.Screen
+        name="Camera"
+        component={CameraCaptureScreen}
+        options={{
+          tabBarButton: () => null, // 탭 바 완전히 숨김
+        }}
+      />
       <Tab.Screen name="Voice" component={VoiceFlowScreen} />
-      <Tab.Screen name="Recipe" component={RecipeBoardScreen} />
-      <Tab.Screen name="Receipt" component={CameraFlowScreen} />
+      <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
+      <Tab.Screen name="Receipt" component={ReceiptSelectionScreen} />
       <Tab.Screen name="Map" component={MapFlowScreen} />
+
+      {/* 카메라 플로우 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="IngredientResult"
+        component={IngredientResultScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="SaveOption"
+        component={SaveOptionScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="RecipeFilter"
+        component={RecipeFilterScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="IngredientSelection"
+        component={IngredientSelectionScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="RecommendedRecipes"
+        component={RecommendedRecipesScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="RecipeDetail"
+        component={RecipeDetailScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
+      {/* 레시피 플로우 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="IngredientInput"
+        component={IngredientInputScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
+      {/* 영수증 플로우 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="Gallery"
+        component={GalleryScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -114,24 +197,32 @@ function App() {
   };
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={getInitialRouteName()}
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-        }}>
-        <Stack.Screen name="TestJunseo" component={TestJunseo} />
-        {/* 온보딩 */}
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        {/* 인증 화면들 */}
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="FindAccount" component={FindAccountScreen} />
-        {/* 메인 앱 (하단 탭 네비게이션) */}
-        <Stack.Screen name="MainApp" component={MainTabNavigator} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName={getInitialRouteName()}
+          screenOptions={{
+            headerShown: false,
+            animation: 'fade',
+          }}>
+          {/* 온보딩 */}
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+
+          {/* 인증 화면들 */}
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="FindAccount" component={FindAccountScreen} />
+
+          {/* 메인 앱 (하단 탭 네비게이션) */}
+          <Stack.Screen name="MainApp" component={MainTabNavigator} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 
