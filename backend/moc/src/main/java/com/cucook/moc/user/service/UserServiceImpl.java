@@ -3,11 +3,21 @@ package com.cucook.moc.user.service;
 import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.cucook.moc.chat.dao.ChatParticipantDAO;
+import com.cucook.moc.common.EmailMaskingUtil;
+import com.cucook.moc.shopping.vo.ShoppingPostVO;
 import com.cucook.moc.user.dao.PasswordResetTokenDAO;
+import com.cucook.moc.user.dao.UserReviewDAO;
+import com.cucook.moc.user.dto.PublicProfileDTO;
+import com.cucook.moc.user.dto.UserProfileDTO;
+import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
+import com.cucook.moc.user.vo.UserReviewVO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +28,7 @@ import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
 import com.cucook.moc.user.dto.response.LoginResponseDTO;
 import com.cucook.moc.user.vo.UserVO;
 import com.cucook.moc.common.MailService;
+import com.cucook.moc.shopping.dao.ShoppingPostDAO;
 
 @Service
 @Transactional
@@ -27,15 +38,25 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final PasswordResetTokenDAO passwordResetTokenDAO;
+    private final UserReviewDAO userReviewDAO;
+    private final ShoppingPostDAO shoppingPostDAO;
+    private final ChatParticipantDAO chatParticipantDAO;
 
     public UserServiceImpl(UserDAO userDAO,
                            PasswordResetTokenDAO passwordResetTokenDAO,
                            BCryptPasswordEncoder passwordEncoder,
-                           MailService mailService) {
+                           MailService mailService,
+                           UserReviewDAO userReviewDAO,
+                           ShoppingPostDAO shoppingPostDAO,
+                           ChatParticipantDAO chatParticipantDAO) {
         this.userDAO = userDAO;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
         this.passwordResetTokenDAO = passwordResetTokenDAO;
+
+        this.userReviewDAO = userReviewDAO;
+        this.shoppingPostDAO = shoppingPostDAO;
+        this.chatParticipantDAO = chatParticipantDAO;
     }
 
     @Override
@@ -63,13 +84,13 @@ public class UserServiceImpl implements UserService {
                 .userNickname(request.getUserNickname())
                 .userBirthDate(request.getUserBirthDate())
                 .userPassword(passwordEncoder.encode(request.getUserPassword()))
-                .userType("USER")
+                .userType("N")
                 .userStatus("ACTIVE")
                 .reportedCnt(0)
                 .shoppingCompletedCnt(0)
                 .ratingScore(0.0)
                 .trustScore(0.0)
-                .createdDate(LocalDateTime.now())
+                .createdDate(new Timestamp(System.currentTimeMillis()))
                 .build();
 
         // 4. DB 저장
@@ -121,10 +142,15 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("일치하는 사용자가 없습니다.");
         }
 
+        // 이메일 마스킹 적용
+        String maskedEmail = EmailMaskingUtil.maskEmail(user.getUserEmail());
+
         return FindEmailResponseDTO.builder()
-                .userEmail(user.getUserEmail())
+                // DTO 필드명이 userEmail이라도, 값은 마스킹된 문자열을 내려주면 됨
+                .userEmail(maskedEmail)
                 .build();
     }
+
 
     @Override
     public void sendPasswordResetLink(FindPasswordRequestDTO request) {
@@ -145,13 +171,14 @@ public class UserServiceImpl implements UserService {
 
         // 3) 토큰 해시화 후 DB 저장 (유효시간 예: 1시간)
         String hashedToken = hashToken(resetToken);
+        long now = System.currentTimeMillis();
 
         PasswordResetTokenVO tokenVO = PasswordResetTokenVO.builder()
                 .userId(user.getUserId())
                 .resetToken(hashedToken)
-                .expireDate(LocalDateTime.now().plusHours(1))
+                .expireDate(new Timestamp(now + 3600_000L))         // 1시간 후
+                .createdDate(new Timestamp(now))
                 .usedYn("N")
-                .createdDate(LocalDateTime.now())
                 .build();
 
         passwordResetTokenDAO.insertToken(tokenVO);
@@ -229,7 +256,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 4) 토큰 만료시간 체크
-        if (tokenVO.getExpireDate().isBefore(LocalDateTime.now())) {
+        if (tokenVO.getExpireDate().before(new Timestamp(System.currentTimeMillis()))) {
             throw new IllegalArgumentException("만료된 토큰입니다.");
         }
 
@@ -255,5 +282,82 @@ public class UserServiceImpl implements UserService {
                 request.getDeviceOs(),
                 request.getDeviceVersion()
         );
+    }
+    // 유저 프로필 정보
+    @Transactional(readOnly = true)
+    public UserProfileDTO getMyProfile(Long userId) {
+        UserVO user = userDAO.selectById(userId);
+
+        if (user == null) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setUserId(user.getUserId());
+        dto.setUserEmail(user.getUserEmail());         // 전체 이메일
+        dto.setUserNickname(user.getUserNickname());   // 닉네임
+
+        return dto;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PublicProfileDTO getPublicProfile(Long targetUserId) {
+
+        // 1) 유저 조회
+        UserVO user = userDAO.selectById(targetUserId);
+        if (user == null) {
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        }
+
+        // 2) 공개용 프로필 DTO 구성 (닉네임 + 평점 + 장보기 완료 횟수)
+        return PublicProfileDTO.builder()
+                .userId(user.getUserId())
+                .userNickname(user.getUserNickname())
+                .ratingScore(user.getRatingScore())
+                .shoppingCompletedCnt(user.getShoppingCompletedCnt())
+                .build();
+    }
+
+    // 같이 장보기 유저 리뷰
+    @Override
+    public void writeReview(Long writerUserId, Long targetUserId, UserReviewCreateRequestDTO request) {
+
+    // 1) 게시글 상태 DONE인지 확인
+    ShoppingPostVO post = shoppingPostDAO.selectById(request.getShoppingPostId());
+    if (!"DONE".equalsIgnoreCase(post.getStatusCd())) {
+        throw new IllegalStateException("완료된 장보기에만 리뷰 작성 가능합니다.");
+    }
+
+    // 2) 참여자 여부 확인
+    boolean participated = chatParticipantDAO.existsByPostAndUser(request.getShoppingPostId(), writerUserId);
+    if (!participated) {
+        throw new IllegalStateException("참여하지 않은 장보기에 리뷰 작성 불가");
+    }
+
+    // 3) 중복 리뷰 여부
+    int exists = userReviewDAO.countExisting(request.getShoppingPostId(), writerUserId, targetUserId);
+    if (exists > 0) {
+        throw new IllegalStateException("이미 리뷰를 작성했습니다.");
+    }
+
+    // 4) INSERT
+    UserReviewVO vo = UserReviewVO.builder()
+            .targetUserId(targetUserId)
+            .writerUserId(writerUserId)
+            .shoppingPostId(request.getShoppingPostId())
+            .rating(request.getRating())
+            .comment(request.getComment())
+            .build();
+    userReviewDAO.insert(vo);
+
+    // 5) 평점 업데이트
+    userDAO.updateRatingScoreByAvg(targetUserId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserReviewDTO> getUserReviews(Long targetUserId) {
+        return userReviewDAO.selectReviewsForUser(targetUserId);
     }
 }

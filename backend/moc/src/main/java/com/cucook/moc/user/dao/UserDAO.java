@@ -1,5 +1,6 @@
 package com.cucook.moc.user.dao;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -40,4 +41,10 @@ public interface UserDAO {
                         @Param("fcmToken") String fcmToken,
                         @Param("deviceOs") String deviceOs,
                         @Param("deviceVersion") String deviceVersion);
+
+    // userId로 회원 한 명 조회 (마이페이지용)
+    UserVO selectById(@Param("userId") Long userId);
+    
+    // 같이 장보기에 대한 유저 평점 평균
+    void updateRatingScoreByAvg(@Param("targetUserId") Long targetUserId);
 }
