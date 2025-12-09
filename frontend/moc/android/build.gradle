@@ -10,11 +10,12 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://repository.map.naver.com/archive/maven") }
     }
     dependencies {
         classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     }
 }
 

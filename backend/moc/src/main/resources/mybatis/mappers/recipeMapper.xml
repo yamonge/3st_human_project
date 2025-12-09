@@ -23,7 +23,6 @@
         like_cnt,
         report_cnt,
         created_id
-        -- created_date, view_cnt, like_cnt, report_cnt, is_public, is_deleted는 DEFAULT 값 사용 가능
         ) VALUES (
         #{recipeId},
         #{ownerUserId},
