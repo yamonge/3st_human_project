@@ -34,6 +34,12 @@ export const colors = {
   success: '#34C759',
   warning: '#FF9500',
 
+  // Map (지도 화면 전용)
+  mapSearchBorder: '#D2D6DB',
+  mapPlaceholder: '#9DA4AE',
+  mapBadgeRed: '#FB2C36',
+  mapIconBlue: '#155DFC',
+
   // Opacity
   blackOverlay: 'rgba(0, 0, 0, 0.5)',
   whiteOverlay: 'rgba(255, 255, 255, 0.8)',
