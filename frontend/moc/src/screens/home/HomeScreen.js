@@ -3,6 +3,7 @@ import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
 import {homeStyles} from '../../styles/screens/home/homeStyles';
+import RecipeLikeTestScreen from '../RecipeLikeTestScreen';
 
 /**
  * 메인 홈 화면
@@ -118,6 +119,7 @@ export default function HomeScreen({navigation}) {
             <Text style={homeStyles.subGreeting}>
               My Own Chef에 어서오세요!
             </Text>
+            <RecipeLikeTestScreen />
           </View>
 
           {/* 메뉴 섹션 */}

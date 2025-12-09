@@ -13,7 +13,7 @@ import {
 import axios from 'axios'; // axios 임포트
 
 // ⭐ 백엔드 API 기본 URL (Android 에뮬레이터용)
-const API_BASE_URL = 'http://192.168.1.49:8090/api/v1/users'; // {userId}가 포함된 상위 경로
+const API_BASE_URL = 'http://192.168.35.21:8090/api/v1/users'; // {userId}가 포함된 상위 경로
 
 const UserIngredientTestScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
