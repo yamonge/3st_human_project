@@ -6,6 +6,7 @@ import com.cucook.moc.shopping.dto.ShoppingPostSummaryDTO;
 import com.cucook.moc.shopping.service.ShoppingPostJoinService;
 import com.cucook.moc.shopping.service.ShoppingPostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,15 +27,29 @@ public class ShoppingPostController {
         return shoppingPostService.createPost(userId, dto);
     }
 
+    /**
+     * 주변 게시글 목록 (맵 기준)
+     * GET /api/shopping/posts/nearby?lat=37.5&lng=127.0
+     */
     @GetMapping("/nearby")
-    public List<ShoppingPostSummaryDTO> getNearbyPosts(@RequestParam double lat,
-                                                       @RequestParam double lng) {
-        return shoppingPostService.getNearbyPosts(lat, lng);
+    public ResponseEntity<List<ShoppingPostSummaryDTO>> getNearbyPosts(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng
+    ) {
+        List<ShoppingPostSummaryDTO> list = shoppingPostService.getNearbyPosts(lat, lng);
+        return ResponseEntity.ok(list);
     }
 
+    /**
+     * 게시글 상세
+     * GET /api/shopping/posts/{postId}
+     */
     @GetMapping("/{postId}")
-    public ShoppingPostDetailDTO getPostDetail(@PathVariable Long postId) {
-        return shoppingPostService.getPostDetail(postId);
+    public ResponseEntity<ShoppingPostDetailDTO> getPostDetail(
+            @PathVariable("postId") Long postId
+    ) {
+        ShoppingPostDetailDTO detail = shoppingPostService.getPostDetail(postId);
+        return ResponseEntity.ok(detail);
     }
 
     @PostMapping("/{postId}/join")

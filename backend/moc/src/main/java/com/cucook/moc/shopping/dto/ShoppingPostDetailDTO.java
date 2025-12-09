@@ -3,8 +3,8 @@ package com.cucook.moc.shopping.dto;
 import lombok.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 
-// 상세화면
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,18 +14,27 @@ import java.sql.Timestamp;
 public class ShoppingPostDetailDTO {
 
     private Long shoppingPostId;
+
+    // 작성자
+    private Long writerUserId;
+    private String writerNickname;
+
+    // 장소
     private String placeName;
     private String placeAddress;
     private Double latitude;
     private Double longitude;
 
+    // 시간/인원/상태
     private Timestamp meetDatetime;
     private Integer minPersonCnt;
     private Integer maxPersonCnt;
     private Integer currentPersonCnt;
-    private String description;
     private String statusCd;
 
-    private String writerNickname;   // 상세에서도 닉네임만
-}
+    // 내용
+    private String description;
 
+    // 카테고리 목록 (예: "마트", "이벤트" 등)
+    private List<String> categoryCodes;
+}

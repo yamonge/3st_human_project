@@ -56,18 +56,28 @@
         )
     </insert>
 
-    <!-- 카테고리 매핑 (테이블명 가정: tb_shopping_post_category) -->
+    <!-- 게시글 카테고리 저장 -->
     <insert id="insertPostCategory">
+        <selectKey keyProperty="shoppingPostCategoryId"
+                   resultType="long"
+                   order="BEFORE">
+            SELECT seq_tb_shopping_post_category.NEXTVAL
+            FROM dual
+        </selectKey>
+
         INSERT INTO tb_shopping_post_category (
-            shopping_post_id,
-            category_cd,
-            created_date
+        shopping_post_category_id,
+        shopping_post_id,
+        category_cd,
+        created_date
         ) VALUES (
-            #{postId},
-            #{categoryCd},
-            SYSTIMESTAMP
+        #{shoppingPostCategoryId},
+        #{shoppingPostId},
+        #{categoryCode},
+        SYSTIMESTAMP
         )
     </insert>
+
 
     <!-- 주변 게시글 요약 조회 -->
     <resultMap id="ShoppingPostSummaryMap" type="com.cucook.moc.shopping.dto.ShoppingPostSummaryDTO">

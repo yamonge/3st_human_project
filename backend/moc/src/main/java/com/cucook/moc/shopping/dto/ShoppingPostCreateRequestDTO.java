@@ -2,6 +2,7 @@ package com.cucook.moc.shopping.dto;
 
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 /**
@@ -18,9 +19,7 @@ import java.util.List;
 public class ShoppingPostCreateRequestDTO {
 
     // ===== 장소 정보 (맵 API에서 받아온 값) =====
-    private String mapProviderCd;     // 예: "NAVER"
-    private String placeExternalId;   // 네이버 placeId 등
-    private String placeName;         // 마트 이름
+    private String placeName;         // 장소명
     private String placeAddress;      // 주소
     private Double latitude;          // 위도
     private Double longitude;         // 경도
@@ -30,15 +29,15 @@ public class ShoppingPostCreateRequestDTO {
      * 만나는 일시 (ISO-8601 문자열)
      * 예) "2025-12-08T20:30:00"
      */
-    private String meetDateTime;
+    private Timestamp meetDateTime;
 
     private Integer minPersonCnt;     // 최소 인원(없으면 기본 2)
     private Integer maxPersonCnt;     // 최대 인원(2~10)
-    private String description;       // 한줄 설명/비고
+    private String description;       // 설명/비고
 
     /**
      * 카테고리 코드 목록
-     * 예) ["MART", "DISCOUNT", ...]
+     * 예) ["MART", "DISCOUNT", ...] (필요 없다면 나중에 제거 가능)
      */
     private List<String> categoryCodes;
 }

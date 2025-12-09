@@ -3,9 +3,7 @@ package com.cucook.moc.shopping.dto;
 import lombok.*;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
-// 지도 목록 요약
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,14 +13,20 @@ import java.time.LocalDateTime;
 public class ShoppingPostSummaryDTO {
 
     private Long shoppingPostId;
+
+    // 장소
     private String placeName;
+    private String placeAddress;
     private Double latitude;
     private Double longitude;
 
+    // 시간/인원/상태
     private Timestamp meetDatetime;
-    private Integer maxPersonCnt;
     private Integer currentPersonCnt;
+    private Integer maxPersonCnt;
     private String statusCd;
 
-    private String writerNickname;   // 글쓴이 닉네임만 (이메일 X)
+    // 작성자 정보(필요시)
+    private Long writerUserId;
+    private String writerNickname;
 }
