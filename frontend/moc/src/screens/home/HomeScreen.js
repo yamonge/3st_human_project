@@ -52,6 +52,14 @@ export default function HomeScreen({navigation}) {
     },
   ]);
 
+  // 같이 장보기 이동
+  const handleShoppingPress = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{name: 'Map'}],
+    });
+  };
+
   // 메뉴 카드 클릭 핸들러
   const handleMenuPress = type => {
     switch (type) {
@@ -73,9 +81,8 @@ export default function HomeScreen({navigation}) {
         // navigation.navigate('RecipeBoard');
         break;
       case 'shopping':
-        // TODO: 지도 플로우 이동
-        Alert.alert('같이 장보기', '지도 화면으로 이동합니다.');
-        // navigation.navigate('Map');
+        // 지도 플로우 이동 (권한 체크)
+        handleShoppingPress();
         break;
       default:
         break;

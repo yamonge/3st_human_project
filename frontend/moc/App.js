@@ -34,6 +34,9 @@ import IngredientInputScreen from './src/screens/recipe/IngredientInputScreen';
 import ReceiptSelectionScreen from './src/screens/receipt/ReceiptSelectionScreen';
 import GalleryScreen from './src/screens/receipt/GalleryScreen';
 
+// 지도 플로우
+import MapMainScreen from './src/screens/map/MapMainScreen';
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -86,7 +89,7 @@ function MainTabNavigator() {
       <Tab.Screen name="Voice" component={VoiceFlowScreen} />
       <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
       <Tab.Screen name="Receipt" component={ReceiptSelectionScreen} />
-      <Tab.Screen name="Map" component={MapFlowScreen} />
+      <Tab.Screen name="Map" component={MapMainScreen} />
 
       {/* 카메라 플로우 서브 화면들 (탭바 숨김) */}
       <Tab.Screen
