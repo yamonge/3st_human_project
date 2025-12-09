@@ -17,7 +17,7 @@ const testRecipeGeneration = async (
   filterCookTime,
   userId,
 ) => {
-  const API_URL = 'http://192.168.35.21:8090/api/v1/recipes/recommend'; // 엔드포인트 수정!
+  const API_URL = 'http://192.168.1.49:8090/api/v1/recipes/recommend'; // 엔드포인트 수정!
 
   // 3. 백엔드 서비스의 RecipeGenerationRequestDTO에 맞게 데이터 전송
   const requestBody = {
