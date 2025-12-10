@@ -1,5 +1,6 @@
 package com.cucook.moc.user.dto.request;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 import lombok.*;
@@ -19,5 +20,5 @@ public class SignupRequestDTO{
     private String userNickname;
     private String userPassword;
     private String passwordConfirm;  // 비밀번호 확인
-    private LocalDate userBirthDate; // 생년월일 (yyyy-MM-dd)
+    private Timestamp userBirthDate; // 생년월일 (yyyy-MM-dd)
 }

@@ -1,4 +1,4 @@
-package com.moc.map.controller;
+package com.cucook.moc.map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

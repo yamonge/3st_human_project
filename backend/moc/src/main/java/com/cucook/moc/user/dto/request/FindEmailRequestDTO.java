@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 
 
@@ -17,5 +18,5 @@ import java.time.LocalDate;
 @ToString
 public class FindEmailRequestDTO {
     private String userName;
-    private LocalDate userBirthDate;
+    private Timestamp userBirthDate;
 }

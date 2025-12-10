@@ -2,14 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cucook.moc.user.dao.UserIngredientDAO">
 
-    <resultMap id="UserIngredientResultMap" type="com.cucook.moc.user.vo.UserIngredientVO">
+    <resultMap id="UserIngredientResultMap" type="UserIngredientVO">
         <id     property="userIngredientId" column="user_ingredient_id"/>
         <result property="userId"           column="user_id"/>
         <result property="ingredientName"   column="ingredient_name"/>
         <result property="quantityDesc"     column="quantity_desc"/>
         <result property="categoryCd"       column="category_cd"/>
         <result property="usedFlag"         column="used_flag"/>
-        <result property="expiredDate"      column="expired_date"/>
         <result property="memo"             column="memo"/>
         <result property="createdId"        column="created_id"/>
         <result property="createdDate"      column="created_date"/>
@@ -29,7 +28,6 @@
         quantity_desc,
         category_cd,
         used_flag,
-        expired_date,
         memo,
         created_id
         ) VALUES (
@@ -39,7 +37,6 @@
         #{quantityDesc},
         #{categoryCd},
         NVL(#{usedFlag}, 'N'), -- NULL일 경우 'N' 기본값
-        #{expiredDate},
         #{memo},
         #{createdId}
         )
@@ -53,7 +50,6 @@
             quantity_desc,
             category_cd,
             used_flag,
-            expired_date,
             memo,
             created_id,
             created_date,
@@ -64,7 +60,7 @@
         WHERE
             user_id = #{userId}
         ORDER BY
-            expired_date ASC, ingredient_name ASC -- 유통기한 임박 순, 이름 순 정렬
+            ingredient_name ASC -- 이름 순 정렬
     </select>
 
     <select id="selectUserIngredientById" parameterType="long" resultMap="UserIngredientResultMap">
@@ -75,7 +71,6 @@
             quantity_desc,
             category_cd,
             used_flag,
-            expired_date,
             memo,
             created_id,
             created_date,
@@ -101,9 +96,6 @@
             </if>
             <if test="usedFlag != null and usedFlag != ''">
                 used_flag = #{usedFlag},
-            </if>
-            <if test="expiredDate != null">
-                expired_date = #{expiredDate},
             </if>
             <if test="memo != null">
                 memo = #{memo},

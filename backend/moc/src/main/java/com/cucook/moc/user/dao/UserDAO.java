@@ -1,7 +1,6 @@
 package com.cucook.moc.user.dao;
 
 import java.sql.Timestamp;
-import java.time.LocalDate;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -22,12 +21,12 @@ public interface UserDAO {
 
     // 이름 + 생년월일로 아이디 찾기
     UserVO findByNameAndBirthDate(@Param("userName") String userName,
-                                  @Param("userBirthDate") LocalDate userBirthDate);
+                                  @Param("userBirthDate") Timestamp userBirthDate);
 
     // 비밀번호 찾기 (이메일 + 이름 + 생년월일)
     UserVO findForPasswordReset(@Param("userEmail") String userEmail,
                                 @Param("userName") String userName,
-                                @Param("userBirthDate") LocalDate userBirthDate);
+                                @Param("userBirthDate") Timestamp userBirthDate);
 
     // 비밀번호 변경
     void updatePassword(@Param("userId") Long userId,

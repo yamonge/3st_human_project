@@ -19,6 +19,9 @@ import java.util.List;
 public class ShoppingChatMessageService {
 
     @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
     private ChatMessageDAO chatMessageDAO;
 
     @Autowired
@@ -64,10 +67,9 @@ public class ShoppingChatMessageService {
         dto.setSenderNickname(senderNickname);
         dto.setSentDate(messageVO.getSentDate());
 
-//        messagingTemplate.convertAndSend(
-//                "/sub/shopping/chat/room/" + dto.getChatRoomId(),
-//                dto
-//        );
+        // /sub/shopping/chat/room/{chatRoomId} 로 브로드캐스트
+        String destination = "/sub/shopping/chat/room/" + dto.getChatRoomId();
+        messagingTemplate.convertAndSend(destination, dto);
     }
     
     // 과거 메시지 조회
