@@ -345,9 +345,9 @@ public class UserServiceImpl implements UserService {
             .writerUserId(writerUserId)
             .shoppingPostId(request.getShoppingPostId())
             .rating(request.getRating())
-            .comment(request.getComment())
+            .userReviewComment(request.getComment())
             .build();
-    userReviewDAO.insert(vo);
+    userReviewDAO.insertUserReview(vo);
 
     // 5) 평점 업데이트
     userDAO.updateRatingScoreByAvg(targetUserId);

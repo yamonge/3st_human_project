@@ -67,7 +67,7 @@ public class UserReviewServiceImpl implements UserReviewService {
 
         // 3. DB에 저장
         int insertedCount = userReviewDAO.insertUserReview(vo);
-        if (insertedCount == 0 || vo.getReviewId() == null) {
+        if (insertedCount == 0 || vo.getUserReviewId() == null) {
             throw new RuntimeException("사용자 후기 저장에 실패했습니다.");
         }
 
