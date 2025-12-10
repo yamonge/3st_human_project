@@ -18,6 +18,6 @@ public class UserReviewVO {
     private Long writerUserId;
     private Long shoppingPostId;
     private Integer rating;
-    private String comment;
+    private String userReviewComment;
     private Timestamp createdDate;
 }

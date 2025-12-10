@@ -1,5 +1,6 @@
 package com.cucook.moc.user.dao; // ⭐ user 패키지 아래에 dao를 생성
 
+import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.vo.UserReviewVO; // VO 임포트
 import org.apache.ibatis.annotations.Mapper; // `@Mapper` 어노테이션
 import org.apache.ibatis.annotations.Param; // 복수 파라미터 매핑을 위해 `@Param` 사용
@@ -85,4 +86,14 @@ public interface UserReviewDAO {
      * @return 삭제된 레코드 수
      */
     int deleteUserReview(@Param("reviewId") Long reviewId, @Param("writerUserId") Long writerUserId);
+
+    void insert(UserReviewVO vo);
+
+    // 이미 작성된 리뷰가 있는지
+    int countExisting(@Param("shoppingPostId") Long shoppingPostId,
+                      @Param("writerUserId") Long writerUserId,
+                      @Param("targetUserId") Long targetUserId);
+
+    // 특정 유저(타겟)를 대상으로 한 리뷰 목록
+    List<UserReviewDTO> selectReviewsForUser(@Param("targetUserId") Long targetUserId);
 }

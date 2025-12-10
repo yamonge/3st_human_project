@@ -27,7 +27,7 @@ public class UserReviewResponseDTO {
             ReviewedUserDetailDTO writerDetailDTO) {
 
         UserReviewResponseDTO dto = new UserReviewResponseDTO();
-        dto.setReviewId(reviewVO.getReviewId());
+        dto.setReviewId(reviewVO.getUserReviewId());
         dto.setTargetUserId(reviewVO.getTargetUserId());
         dto.setWriterUserId(reviewVO.getWriterUserId());
         dto.setShoppingPostId(reviewVO.getShoppingPostId());
