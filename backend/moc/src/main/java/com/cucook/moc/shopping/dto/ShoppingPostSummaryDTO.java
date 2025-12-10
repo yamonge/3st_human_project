@@ -22,7 +22,7 @@ public class ShoppingPostSummaryDTO {
 
     // 시간/인원/상태
     private Timestamp meetDatetime;
-    private Integer minPersonCnt;
+//    private Integer minPersonCnt;
     private Integer maxPersonCnt;
     private Integer currentPersonCnt;
     private String statusCd;

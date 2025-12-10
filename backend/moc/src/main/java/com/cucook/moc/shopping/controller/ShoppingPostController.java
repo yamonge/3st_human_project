@@ -22,9 +22,10 @@ public class ShoppingPostController {
     private ShoppingPostJoinService shoppingPostJoinService;
 
     @PostMapping
-    public Long createPost(@RequestParam("userId") Long userId,
-                           @RequestBody ShoppingPostCreateRequestDTO dto) {
-        return shoppingPostService.createPost(userId, dto);
+    public ResponseEntity<Long> createPost(@RequestParam("userId") Long userId,
+                                           @RequestBody ShoppingPostCreateRequestDTO dto) {
+        Long postId = shoppingPostService.createPost(userId, dto);
+        return ResponseEntity.ok(postId);
     }
 
     /**
@@ -51,11 +52,15 @@ public class ShoppingPostController {
         ShoppingPostDetailDTO detail = shoppingPostService.getPostDetail(postId);
         return ResponseEntity.ok(detail);
     }
-
+    /**
+     * 게시글 채팅 참여
+     * GET /api/shopping/posts/{postId}/join
+     */
     @PostMapping("/{postId}/join")
-    public void joinPost(@PathVariable Long postId,
-                         @RequestParam("userId") Long userId) {
-        shoppingPostJoinService.joinPost(postId, userId);
+    public ResponseEntity<Long> joinPost(@PathVariable Long postId,
+                                         @RequestParam("userId") Long userId) {
+        Long chatRoomId = shoppingPostJoinService.joinPost(postId, userId);
+        return ResponseEntity.ok(chatRoomId);
     }
 
     /**

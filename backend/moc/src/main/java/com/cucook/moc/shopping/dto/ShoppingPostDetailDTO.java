@@ -5,6 +5,7 @@ import lombok.*;
 import java.sql.Timestamp;
 import java.util.List;
 
+// 게시글 상세보기
 @Getter
 @Setter
 @NoArgsConstructor

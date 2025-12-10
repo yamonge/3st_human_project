@@ -30,13 +30,12 @@ public class ShoppingPostCreateRequestDTO {
      * 예) "2025-12-08T20:30:00"
      */
     private Timestamp meetDateTime;
-
     private Integer minPersonCnt;     // 최소 인원(없으면 기본 2)
     private Integer maxPersonCnt;     // 최대 인원(2~10)
     private String description;       // 설명/비고
 
     /**
-     * 카테고리 코드 목록
+     * 택한 재료 카테고리 코드들 (ING_CATEGORY)
      * 예) ["MART", "DISCOUNT", ...] (필요 없다면 나중에 제거 가능)
      */
     private List<String> categoryCodes;

@@ -33,7 +33,7 @@ public class ShoppingPostService {
             throw new IllegalArgumentException("최대 인원은 2명 이상이어야 합니다.");
         }
 
-        // 1) meetDateTime 파싱
+        // 1) meetDateTime
         Timestamp meetTs = dto.getMeetDateTime();
         if (meetTs == null) {
             throw new IllegalArgumentException("meetDateTime은 필수입니다. (Timestamp 타입)");
@@ -59,7 +59,7 @@ public class ShoppingPostService {
         shoppingPostDAO.insertPost(postVO);
         Long postId = postVO.getShoppingPostId();
 
-        // 카테고리 INSERT
+        // 카테고리 저장 INSERT
         if (dto.getCategoryCodes() != null) {
             for (String cd : dto.getCategoryCodes()) {
                 shoppingPostDAO.insertPostCategory(postId, cd);
@@ -79,9 +79,12 @@ public class ShoppingPostService {
     public List<ShoppingPostSummaryDTO> getNearbyPosts(double lat, double lng) {
         double latDiff = 0.03;
         double lngDiff = 0.03;
-        return shoppingPostDAO.selectNearbyPosts(
-            lat - latDiff, lat + latDiff,
-            lng - lngDiff, lng + lngDiff);
+        double latMin = lat - latDiff;
+        double latMax = lat + latDiff;
+        double lngMin = lng - lngDiff;
+        double lngMax = lng + lngDiff;
+
+        return shoppingPostDAO.selectNearbyPosts(latMin, latMax, lngMin, lngMax);
     }
 
     /**
@@ -91,14 +94,21 @@ public class ShoppingPostService {
     public List<ShoppingPostSummaryDTO> getPostsForPlace(double lat, double lng) {
         double latDiff = 0.001; // 대략 100m 정도 박스
         double lngDiff = 0.001;
-        return shoppingPostDAO.selectPostsByPlace(
-                lat - latDiff, lat + latDiff,
-                lng - lngDiff, lng + lngDiff
-        );
+        double latMin = lat - latDiff;
+        double latMax = lat + latDiff;
+        double lngMin = lng - lngDiff;
+        double lngMax = lng + lngDiff;
+
+        return shoppingPostDAO.selectPostsByPlace(latMin, latMax, lngMin, lngMax);
     }
-    
+
     @Transactional(readOnly = true)
     public ShoppingPostDetailDTO getPostDetail(Long postId) {
         return shoppingPostDAO.selectPostDetail(postId);
+    }
+
+    @Transactional(readOnly = true)
+    public ShoppingPostVO getPost(Long postId) {
+        return shoppingPostDAO.selectById(postId);
     }
 }
