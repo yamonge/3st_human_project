@@ -201,10 +201,11 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         }
 
         List<UserIngredientResponseDTO> addedIngredients = new ArrayList<>();
+
         for (String ingredientName : ingredientNames) {
             UserIngredientRequestDTO request = new UserIngredientRequestDTO();
             request.setIngredientName(ingredientName);
-            request.setQuantityDesc("1개"); // 기본 수량 (영수증에서 정확한 수량 파악이 어려울 경우)
+            request.setQuantityDesc("1개");  // 기본 수량
             request.setUsedFlag("N");
             // 기본 유통기한 (예시)
             request.setMemo("영수증 인식으로 추가됨");

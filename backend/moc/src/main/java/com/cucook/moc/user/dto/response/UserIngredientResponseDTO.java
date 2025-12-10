@@ -1,5 +1,6 @@
 package com.cucook.moc.user.dto.response;
 
+import com.cucook.moc.user.vo.UserIngredientVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter; // 날짜 포맷팅을 위해 추가
+import java.time.temporal.ChronoUnit;
 
 @Data
 @NoArgsConstructor
@@ -25,7 +27,7 @@ public class UserIngredientResponseDTO {
     private long daysUntilExpired;  // ⭐ UI 로직용: 남은 유통기한 일수
 
     // UserIngredientVO를 기반으로 DTO를 생성하는 편의 메서드 (선택 사항)
-    public static UserIngredientResponseDTO from(com.cucook.moc.user.vo.UserIngredientVO vo) {
+    public static UserIngredientResponseDTO from(UserIngredientVO vo) {
         UserIngredientResponseDTO dto = new UserIngredientResponseDTO();
         dto.setUserIngredientId(vo.getUserIngredientId());
         dto.setUserId(vo.getUserId());
