@@ -14,7 +14,7 @@ import lombok.*;
 @NoArgsConstructor
 @ToString
 public class SignupRequestDTO{
-
+    private String fcmToken;
     private String userEmail;        // 이메일
     private String userName;
     private String userNickname;
