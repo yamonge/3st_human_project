@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 @Service
@@ -22,36 +23,43 @@ public class ShoppingPostService {
     @Autowired
     private ShoppingChatRoomService shoppingChatRoomService;
 
+    /**
+     * 글 생성 + 카테고리 + 채팅방 생성
+     */
     public Long createPost(Long writerUserId, ShoppingPostCreateRequestDTO dto) {
 
-        if (dto.getMeetDateTime() == null) {
-            throw new IllegalArgumentException("meetDateTime은 필수입니다.(Timestamp)");
-        }
+
         if (dto.getMaxPersonCnt() == null || dto.getMaxPersonCnt() < 2) {
             throw new IllegalArgumentException("최대 인원은 2명 이상이어야 합니다.");
         }
 
-        ShoppingPostVO postVO = ShoppingPostVO.builder()
-                .writerUserId(writerUserId)
-                .meetDatetime(dto.getMeetDateTime())
-                .minPersonCnt(
-                        dto.getMinPersonCnt() != null ? dto.getMinPersonCnt() : 2
-                )
-                .maxPersonCnt(dto.getMaxPersonCnt())
-                .currentPersonCnt(1) // 작성자 포함
-                .description(dto.getDescription())
-                .statusCd("OPEN")
-                .placeName(dto.getPlaceName())
-                .placeAddress(dto.getPlaceAddress())
-                .latitude(dto.getLatitude())
-                .longitude(dto.getLongitude())
-                .build();
+        // 1) meetDateTime 파싱
+        Timestamp meetTs = dto.getMeetDateTime();
+        if (meetTs == null) {
+            throw new IllegalArgumentException("meetDateTime은 필수입니다. (Timestamp 타입)");
+        }
 
-        // 1) 게시글 INSERT
+
+        // 2) 게시글 VO 구성
+        ShoppingPostVO postVO = new ShoppingPostVO();
+        postVO.setWriterUserId(writerUserId);
+        postVO.setMeetDatetime(meetTs);
+        postVO.setMinPersonCnt(dto.getMinPersonCnt() != null ? dto.getMinPersonCnt() : 2);
+        postVO.setMaxPersonCnt(dto.getMaxPersonCnt());
+        postVO.setCurrentPersonCnt(1); // 작성자 본인
+        postVO.setDescription(dto.getDescription());
+        postVO.setStatusCd("OPEN");
+
+        postVO.setPlaceName(dto.getPlaceName());
+        postVO.setPlaceAddress(dto.getPlaceAddress());
+        postVO.setLatitude(dto.getLatitude());
+        postVO.setLongitude(dto.getLongitude());
+
+        // 게시글 INSERT
         shoppingPostDAO.insertPost(postVO);
         Long postId = postVO.getShoppingPostId();
 
-        // 2) 카테고리 INSERT (있으면)
+        // 카테고리 INSERT
         if (dto.getCategoryCodes() != null) {
             for (String cd : dto.getCategoryCodes()) {
                 shoppingPostDAO.insertPostCategory(postId, cd);
@@ -64,13 +72,31 @@ public class ShoppingPostService {
         return postId;
     }
 
+    /**
+     * 현재 위치 기준 주변 게시글
+     */
     @Transactional(readOnly = true)
     public List<ShoppingPostSummaryDTO> getNearbyPosts(double lat, double lng) {
         double latDiff = 0.03;
         double lngDiff = 0.03;
-        return shoppingPostDAO.selectNearbyPosts(lat, lng, latDiff, lngDiff);
+        return shoppingPostDAO.selectNearbyPosts(
+            lat - latDiff, lat + latDiff,
+            lng - lngDiff, lng + lngDiff);
     }
 
+    /**
+     * 특정 마트(핀) 기준 게시글 목록
+     */
+    @Transactional(readOnly = true)
+    public List<ShoppingPostSummaryDTO> getPostsForPlace(double lat, double lng) {
+        double latDiff = 0.001; // 대략 100m 정도 박스
+        double lngDiff = 0.001;
+        return shoppingPostDAO.selectPostsByPlace(
+                lat - latDiff, lat + latDiff,
+                lng - lngDiff, lng + lngDiff
+        );
+    }
+    
     @Transactional(readOnly = true)
     public ShoppingPostDetailDTO getPostDetail(Long postId) {
         return shoppingPostDAO.selectPostDetail(postId);

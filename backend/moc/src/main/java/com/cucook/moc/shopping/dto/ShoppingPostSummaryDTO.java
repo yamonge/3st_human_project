@@ -22,11 +22,12 @@ public class ShoppingPostSummaryDTO {
 
     // 시간/인원/상태
     private Timestamp meetDatetime;
-    private Integer currentPersonCnt;
+    private Integer minPersonCnt;
     private Integer maxPersonCnt;
+    private Integer currentPersonCnt;
     private String statusCd;
 
-    // 작성자 정보(필요시)
+    // 작성자 정보
     private Long writerUserId;
     private String writerNickname;
 }

@@ -31,32 +31,37 @@
         </selectKey>
 
         INSERT INTO tb_shopping_post (
-        shopping_post_id,
-        place_id,
-        writer_user_id,
-        meet_datetime,
-        min_person_cnt,
-        max_person_cnt,
-        current_person_cnt,
-        description,
-        status_cd,
-        created_date
+            shopping_post_id,
+            writer_user_id,
+            meet_datetime,
+            min_person_cnt,
+            max_person_cnt,
+            current_person_cnt,
+            description,
+            status_cd,
+            place_name,
+            place_address,
+            latitude,
+            longitude,
+            created_date
         ) VALUES (
-        #{shoppingPostId},
-        #{placeId},
-        #{writerUserId},
-        #{meetDatetime},
-        #{minPersonCnt},
-        #{maxPersonCnt},
-        #{currentPersonCnt},
-        #{description},
-        #{statusCd},
-        #{createdId},
-        SYSTIMESTAMP
+            #{shoppingPostId},
+            #{writerUserId},
+            #{meetDatetime},
+            #{minPersonCnt},
+            #{maxPersonCnt},
+            #{currentPersonCnt},
+            #{description},
+            #{statusCd},
+            #{placeName},
+            #{placeAddress},
+            #{latitude},
+            #{longitude},
+            SYSTIMESTAMP
         )
     </insert>
 
-    <!-- 게시글 카테고리 저장 -->
+    <!-- 게시글 카테고리 INSERT -->
     <insert id="insertPostCategory">
         <selectKey keyProperty="shoppingPostCategoryId"
                    resultType="long"
@@ -66,15 +71,15 @@
         </selectKey>
 
         INSERT INTO tb_shopping_post_category (
-        shopping_post_category_id,
-        shopping_post_id,
-        category_cd,
-        created_date
+            shopping_post_category_id,
+            shopping_post_id,
+            category_cd,
+            created_date
         ) VALUES (
-        #{shoppingPostCategoryId},
-        #{shoppingPostId},
-        #{categoryCode},
-        SYSTIMESTAMP
+            #{shoppingPostCategoryId},
+            #{shoppingPostId},
+            #{categoryCode},
+            SYSTIMESTAMP
         )
     </insert>
 
@@ -95,25 +100,25 @@
     <select id="selectNearbyPosts"
             resultMap="ShoppingPostSummaryMap">
         SELECT
-            sp.shopping_post_id,
-            pl.place_name,
-            pl.latitude,
-            pl.longitude,
-            sp.meet_datetime,
-            sp.max_person_cnt,
-            sp.current_person_cnt,
-            sp.status_cd,
+            p.shopping_post_id,
+            p.place_name,
+            p.place_address,
+            p.latitude,
+            p.longitude,
+            p.meet_datetime,
+            p.min_person_cnt,
+            p.max_person_cnt,
+            p.current_person_cnt,
+            p.status_cd,
+            p.writer_user_id,
             u.user_nickname AS writer_nickname
-        FROM tb_shopping_post sp
-        JOIN tb_place pl
-          ON sp.place_id = pl.place_id
+        FROM tb_shopping_post p
         JOIN tb_user u
-          ON sp.writer_user_id = u.user_id
-        WHERE pl.latitude BETWEEN #{lat} - #{latDiff}
-                              AND #{lat} + #{latDiff}
-          AND pl.longitude BETWEEN #{lng} - #{lngDiff}
-                              AND #{lng} + #{lngDiff}
-        ORDER BY sp.meet_datetime ASC
+          ON p.writer_user_id = u.user_id
+        WHERE p.latitude  BETWEEN #{latMin} AND #{latMax}
+          AND p.longitude BETWEEN #{lngMin} AND #{lngMax}
+          AND p.status_cd = 'OPEN'
+        ORDER BY p.meet_datetime
     </select>
 
     <!-- 게시글 상세 조회 -->
@@ -132,28 +137,53 @@
         <result property="writerNickname"   column="writer_nickname"/>
     </resultMap>
 
-    <select id="selectPostDetail"
-            parameterType="long"
-            resultMap="ShoppingPostDetailMap">
+    <!-- 특정 마트(좌표) 기준 게시글 목록 -->
+    <select id="selectPostsByPlace"
+            resultMap="ShoppingPostSummaryMap">
         SELECT
-            sp.shopping_post_id,
-            pl.place_name,
-            pl.address,
-            pl.latitude,
-            pl.longitude,
-            sp.meet_datetime,
-            sp.min_person_cnt,
-            sp.max_person_cnt,
-            sp.current_person_cnt,
-            sp.description,
-            sp.status_cd,
+            p.shopping_post_id,
+            p.place_name,
+            p.place_address,
+            p.latitude,
+            p.longitude,
+            p.meet_datetime,
+            p.min_person_cnt,
+            p.max_person_cnt,
+            p.current_person_cnt,
+            p.status_cd,
+            p.writer_user_id,
             u.user_nickname AS writer_nickname
-        FROM tb_shopping_post sp
-        JOIN tb_place pl
-          ON sp.place_id = pl.place_id
+        FROM tb_shopping_post p
         JOIN tb_user u
-          ON sp.writer_user_id = u.user_id
-        WHERE sp.shopping_post_id = #{postId}
+          ON p.writer_user_id = u.user_id
+        WHERE p.latitude  BETWEEN #{latMin} AND #{latMax}
+          AND p.longitude BETWEEN #{lngMin} AND #{lngMax}
+          AND p.status_cd = 'OPEN'
+        ORDER BY p.meet_datetime
     </select>
+
+    <!-- 게시글 상세 (필요한 만큼만) -->
+    <select id="selectPostDetail"
+            resultType="com.cucook.moc.shopping.dto.ShoppingPostDetailDTO">
+        SELECT
+            p.shopping_post_id,
+            p.place_name,
+            p.place_address,
+            p.latitude,
+            p.longitude,
+            p.meet_datetime,
+            p.min_person_cnt,
+            p.max_person_cnt,
+            p.current_person_cnt,
+            p.status_cd,
+            p.description,
+            u.user_id       AS writer_user_id,
+            u.user_nickname AS writer_nickname
+        FROM tb_shopping_post p
+        JOIN tb_user u
+          ON p.writer_user_id = u.user_id
+        WHERE p.shopping_post_id = #{postId}
+    </select>
+
 
 </mapper>

@@ -27,6 +27,14 @@ public interface ShoppingPostDAO {
             @Param("latDiff") double latDiff,
             @Param("lngDiff") double lngDiff
     );
+    
+    // ✅ 특정 마트(좌표) 기준으로 글 목록 조회
+    List<ShoppingPostSummaryDTO> selectPostsByPlace(
+        @Param("latMin") double latMin,
+        @Param("latMax") double latMax,
+        @Param("lngMin") double lngMin,
+        @Param("lngMax") double lngMax
+    );
 
     // 상세보기
     ShoppingPostDetailDTO selectPostDetail(@Param("shoppingPostId") Long shoppingPostId);

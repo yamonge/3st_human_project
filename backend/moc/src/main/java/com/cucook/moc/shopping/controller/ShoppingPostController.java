@@ -57,4 +57,17 @@ public class ShoppingPostController {
                          @RequestParam("userId") Long userId) {
         shoppingPostJoinService.joinPost(postId, userId);
     }
+
+    /**
+     * 특정 마트(핀) 기준 게시글 목록
+     * GET /api/shopping-posts/place?lat=37.5&lng=127.0
+     */
+    @GetMapping("/place")
+    public ResponseEntity<List<ShoppingPostSummaryDTO>> getPostsByPlace(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng
+    ) {
+        List<ShoppingPostSummaryDTO> list = shoppingPostService.getPostsForPlace(lat, lng);
+        return ResponseEntity.ok(list);
+    }
 }
