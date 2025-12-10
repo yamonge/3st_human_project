@@ -13,7 +13,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 public class LoginRequestDTO {
-
+    private String fcmToken;
     private String userEmail;
     private String userPassword;
 }

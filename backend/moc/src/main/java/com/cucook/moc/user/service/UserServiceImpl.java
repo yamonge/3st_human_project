@@ -4,7 +4,6 @@ import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.cucook.moc.chat.dao.ChatParticipantDAO;
@@ -176,7 +175,6 @@ public class UserServiceImpl implements UserService {
         PasswordResetTokenVO tokenVO = PasswordResetTokenVO.builder()
                 .userId(user.getUserId())
                 .resetToken(hashedToken)
-                .expireDate(new Timestamp(now + 3600_000L))         // 1시간 후
                 .createdDate(new Timestamp(now))
                 .usedYn("N")
                 .build();

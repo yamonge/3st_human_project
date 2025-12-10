@@ -1,7 +1,5 @@
 package com.cucook.moc.shopping.service;
 
-import com.cucook.moc.place.dto.request.PlaceUpsertRequestDTO;
-import com.cucook.moc.place.service.PlaceService;
 import com.cucook.moc.shopping.dao.ShoppingPostDAO;
 import com.cucook.moc.shopping.dto.ShoppingPostCreateRequestDTO;
 import com.cucook.moc.shopping.dto.ShoppingPostDetailDTO;
@@ -13,15 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Transactional
 public class ShoppingPostService {
-
-    @Autowired
-    private PlaceService placeService;
 
     @Autowired
     private ShoppingPostDAO shoppingPostDAO;
@@ -30,84 +24,91 @@ public class ShoppingPostService {
     private ShoppingChatRoomService shoppingChatRoomService;
 
     /**
-     * 같이 장보기 게시글 생성 + 채팅방 1개 자동 생성
-     *
-     * @param writerUserId 작성자 user_id
-     * @param dto          프론트에서 넘어온 게시글 생성 요청
-     * @return 생성된 shopping_post_id
+     * 글 생성 + 카테고리 + 채팅방 생성
      */
     public Long createPost(Long writerUserId, ShoppingPostCreateRequestDTO dto) {
 
-        // 1) 장소 upsert (tb_place)
-        PlaceUpsertRequestDTO placeDto = new PlaceUpsertRequestDTO();
-        placeDto.setMapProviderCd(dto.getMapProviderCd());
-        placeDto.setPlaceExternalId(dto.getPlaceExternalId());
-        placeDto.setPlaceName(dto.getPlaceName());
-        placeDto.setAddress(dto.getPlaceAddress());
-        placeDto.setLatitude(dto.getLatitude());
-        placeDto.setLongitude(dto.getLongitude());
 
-        Long placeId = placeService.upsertPlace(placeDto);
-
-        // 2) meetDateTime 문자열 → Timestamp 변환
-        //    프론트에서 "2025-12-08T20:30:00" 형식으로 보낸다고 가정
-        LocalDateTime meetLdt = LocalDateTime.parse(dto.getMeetDateTime());
-        Timestamp meetTs = Timestamp.valueOf(meetLdt);
-
-        // 3) 게시글 VO 생성 (tb_shopping_post)
-        ShoppingPostVO postVO = new ShoppingPostVO();
-        postVO.setPlaceId(placeId);
-        postVO.setWriterUserId(writerUserId);
-        postVO.setMeetDatetime(meetTs);
-
-        // 최소 인원 기본값 2
-        if (dto.getMinPersonCnt() != null) {
-            postVO.setMinPersonCnt(dto.getMinPersonCnt());
-        } else {
-            postVO.setMinPersonCnt(2);
+        if (dto.getMaxPersonCnt() == null || dto.getMaxPersonCnt() < 2) {
+            throw new IllegalArgumentException("최대 인원은 2명 이상이어야 합니다.");
         }
 
+        // 1) meetDateTime
+        Timestamp meetTs = dto.getMeetDateTime();
+        if (meetTs == null) {
+            throw new IllegalArgumentException("meetDateTime은 필수입니다. (Timestamp 타입)");
+        }
+
+
+        // 2) 게시글 VO 구성
+        ShoppingPostVO postVO = new ShoppingPostVO();
+        postVO.setWriterUserId(writerUserId);
+        postVO.setMeetDatetime(meetTs);
+        postVO.setMinPersonCnt(dto.getMinPersonCnt() != null ? dto.getMinPersonCnt() : 2);
         postVO.setMaxPersonCnt(dto.getMaxPersonCnt());
-        postVO.setCurrentPersonCnt(1);      // 작성자 본인 1명
+        postVO.setCurrentPersonCnt(1); // 작성자 본인
         postVO.setDescription(dto.getDescription());
-        postVO.setStatusCd("OPEN");         // 기본 상태
+        postVO.setStatusCd("OPEN");
 
-        // 필요하면 createdId 쓸 수 있음 (원하면 주석 해제)
-        // postVO.setCreatedId(writerUserId);
+        postVO.setPlaceName(dto.getPlaceName());
+        postVO.setPlaceAddress(dto.getPlaceAddress());
+        postVO.setLatitude(dto.getLatitude());
+        postVO.setLongitude(dto.getLongitude());
 
-        // 4) 게시글 INSERT
+        // 게시글 INSERT
         shoppingPostDAO.insertPost(postVO);
         Long postId = postVO.getShoppingPostId();
 
-        // 5) 게시글 카테고리 INSERT (tb_shopping_post_category 등)
+        // 카테고리 저장 INSERT
         if (dto.getCategoryCodes() != null) {
             for (String cd : dto.getCategoryCodes()) {
                 shoppingPostDAO.insertPostCategory(postId, cd);
             }
         }
 
-        // 6) 게시글 당 채팅방 1개 생성 (tb_shopping_chat_room + tb_shopping_participant)
+        // 3) 채팅방 생성 + 작성자 참여
         shoppingChatRoomService.createRoomForPost(postId, writerUserId);
 
         return postId;
     }
 
     /**
-     * 현재 위치 기준 근처 게시글 목록 조회
+     * 현재 위치 기준 주변 게시글
      */
     @Transactional(readOnly = true)
     public List<ShoppingPostSummaryDTO> getNearbyPosts(double lat, double lng) {
-        // 단순 박스 범위 (추후 반경/거리 계산으로 개선 가능)
         double latDiff = 0.03;
         double lngDiff = 0.03;
-        return shoppingPostDAO.selectNearbyPosts(lat, lng, latDiff, lngDiff);
+        double latMin = lat - latDiff;
+        double latMax = lat + latDiff;
+        double lngMin = lng - lngDiff;
+        double lngMax = lng + lngDiff;
+
+        return shoppingPostDAO.selectNearbyPosts(latMin, latMax, lngMin, lngMax);
     }
 
     /**
-     * 게시글 상세 조회
+     * 특정 마트(핀) 기준 게시글 목록
      */
+    @Transactional(readOnly = true)
+    public List<ShoppingPostSummaryDTO> getPostsForPlace(double lat, double lng) {
+        double latDiff = 0.001; // 대략 100m 정도 박스
+        double lngDiff = 0.001;
+        double latMin = lat - latDiff;
+        double latMax = lat + latDiff;
+        double lngMin = lng - lngDiff;
+        double lngMax = lng + lngDiff;
+
+        return shoppingPostDAO.selectPostsByPlace(latMin, latMax, lngMin, lngMax);
+    }
+
     @Transactional(readOnly = true)
     public ShoppingPostDetailDTO getPostDetail(Long postId) {
         return shoppingPostDAO.selectPostDetail(postId);
+    }
+
+    @Transactional(readOnly = true)
+    public ShoppingPostVO getPost(Long postId) {
+        return shoppingPostDAO.selectById(postId);
     }
 }

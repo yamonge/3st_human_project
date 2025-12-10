@@ -12,7 +12,6 @@ public class UserIngredientVO {
     private String quantityDesc;
     private String categoryCd;
     private String usedFlag;
-    private LocalDate expiredDate;
     private String memo;
     private Long createdId;
     private Timestamp createdDate;

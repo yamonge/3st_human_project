@@ -27,7 +27,7 @@ public class MailServiceImpl implements MailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);
         message.setFrom(fromAddress);
-        message.setSubject("[같이장보자] 비밀번호 재설정 안내");
+        message.setSubject("[MyOwnChef] 비밀번호 재설정 안내");
         message.setText(buildResetMailText(resetUrl));
 
         mailSender.send(message);

@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +42,6 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         vo.setQuantityDesc(requestDTO.getQuantityDesc());
         vo.setCategoryCd(requestDTO.getCategoryCd());
         vo.setUsedFlag(requestDTO.getUsedFlag() != null ? requestDTO.getUsedFlag() : "N"); // 기본값 'N'
-        vo.setExpiredDate(requestDTO.getExpiredDate());
         vo.setMemo(requestDTO.getMemo());
         vo.setCreatedId(userId); // 생성자 ID 설정
 
@@ -131,8 +130,6 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         existingVo.setUsedFlag(Optional.ofNullable(requestDTO.getUsedFlag())
                 .filter(flag -> !flag.isEmpty())
                 .orElse(existingVo.getUsedFlag()));
-        existingVo.setExpiredDate(Optional.ofNullable(requestDTO.getExpiredDate())
-                .orElse(existingVo.getExpiredDate()));
         existingVo.setMemo(Optional.ofNullable(requestDTO.getMemo())
                 .orElse(existingVo.getMemo()));
         existingVo.setUpdatedId(userId); // 수정자 ID 설정
@@ -209,7 +206,7 @@ public class UserIngredientServiceImpl implements UserIngredientService {
             request.setIngredientName(ingredientName);
             request.setQuantityDesc("1개"); // 기본 수량 (영수증에서 정확한 수량 파악이 어려울 경우)
             request.setUsedFlag("N");
-            request.setExpiredDate(LocalDate.now().plusMonths(1)); // 기본 유통기한 (예시)
+            // 기본 유통기한 (예시)
             request.setMemo("영수증 인식으로 추가됨");
 
             try {

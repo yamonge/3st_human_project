@@ -15,5 +15,7 @@ public interface ShoppingPostJoinDAO {
 
     // 게시글에 매핑된 채팅방 ID 조회
     Long selectChatRoomIdByPostId(@Param("postId") Long postId);
+
+    ShoppingPostVO selectById(@Param("postId") Long postId);
 }
 
