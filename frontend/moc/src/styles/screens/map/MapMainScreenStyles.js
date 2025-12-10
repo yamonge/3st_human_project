@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     top: 43,
     left: 26,
     right: 26,
-    zIndex: 10,
+    zIndex: 1,
   },
 
   // 검색바

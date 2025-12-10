@@ -43,6 +43,9 @@ export const colors = {
   // Opacity
   blackOverlay: 'rgba(0, 0, 0, 0.5)',
   whiteOverlay: 'rgba(255, 255, 255, 0.8)',
+
+  //White
+  white: '#ffffff',
 };
 
 // 폰트 (Typography)

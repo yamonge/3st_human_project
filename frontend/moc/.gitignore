@@ -77,3 +77,5 @@ tsconfig.json
 package-lock.json
 package.json
 yarn.lock
+.env
+example.env
