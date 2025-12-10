@@ -46,6 +46,7 @@ export const colors = {
 
   //White
   white: '#ffffff',
+  backgroundWhite: '#ffffff',
 };
 
 // 폰트 (Typography)

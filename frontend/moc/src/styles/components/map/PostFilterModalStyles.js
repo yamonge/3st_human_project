@@ -138,6 +138,10 @@ export default StyleSheet.create({
     fontFamily: typography.body.fontFamily,
   },
 
+  timeButtonTextSelected: {
+    color: colors.textBlack,
+  },
+
   // 하단 버튼 영역
   footer: {
     flexDirection: 'row',
