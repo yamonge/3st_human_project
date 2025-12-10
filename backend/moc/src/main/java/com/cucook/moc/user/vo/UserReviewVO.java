@@ -1,16 +1,23 @@
-package com.cucook.moc.user.vo; // ⭐ user 패키지 아래에 vo를 생성
+// com.cucook.moc.user.vo.UserReviewVO
 
-import lombok.Data;
+package com.cucook.moc.user.vo;
+
 import java.sql.Timestamp;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
 public class UserReviewVO {
 
-    private Long reviewId;          // DDL: user_review_id NUMBER(19) -> Java Long
-    private Long targetUserId;      // DDL: target_user_id NUMBER(19) -> Java Long
-    private Long writerUserId;      // DDL: writer_user_id NUMBER(19) -> Java Long
-    private Long shoppingPostId;    // DDL: shopping_post_id NUMBER(19) -> Java Long
-    private Integer rating;         // DDL: rating NUMBER(2)          -> Java Integer (1~5점)
-    private String userReviewComment; // DDL: user_review_comment VARCHAR2(1000) -> Java String
-    private Timestamp createdDate;  // DDL: created_date TIMESTAMP(6)   -> Java Timestamp
+    private Long userReviewId;
+    private Long targetUserId;
+    private Long writerUserId;
+    private Long shoppingPostId;
+    private Integer rating;
+    private String comment;
+    private Timestamp createdDate;
 }

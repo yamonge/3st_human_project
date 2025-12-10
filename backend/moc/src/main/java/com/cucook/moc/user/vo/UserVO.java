@@ -2,6 +2,7 @@ package com.cucook.moc.user.vo;
 
 import lombok.*;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -26,15 +27,15 @@ public class UserVO {
     private Integer shoppingCompletedCnt;
     private Double ratingScore;
     private Double trustScore;
-    private LocalDate userBirthDate;
+    private Timestamp userBirthDate;
 
-    private LocalDateTime lastLoginDate;
+    private Timestamp lastLoginDate;
     private String deviceOs;
     private String deviceVersion;
     private String fcmToken;
 
     private Long createdId;
-    private LocalDateTime createdDate;
+    private Timestamp createdDate;
     private Long updatedId;
-    private LocalDateTime updatedDate;
+    private Timestamp updatedDate;
 }

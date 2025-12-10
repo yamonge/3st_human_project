@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cucook.moc.chat.dao.ChatParticipantDAO">
+
+    <!-- 참여자 insert -->
+    <insert id="insertParticipant">
+        <selectKey keyProperty="shoppingParticipantId"
+                   resultType="long"
+                   order="BEFORE">
+            SELECT seq_tb_shopping_participant.NEXTVAL FROM dual
+        </selectKey>
+
+        INSERT INTO tb_shopping_participant (
+            shopping_participant_id,
+            chat_room_id,
+            user_id,
+            join_date,
+            created_id,
+            created_date
+        ) VALUES (
+            #{shoppingParticipantId},
+            #{chatRoomId},
+            #{userId},
+            SYSTIMESTAMP,
+            #{userId},
+            SYSTIMESTAMP
+        )
+    </insert>
+
+    <!-- 해당 방에 유저가 이미 있는지 -->
+    <select id="existsByRoomAndUser"
+            resultType="boolean">
+        SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+        FROM tb_shopping_participant
+        WHERE chat_room_id = #{chatRoomId}
+          AND user_id      = #{userId}
+    </select>
+
+    <!-- 참가자 목록 + 닉네임/평점 (프로필용) -->
+    <resultMap id="ChatParticipantInfoMap" type="com.cucook.moc.chat.dto.ChatParticipantDTO">
+        <result property="userId"       column="user_id"/>
+        <result property="nickname"     column="user_nickname"/>
+        <result property="ratingScore"  column="rating_score"/>
+    </resultMap>
+
+    <select id="selectParticipantInfos"
+            parameterType="long"
+            resultMap="ChatParticipantInfoMap">
+        SELECT
+            p.user_id,
+            u.user_nickname,
+            u.rating_score
+        FROM tb_shopping_participant p
+        JOIN tb_user u
+          ON p.user_id = u.user_id
+        WHERE p.chat_room_id = #{chatRoomId}
+    </select>
+
+    <!-- 특정 장보기에 해당 유저가 참여했는지 -->
+    <select id="existsByPostAndUser"
+            resultType="boolean">
+        SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+        FROM tb_shopping_participant p
+        JOIN tb_shopping_chat_room r
+        ON p.chat_room_id = r.chat_room_id
+        WHERE r.shopping_post_id = #{shoppingPostId}
+        AND p.user_id          = #{userId}
+    </select>
+
+</mapper>

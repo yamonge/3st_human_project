@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cucook.moc.shopping.dao.ShoppingPostDAO">
+
+    <!-- 기본 VO 매핑 -->
+    <resultMap id="ShoppingPostResultMap" type="com.cucook.moc.shopping.vo.ShoppingPostVO">
+        <id     property="shoppingPostId"   column="shopping_post_id"/>
+        <result property="writerUserId"     column="writer_user_id"/>
+        <result property="meetDatetime"     column="meet_datetime"/>
+        <result property="minPersonCnt"     column="min_person_cnt"/>
+        <result property="maxPersonCnt"     column="max_person_cnt"/>
+        <result property="currentPersonCnt" column="current_person_cnt"/>
+        <result property="description"      column="description"/>
+        <result property="statusCd"         column="status_cd"/>
+
+        <!-- 장소 정보 (tb_shopping_post에 직접 존재) -->
+        <result property="placeName"        column="place_name"/>
+        <result property="placeAddress"     column="place_address"/>
+        <result property="latitude"         column="latitude"/>
+        <result property="longitude"        column="longitude"/>
+
+        <!-- 공통 이력 -->
+        <result property="createdId"        column="created_id"/>
+        <result property="createdDate"      column="created_date"/>
+        <result property="updatedId"        column="updated_id"/>
+        <result property="updatedDate"      column="updated_date"/>
+    </resultMap>
+
+    <!-- 게시글 INSERT -->
+    <insert id="insertPost"
+            parameterType="ShoppingPostVO">
+        <selectKey keyProperty="shoppingPostId"
+                   resultType="long"
+                   order="BEFORE">
+            SELECT seq_tb_shopping_post.NEXTVAL FROM dual
+        </selectKey>
+
+        INSERT INTO tb_shopping_post (
+        shopping_post_id,
+        writer_user_id,
+        meet_datetime,
+        min_person_cnt,
+        max_person_cnt,
+        current_person_cnt,
+        description,
+        status_cd,
+        place_name,
+        place_address,
+        latitude,
+        longitude,
+        created_date
+        ) VALUES (
+        #{shoppingPostId},
+        #{writerUserId},
+        #{meetDatetime},
+        #{minPersonCnt},
+        #{maxPersonCnt},
+        #{currentPersonCnt},
+        #{description},
+        #{statusCd},
+        #{placeName},
+        #{placeAddress},
+        #{latitude},
+        #{longitude},
+        SYSTIMESTAMP
+        )
+    </insert>
+
+    <!-- 게시글 카테고리 INSERT -->
+    <!-- 게시글 카테고리 INSERT : 시퀀스를 SQL에서 직접 사용 -->
+    <insert id="insertPostCategory">
+        INSERT INTO tb_shopping_post_category (
+        shopping_post_category_id,
+        shopping_post_id,
+        category_cd,
+        created_date
+        ) VALUES (
+        seq_tb_shopping_post_category.NEXTVAL,
+        #{shoppingPostId},
+        #{categoryCode},
+        SYSTIMESTAMP
+        )
+    </insert>
+
+    <!-- 주변 게시글 요약 DTO 매핑 -->
+    <resultMap id="ShoppingPostSummaryMap" type="com.cucook.moc.shopping.dto.ShoppingPostSummaryDTO">
+        <id     property="shoppingPostId"   column="shopping_post_id"/>
+        <result property="placeName"        column="place_name"/>
+        <result property="placeAddress"     column="place_address"/>
+        <result property="latitude"         column="latitude"/>
+        <result property="longitude"        column="longitude"/>
+        <result property="meetDatetime"     column="meet_datetime"/>
+        <result property="maxPersonCnt"     column="max_person_cnt"/>
+        <result property="currentPersonCnt" column="current_person_cnt"/>
+        <result property="statusCd"         column="status_cd"/>
+        <result property="writerNickname"   column="writer_nickname"/>
+    </resultMap>
+
+    <!-- 주변 게시글 목록 (맵 기준) -->
+    <select id="selectNearbyPosts"
+            resultMap="ShoppingPostSummaryMap">
+        SELECT
+            p.shopping_post_id,
+            p.place_name,
+            p.place_address,
+            p.latitude,
+            p.longitude,
+            p.meet_datetime,
+            p.min_person_cnt,
+            p.max_person_cnt,
+            p.current_person_cnt,
+            p.status_cd,
+            p.writer_user_id,
+            u.user_nickname AS writer_nickname
+        FROM tb_shopping_post p
+        JOIN tb_user u
+            ON p.writer_user_id = u.user_id
+        WHERE p.latitude  BETWEEN #{latMin} AND #{latMax}
+            AND p.longitude BETWEEN #{lngMin} AND #{lngMax}
+            AND p.status_cd = 'OPEN'
+        ORDER BY p.meet_datetime
+    </select>
+
+    <!-- 게시글 상세 DTO 매핑 -->
+    <resultMap id="ShoppingPostDetailMap" type="com.cucook.moc.shopping.dto.ShoppingPostDetailDTO">
+        <id     property="shoppingPostId"   column="shopping_post_id"/>
+        <result property="placeName"        column="place_name"/>
+        <result property="placeAddress"     column="place_address"/>
+        <result property="latitude"         column="latitude"/>
+        <result property="longitude"        column="longitude"/>
+        <result property="meetDatetime"     column="meet_datetime"/>
+        <result property="minPersonCnt"     column="min_person_cnt"/>
+        <result property="maxPersonCnt"     column="max_person_cnt"/>
+        <result property="currentPersonCnt" column="current_person_cnt"/>
+        <result property="description"      column="description"/>
+        <result property="statusCd"         column="status_cd"/>
+        <result property="writerNickname"   column="writer_nickname"/>
+    </resultMap>
+
+    <!-- 특정 마트(좌표) 기준 게시글 목록
+         (핀 하나의 좌표를 중심으로 작은 범위로 조회할 때 사용) -->
+    <select id="selectPostsByPlace"
+            resultMap="ShoppingPostSummaryMap">
+        SELECT
+            p.shopping_post_id,
+            p.place_name,
+            p.place_address,
+            p.latitude,
+            p.longitude,
+            p.meet_datetime,
+            p.min_person_cnt,
+            p.max_person_cnt,
+            p.current_person_cnt,
+            p.status_cd,
+            p.writer_user_id,
+            u.user_nickname AS writer_nickname
+        FROM tb_shopping_post p
+        JOIN tb_user u
+        ON p.writer_user_id = u.user_id
+        WHERE p.latitude  BETWEEN #{latMin} AND #{latMax}
+            AND p.longitude BETWEEN #{lngMin} AND #{lngMax}
+            AND p.status_cd = 'OPEN'
+        ORDER BY p.meet_datetime
+    </select>
+
+    <!-- 게시글 상세 -->
+    <select id="selectPostDetail"
+            resultMap="ShoppingPostDetailMap">
+        SELECT
+            p.shopping_post_id,
+            p.place_name,
+            p.place_address,
+            p.latitude,
+            p.longitude,
+            p.meet_datetime,
+            p.min_person_cnt,
+            p.max_person_cnt,
+            p.current_person_cnt,
+            p.status_cd,
+            p.description,
+            u.user_nickname AS writer_nickname
+        FROM tb_shopping_post p
+        JOIN tb_user u
+        ON p.writer_user_id = u.user_id
+        WHERE p.shopping_post_id = #{postId}
+    </select>
+
+    <!-- VO 한 건 조회 (JOIN 없이) -->
+    <select id="selectById"
+            parameterType="long"
+            resultMap="ShoppingPostResultMap">
+        SELECT *
+        FROM tb_shopping_post
+        WHERE shopping_post_id = #{postId}
+    </select>
+</mapper>

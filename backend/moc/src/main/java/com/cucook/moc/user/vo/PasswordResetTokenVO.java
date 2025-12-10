@@ -1,6 +1,6 @@
 package com.cucook.moc.user.vo;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,8 +20,8 @@ public class PasswordResetTokenVO {
     private Long resetTokenId;
     private Long userId;
     private String resetToken;
-    private LocalDateTime expireDate;
+    private Timestamp expireDate;   // 토큰 만료일
     private String usedYn;        // 'N' or 'Y'
-    private LocalDateTime createdDate;
-    private LocalDateTime usedDate;
+    private Timestamp createdDate;
+    private Timestamp usedDate;
 }

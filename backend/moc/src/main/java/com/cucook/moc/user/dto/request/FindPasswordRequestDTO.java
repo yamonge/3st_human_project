@@ -5,7 +5,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
+
 /*
 * 비밀번호 찾기 : 이메일 + 유저이름 + 생년월일
 * */
@@ -16,5 +18,5 @@ import java.time.LocalDate;
 public class FindPasswordRequestDTO {
     private String userEmail;
     private String userName;
-    private LocalDate userBirthDate;
+    private Timestamp userBirthDate;
 }

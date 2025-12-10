@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
     // ✅ 비밀번호 암호화용 (BCryptPasswordEncoder)
     implementation 'org.springframework.security:spring-security-crypto'
-    // ✅ 메일 발송용 (JavaMailSender, SimpleMailMessage)
+    // 메일 발송용 (JavaMailSender, SimpleMailMessage)
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'com.google.genai:google-genai:1.0.0'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
