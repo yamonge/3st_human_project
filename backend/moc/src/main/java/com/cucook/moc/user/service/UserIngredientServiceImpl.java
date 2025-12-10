@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -204,12 +207,15 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         }
 
         List<UserIngredientResponseDTO> addedIngredients = new ArrayList<>();
+
         for (String ingredientName : ingredientNames) {
             UserIngredientRequestDTO request = new UserIngredientRequestDTO();
             request.setIngredientName(ingredientName);
-            request.setQuantityDesc("1개"); // 기본 수량 (영수증에서 정확한 수량 파악이 어려울 경우)
+            request.setQuantityDesc("1개");  // 기본 수량
             request.setUsedFlag("N");
-            request.setExpiredDate(LocalDate.now().plusMonths(1)); // 기본 유통기한 (예시)
+            request.setExpiredDate(
+                    Timestamp.from(Instant.now().plus(1, ChronoUnit.MONTHS))
+            );
             request.setMemo("영수증 인식으로 추가됨");
 
             try {

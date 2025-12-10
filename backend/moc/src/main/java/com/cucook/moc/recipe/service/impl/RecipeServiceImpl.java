@@ -18,8 +18,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.cucook.moc.recipe.dto.request.RecipeListResponseDTO;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -439,5 +437,18 @@ public class RecipeServiceImpl implements RecipeService {
 
         // 3. DTO 리스트와 총 개수를 담아 반환
         return new RecipeListResponseDTO(dtoList, dtoList.size()); // ⭐ 이 라인이 문제 없음
+    }
+    /**
+     * 특정 사용자가 '공유'(공개)한 레시피의 총 개수를 조회합니다.
+     * 마이페이지 '공유한 게시글' 카드에 표시용입니다.
+     * `RecipeService` 인터페이스의 `countSharedRecipesByUserId` 메서드를 구현합니다.
+     *
+     * @param userId 개수를 조회할 사용자의 ID
+     * @return 공유된 레시피의 총 개수
+     */
+    @Override // ⭐ 인터페이스 구현 명시
+    @Transactional(readOnly = true) // 데이터 조회 작업이므로 읽기 전용 트랜잭션 적용
+    public int countSharedRecipesByUserId(Long userId) {
+        return recipeDAO.countSharedRecipesByUserId(userId);
     }
 }

@@ -1,11 +1,14 @@
 package com.cucook.moc.user.dto.response;
 
+import com.cucook.moc.user.vo.UserIngredientVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.time.LocalDate;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter; // 날짜 포맷팅을 위해 추가
+import java.time.temporal.ChronoUnit;
 
 @Data
 @NoArgsConstructor
@@ -17,7 +20,7 @@ public class UserIngredientResponseDTO {
     private String quantityDesc;    // 수량 설명
     private String categoryCd;      // 카테고리 코드
     private String usedFlag;        // 사용 여부 (Y/N)
-    private LocalDate expiredDate;  // 유통기한
+    private Timestamp expiredDate;  // 유통기한
     private String expiredDateFormatted; // ⭐ UI 표시용: "YYYY-MM-DD" 포맷
     private String memo;            // 메모
     private boolean isExpired;      // ⭐ UI 로직용: 유통기한 만료 여부
@@ -25,7 +28,7 @@ public class UserIngredientResponseDTO {
     private long daysUntilExpired;  // ⭐ UI 로직용: 남은 유통기한 일수
 
     // UserIngredientVO를 기반으로 DTO를 생성하는 편의 메서드 (선택 사항)
-    public static UserIngredientResponseDTO from(com.cucook.moc.user.vo.UserIngredientVO vo) {
+    public static UserIngredientResponseDTO from(UserIngredientVO vo) {
         UserIngredientResponseDTO dto = new UserIngredientResponseDTO();
         dto.setUserIngredientId(vo.getUserIngredientId());
         dto.setUserId(vo.getUserId());
@@ -38,18 +41,33 @@ public class UserIngredientResponseDTO {
 
         // UI 로직 관련 추가 필드 계산
         if (vo.getExpiredDate() != null) {
-            LocalDate today = LocalDate.now();
-            dto.setExpiredDateFormatted(vo.getExpiredDate().format(DateTimeFormatter.ISO_LOCAL_DATE)); // "YYYY-MM-DD"
-            dto.setExpired(vo.getExpiredDate().isBefore(today)); // 오늘보다 이전이면 만료
-            long days = java.time.temporal.ChronoUnit.DAYS.between(today, vo.getExpiredDate());
+
+            Timestamp today = new Timestamp(System.currentTimeMillis());
+            Timestamp expired = vo.getExpiredDate();
+
+            // 날짜 포맷 (Timestamp -> String)
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            dto.setExpiredDateFormatted(sdf.format(expired));
+
+            // 만료 여부 (today 이후면 false, 이전이면 true)
+            dto.setExpired(expired.before(today));
+
+            // 남은 일수 계산 (Timestamp만 사용)
+            long diffMillis = expired.getTime() - today.getTime();
+            long days = diffMillis / (1000 * 60 * 60 * 24); // 밀리초 → 일수 변환
             dto.setDaysUntilExpired(days);
-            dto.setNearExpiry(days <= 7 && days >= 0); // 7일 이내이고 만료되지 않았으면 임박
+
+            // 7일 이내 && 아직 만료되지 않았으면 임박
+            dto.setNearExpiry(days <= 7 && days >= 0);
+
         } else {
+
             dto.setExpiredDateFormatted(null);
             dto.setExpired(false);
             dto.setNearExpiry(false);
-            dto.setDaysUntilExpired(-1); // 유통기한 없음
+            dto.setDaysUntilExpired(-1);
         }
+
         return dto;
     }
 }
