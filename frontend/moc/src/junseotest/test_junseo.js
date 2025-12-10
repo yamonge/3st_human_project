@@ -15,7 +15,7 @@ import {
   NaverMapMarkerOverlay,
 } from '@mj-studio/react-native-naver-map';
 
-import {searchMarts, geocodeAddress} from '../api/naverPlaceApi';
+import {searchMarts, geocodeAddress} from './naverPlaceApi';
 
 function TestJunseo() {
   const [location, setLocation] = useState(null); // { latitude, longitude }
