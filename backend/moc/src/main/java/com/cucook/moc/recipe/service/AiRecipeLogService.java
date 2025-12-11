@@ -1,10 +1,10 @@
 package com.cucook.moc.recipe.service;
 
 import com.cucook.moc.recipe.vo.AiRecipeLogVO;
+import java.io.IOException;
 import java.util.List;
 
 public interface AiRecipeLogService {
-
     /**
      * AI 레시피 생성 로그를 저장합니다.
      *
@@ -20,4 +20,6 @@ public interface AiRecipeLogService {
      * @return 검색 조건에 맞는 AiRecipeLogVO 리스트
      */
     List<AiRecipeLogVO> getAiRecipeLogs(AiRecipeLogVO searchVO);
+
+
 }
