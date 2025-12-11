@@ -30,9 +30,6 @@ public class ShoppingChatMessageService {
     @Autowired
     private UserDAO userDAO;  // 닉네임 조회용 (이메일 X)
 
-//    @Autowired
-//    private SimpMessagingTemplate messagingTemplate;
-
     /**
      * 채팅 메시지 전송
      * - 참여자 검증

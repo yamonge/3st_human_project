@@ -1,0 +1,100 @@
+import axiosInstance from './axiosConfig';
+
+/**
+ * 채팅 관련 API
+ */
+
+/**
+ * 내 채팅방 목록 조회
+ * @param {number} userId - 사용자 ID
+ * @returns {Promise<Array>} 채팅방 목록
+ */
+export const getMyChatRooms = async userId => {
+  try {
+    const response = await axiosInstance.get('/chat/rooms/me', {
+      params: {userId},
+    });
+    return response.data;
+  } catch (error) {
+    console.error('채팅방 목록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 채팅방 삭제
+ * @param {number} chatRoomId - 채팅방 ID
+ * @returns {Promise<void>}
+ */
+export const deleteChatRoom = async chatRoomId => {
+  try {
+    await axiosInstance.delete(`/chat/rooms/${chatRoomId}`);
+  } catch (error) {
+    console.error('채팅방 삭제 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 채팅방 과거 메시지 조회
+ * @param {number} chatRoomId - 채팅방 ID
+ * @param {number} limit - 조회할 메시지 수 (기본 50)
+ * @returns {Promise<Array>} 메시지 목록
+ */
+export const getChatMessages = async (chatRoomId, limit = 50) => {
+  try {
+    const response = await axiosInstance.get(`/chat/messages/${chatRoomId}`, {
+      params: {limit},
+    });
+    return response.data;
+  } catch (error) {
+    console.error('메시지 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 채팅 메시지 전송 (REST - 테스트용)
+ * @param {object} messageData - { chatRoomId, senderUserId, messageTypeCd, messageText }
+ * @returns {Promise<void>}
+ */
+export const sendChatMessage = async messageData => {
+  try {
+    await axiosInstance.post('/chat/messages/send', messageData);
+  } catch (error) {
+    console.error('메시지 전송 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 채팅방 참여자 목록 조회
+ * @param {number} chatRoomId - 채팅방 ID
+ * @returns {Promise<Array>} 참여자 목록
+ */
+export const getChatRoomParticipants = async chatRoomId => {
+  try {
+    const response = await axiosInstance.get(
+      `/chat/rooms/${chatRoomId}/participants`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('참여자 목록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 채팅방 나가기 (참여자 제거)
+ * @param {number} chatRoomId - 채팅방 ID
+ * @param {number} userId - 사용자 ID
+ * @returns {Promise<void>}
+ */
+export const leaveChatRoom = async (chatRoomId, userId) => {
+  try {
+    await axiosInstance.post(`/chat/rooms/${chatRoomId}/leave`, {userId});
+  } catch (error) {
+    console.error('채팅방 나가기 실패:', error);
+    throw error;
+  }
+};

@@ -22,6 +22,7 @@ import {Search, SlidersHorizontal, MessageCircle} from 'lucide-react-native';
 import PermissionModal from '../../components/common/PermissionModal';
 import MapFilterModal from '../../components/map/MapFilterModal';
 import PostListBottomSheet from '../../components/map/PostListBottomSheet';
+import ChatRoomListModal from '../../components/chat/ChatRoomListModal';
 import {searchPlaces, reverseGeocode, getPostsByLocation} from '../../api/map';
 import styles from '../../styles/screens/map/MapMainScreenStyles';
 import {colors} from '../../styles/common';
@@ -61,6 +62,9 @@ export default function MapMainScreen({navigation}) {
   // 게시물 목록 바텀시트
   const [showPostList, setShowPostList] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
+
+  // 채팅방 목록 모달
+  const [showChatRoomList, setShowChatRoomList] = useState(false);
 
   // GPS 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
@@ -253,10 +257,9 @@ export default function MapMainScreen({navigation}) {
     }
   };
 
-  // 채팅방 목록 이동 (추후 구현)
+  // 채팅방 목록 모달 열기
   const handleChatRoomPress = () => {
-    console.log('채팅방 목록으로 이동');
-    // TODO: navigation.navigate('ChatRoomList');
+    setShowChatRoomList(true);
   };
 
   /**
@@ -410,6 +413,13 @@ export default function MapMainScreen({navigation}) {
         navigation={navigation}
         storeName={selectedMarker?.name || '선택된 장소'}
         selectedMarker={selectedMarker}
+      />
+
+      {/* 채팅방 목록 모달 */}
+      <ChatRoomListModal
+        visible={showChatRoomList}
+        onClose={() => setShowChatRoomList(false)}
+        navigation={navigation}
       />
     </View>
   );

@@ -50,6 +50,17 @@ export const colors = {
   //White
   white: '#ffffff',
   backgroundWhite: '#ffffff',
+
+  //gray
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+
+  // Primary colors
+  primaryBlue: '#155DFC',
+
+  // Text colors (additional)
+  textGray2: '#525252',
 };
 
 // 폰트 (Typography)
