@@ -4,7 +4,6 @@ import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.cucook.moc.chat.dao.ChatParticipantDAO;
@@ -176,7 +175,6 @@ public class UserServiceImpl implements UserService {
         PasswordResetTokenVO tokenVO = PasswordResetTokenVO.builder()
                 .userId(user.getUserId())
                 .resetToken(hashedToken)
-                .expireDate(new Timestamp(now + 3600_000L))         // 1시간 후
                 .createdDate(new Timestamp(now))
                 .usedYn("N")
                 .build();
@@ -347,9 +345,9 @@ public class UserServiceImpl implements UserService {
             .writerUserId(writerUserId)
             .shoppingPostId(request.getShoppingPostId())
             .rating(request.getRating())
-            .comment(request.getComment())
+            .userReviewComment(request.getComment())
             .build();
-    userReviewDAO.insert(vo);
+    userReviewDAO.insertUserReview(vo);
 
     // 5) 평점 업데이트
     userDAO.updateRatingScoreByAvg(targetUserId);

@@ -20,7 +20,7 @@ public class PasswordResetTokenVO {
     private Long resetTokenId;
     private Long userId;
     private String resetToken;
-    private Timestamp expireDate;
+    private Timestamp expireDate;   // 토큰 만료일
     private String usedYn;        // 'N' or 'Y'
     private Timestamp createdDate;
     private Timestamp usedDate;

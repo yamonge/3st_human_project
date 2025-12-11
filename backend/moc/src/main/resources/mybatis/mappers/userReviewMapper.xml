@@ -31,54 +31,86 @@
         writer_user_id,
         shopping_post_id,
         rating,
-        comment,
-        created_date
+        user_review_comment
+        -- created_date는 테이블 정의에 따라 DEFAULT SYSTIMESTAMP로 자동 입력됩니다.
         ) VALUES (
-        #{userReviewId},
+        #{reviewId},
         #{targetUserId},
         #{writerUserId},
         #{shoppingPostId},
         #{rating},
-        #{comment},
-        SYSTIMESTAMP
+        #{userReviewComment}
         )
     </insert>
 
-    <!-- 같은 장보기에서 같은 작성자가 같은 대상에게 이미 리뷰를 쓴 적 있는지 -->
-    <select id="countExisting"
-            resultType="int">
-        SELECT COUNT(*)
-        FROM tb_user_review
-        WHERE shopping_post_id = #{shoppingPostId}
-        AND writer_user_id   = #{writerUserId}
-        AND target_user_id   = #{targetUserId}
-    </select>
-
-    <!-- 특정 유저에 대한 리뷰 목록 (작성자 닉네임 포함) -->
-    <resultMap id="UserReviewDtoMap" type="com.cucook.moc.user.dto.UserReviewDTO">
-        <id     property="userReviewId"   column="user_review_id"/>
-        <result property="writerUserId"   column="writer_user_id"/>
-        <result property="writerNickname" column="writer_nickname"/>
-        <result property="rating"         column="rating"/>
-        <result property="comment"        column="comment"/>
-        <result property="createdDate"    column="created_date"/>
-    </resultMap>
-
-    <select id="selectReviewsForUser"
-            parameterType="long"
-            resultMap="UserReviewDtoMap">
+    <!--
+        MyBatis SELECT 쿼리: 특정 장보기 게시글(shopping_post_id)에 대해
+        특정 작성자(writer_user_id)가 특정 대상(target_user_id)에게 후기를 남겼는지 확인합니다.
+        (UNIQUE INDEX uq_user_review_unique 제약조건 검사 및 중복 후기 방지용)
+        parameterType: Map
+        resultType: int (0 또는 1)
+    -->
+    <select id="checkIfUserReviewExists" parameterType="map" resultType="int">
         SELECT
-        r.user_review_id,
-        r.writer_user_id,
-        u.user_nickname AS writer_nickname,
-        r.rating,
-        r.comment,
-        r.created_date
-        FROM tb_user_review r
-        JOIN tb_user u
-        ON r.writer_user_id = u.user_id
-        WHERE r.target_user_id = #{targetUserId}
-        ORDER BY r.created_date DESC
+            COUNT(user_review_id)
+        FROM
+            tb_user_review
+        WHERE
+            target_user_id = #{targetUserId}
+          AND writer_user_id = #{writerUserId}
+          AND shopping_post_id = #{shoppingPostId}
     </select>
+
+    <!--
+        MyBatis SELECT 쿼리: 특정 후기 ID로 단일 후기 정보를 조회합니다.
+        (관리자/개발자용 또는 후기 수정/삭제 전 존재 여부 확인용)
+        parameterType: long
+        resultMap: UserReviewResultMap
+    -->
+    <select id="selectUserReviewById" parameterType="long" resultMap="UserReviewResultMap">
+        SELECT
+            user_review_id,
+            target_user_id,
+            writer_user_id,
+            shopping_post_id,
+            rating,
+            user_review_comment,
+            created_date
+        FROM
+            tb_user_review
+        WHERE
+            user_review_id = #{userReviewId}
+    </select>
+
+    <!--
+        MyBatis UPDATE 쿼리: 특정 후기 정보를 수정합니다.
+        (관리자 또는 후기 작성자가 자신의 후기를 수정할 때 사용)
+        parameterType: com.cucook.moc.user.vo.UserReviewVO
+    -->
+    <update id="updateUserReview" parameterType="com.cucook.moc.user.vo.UserReviewVO">
+        UPDATE tb_user_review
+        <set>
+            <if test="rating != null">
+                rating = #{rating},
+            </if>
+            <if test="userReviewComment != null">
+                user_review_comment = #{userReviewComment},
+            </if>
+        </set>
+        WHERE
+        user_review_id = #{reviewId}
+        AND writer_user_id = #{writerUserId} -- 후기 작성자만 수정 가능하도록 권한 확인
+    </update>
+
+    <!--
+        MyBatis DELETE 쿼리: 특정 후기 정보를 삭제합니다.
+        (관리자 또는 후기 작성자가 자신의 후기를 삭제할 때 사용)
+        parameterType: Map
+    -->
+    <delete id="deleteUserReview" parameterType="map">
+        DELETE FROM tb_user_review
+        WHERE user_review_id = #{reviewId}
+          AND writer_user_id = #{writerUserId} -- 후기 작성자만 삭제 가능하도록 권한 확인
+    </delete>
 
 </mapper>

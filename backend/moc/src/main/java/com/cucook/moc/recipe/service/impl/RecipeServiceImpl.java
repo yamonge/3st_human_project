@@ -3,10 +3,7 @@ package com.cucook.moc.recipe.service.impl;
 import com.cucook.moc.recipe.dao.RecipeDAO;
 import com.cucook.moc.recipe.dto.request.RecipeGenerationRequestDTO;
 import com.cucook.moc.recipe.dto.request.SelectedIngredientRequestDTO;
-import com.cucook.moc.recipe.dto.response.RecipeRecommendationResponseDTO;
-import com.cucook.moc.recipe.dto.response.RecommendedRecipeDTO;
-import com.cucook.moc.recipe.dto.response.RecipeIngredientResponseDTO;
-import com.cucook.moc.recipe.dto.response.RecipeStepResponseDTO;
+import com.cucook.moc.recipe.dto.response.*;
 import com.cucook.moc.recipe.service.AiRecipeLogService;
 import com.cucook.moc.recipe.service.RecipeIngredientService;
 import com.cucook.moc.recipe.service.RecipeService;
@@ -21,7 +18,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -381,5 +377,78 @@ public class RecipeServiceImpl implements RecipeService {
         logVO.setCreatedId(requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty() ? Long.valueOf(requestDTO.getUserId()) : null);
 
         aiRecipeLogService.saveAiRecipeLog(logVO);
+    }
+
+    /**
+     * 특정 레시피의 공개(`is_public`) 상태를 업데이트(토글)합니다.
+     * 사용자가 자신의 레시피를 '공유'하거나 '공유 취소'하는 것으로 간주합니다.
+     *
+     * @param recipeId 상태를 업데이트할 레시피의 ID
+     * @param userId 해당 레시피의 소유자 ID (권한 확인용)
+     * @param shareStatus 공유 여부 (true: 공개, false: 비공개)
+     * @return 업데이트 성공 여부 (true/false)
+     * @throws IllegalArgumentException 레시피를 찾을 수 없거나 권한이 없을 경우
+     */
+    @Override
+    @Transactional // 데이터 변경 작업이므로 트랜잭션 적용
+    public boolean toggleRecipeShareStatus(Long recipeId, Long userId, boolean shareStatus) {
+        // 1. 레시피 존재 여부 확인
+        RecipeVO recipe = recipeDAO.selectRecipeById(recipeId);
+        if (recipe == null) {
+            throw new IllegalArgumentException("레시피 (ID: " + recipeId + ")를 찾을 수 없습니다.");
+        }
+
+        // 2. 권한 검사: 레시피 소유자만 공유 상태를 변경할 수 있음
+        //    userId는 Long 타입, recipe.getOwnerUserId()도 Long 타입이므로 equals 사용
+        if (!recipe.getOwnerUserId().equals(userId)) {
+            throw new IllegalArgumentException("이 레시피 (ID: " + recipeId + ")의 공유 상태를 변경할 권한이 없습니다.");
+        }
+
+        // 3. is_public 상태를 'Y' 또는 'N'으로 변환
+        String isPublicFlag = shareStatus ? "Y" : "N";
+
+        // 4. 현재 상태와 요청 상태가 다를 경우에만 DB 업데이트 수행
+        //    equalsIgnoreCase를 사용하여 "Y" / "y" 모두 처리
+        if (!recipe.getIsPublic().equalsIgnoreCase(isPublicFlag)) {
+            int updatedCount = recipeDAO.updateRecipeIsPublic(recipeId, userId, isPublicFlag); // DAO 호출
+            return updatedCount > 0; // 업데이트 성공 여부 반환
+        }
+        // 현재 상태와 요청 상태가 이미 일치하면 DB 업데이트할 필요 없음 (성공으로 간주)
+        return true;
+    }
+
+    /**
+     * 특정 사용자가 '공유'(공개)한 모든 레시피 목록을 조회합니다.
+     * 마이페이지 '공유한 게시글' 탭의 목록 표시용입니다.
+     *
+     * @param userId 공유한 레시피 목록을 조회할 사용자의 ID
+     * @return 해당 사용자가 공유한 레시피 목록과 총 개수를 담은 응답 DTO
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public RecipeListResponseDTO getSharedRecipesByUserId(Long userId) {
+        // 1. DAO를 통해 공유된 레시피 VO 리스트 조회
+        List<RecipeVO> sharedRecipeVOs = recipeDAO.selectSharedRecipesByUserId(userId);
+
+        // 2. VO 리스트 -> RecipeResponseDTO 리스트 변환 (편의 메서드 활용)
+        List<RecipeResponseDTO> dtoList = sharedRecipeVOs.stream()
+                .map(RecipeResponseDTO::from) // RecipeResponseDTO.from() 사용
+                .collect(Collectors.toList());
+
+        // 3. DTO 리스트와 총 개수를 담아 반환
+        return new RecipeListResponseDTO(dtoList, dtoList.size()); // ⭐ 이 라인이 문제 없음
+    }
+    /**
+     * 특정 사용자가 '공유'(공개)한 레시피의 총 개수를 조회합니다.
+     * 마이페이지 '공유한 게시글' 카드에 표시용입니다.
+     * `RecipeService` 인터페이스의 `countSharedRecipesByUserId` 메서드를 구현합니다.
+     *
+     * @param userId 개수를 조회할 사용자의 ID
+     * @return 공유된 레시피의 총 개수
+     */
+    @Override // ⭐ 인터페이스 구현 명시
+    @Transactional(readOnly = true) // 데이터 조회 작업이므로 읽기 전용 트랜잭션 적용
+    public int countSharedRecipesByUserId(Long userId) {
+        return recipeDAO.countSharedRecipesByUserId(userId);
     }
 }

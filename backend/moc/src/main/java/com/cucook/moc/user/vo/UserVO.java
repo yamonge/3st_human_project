@@ -27,7 +27,7 @@ public class UserVO {
     private Integer shoppingCompletedCnt;
     private Double ratingScore;
     private Double trustScore;
-    private LocalDate userBirthDate;
+    private Timestamp userBirthDate;
 
     private Timestamp lastLoginDate;
     private String deviceOs;

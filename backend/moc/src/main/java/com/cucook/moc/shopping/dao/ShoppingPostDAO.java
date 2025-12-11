@@ -11,19 +11,33 @@ import java.util.List;
 @Mapper
 public interface ShoppingPostDAO {
 
-    void insertPost(ShoppingPostVO vo);
+    // 게시글 저장
+    void insertPost(ShoppingPostVO post);
 
-    void insertPostCategory(@Param("postId") Long postId,
-                            @Param("categoryCd") String categoryCd);
+    // 게시글 카테고리 저장 (사용할 경우)
+    void insertPostCategory(
+            @Param("shoppingPostId") Long shoppingPostId,
+            @Param("categoryCode") String categoryCode
+    );
 
+    // 반경 내 게시글 목록
     List<ShoppingPostSummaryDTO> selectNearbyPosts(
-            @Param("lat") double lat,
-            @Param("lng") double lng,
+            @Param("centerLat") double centerLat,
+            @Param("centerLng") double centerLng,
             @Param("latDiff") double latDiff,
             @Param("lngDiff") double lngDiff
     );
+    
+    // ✅ 특정 마트(좌표) 기준으로 글 목록 조회
+    List<ShoppingPostSummaryDTO> selectPostsByPlace(
+        @Param("latMin") double latMin,
+        @Param("latMax") double latMax,
+        @Param("lngMin") double lngMin,
+        @Param("lngMax") double lngMax
+    );
 
-    ShoppingPostDetailDTO selectPostDetail(@Param("postId") Long postId);
+    // 상세보기
+    ShoppingPostDetailDTO selectPostDetail(@Param("shoppingPostId") Long shoppingPostId);
 
     // 리뷰/DONE 체크용: 게시글 단건 조회
     ShoppingPostVO selectById(@Param("postId") Long postId);

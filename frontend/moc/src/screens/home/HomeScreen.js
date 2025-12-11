@@ -206,8 +206,6 @@ export default function HomeScreen({navigation}) {
           </View>
         </View>
       </ScrollView>
-
-      {/* TODO: 하단 네비게이션 (추후 추가) */}
     </View>
   );
 }
