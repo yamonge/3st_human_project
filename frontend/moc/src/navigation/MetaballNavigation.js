@@ -323,11 +323,18 @@ export default function MetaballNavigation({state, navigation}) {
           <Animated.View
             style={[styles.blurBackdrop, blurStyle]}
             pointerEvents="none">
+            {/* 반투명 오버레이 추가 (블러 효과 강화) */}
+            <View
+              style={{
+                ...StyleSheet.absoluteFillObject,
+                backgroundColor: 'rgba(192, 192, 192, 0.6)',
+              }}
+            />
             <BlurView
               style={styles.blurView}
               blurType="light"
-              blurAmount={15}
-              reducedTransparencyFallbackColor="rgba(240, 240, 240, 0.8)"
+              blurAmount={10}
+              reducedTransparencyFallbackColor="rgba(240, 240, 240, 0.85)"
             />
           </Animated.View>
         )}

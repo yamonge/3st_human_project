@@ -5,10 +5,10 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {PortalProvider} from '@gorhom/portal';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 
 // 온보딩 & 인증 화면
-import ChatTestScreen from './src/junseotest/test_junseo';
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import LoginScreen from './src/screens/user/LoginScreen';
 import SignupScreen from './src/screens/user/SignupScreen';
@@ -33,6 +33,9 @@ import IngredientInputScreen from './src/screens/recipe/IngredientInputScreen';
 // 영수증 플로우
 import ReceiptSelectionScreen from './src/screens/receipt/ReceiptSelectionScreen';
 import GalleryScreen from './src/screens/receipt/GalleryScreen';
+
+// 지도 플로우
+import MapMainScreen from './src/screens/map/MapMainScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -86,7 +89,7 @@ function MainTabNavigator() {
       <Tab.Screen name="Voice" component={VoiceFlowScreen} />
       <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
       <Tab.Screen name="Receipt" component={ReceiptSelectionScreen} />
-      <Tab.Screen name="Map" component={MapFlowScreen} />
+      <Tab.Screen name="Map" component={MapMainScreen} />
 
       {/* 카메라 플로우 서브 화면들 (탭바 숨김) */}
       <Tab.Screen
@@ -192,37 +195,37 @@ function App() {
 
   // 초기 화면 결정 - 항상 온보딩부터 시작
   const getInitialRouteName = () => {
-    // return 'Onboarding'; // 항상 온보딩
-    return 'ChatTestScreen'; // ✅ 개발 중에는 테스트용 화면부터
+    return 'Onboarding'; // 항상 온보딩
   };
 
   return (
     <SafeAreaProvider>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName={getInitialRouteName()}
-          screenOptions={{
-            headerShown: false,
-            animation: 'fade',
-          }}>
-          <Stack.Screen name="ChatTestScreen" component={ChatTestScreen} />
-          {/* 온보딩 */}
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <PortalProvider>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="transparent"
+          translucent
+        />
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName={getInitialRouteName()}
+            screenOptions={{
+              headerShown: false,
+              animation: 'fade',
+            }}>
+            {/* 온보딩 */}
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
 
-          {/* 인증 화면들 */}
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
-          <Stack.Screen name="FindAccount" component={FindAccountScreen} />
+            {/* 인증 화면들 */}
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Signup" component={SignupScreen} />
+            <Stack.Screen name="FindAccount" component={FindAccountScreen} />
 
-          {/* 메인 앱 (하단 탭 네비게이션) */}
-          <Stack.Screen name="MainApp" component={MainTabNavigator} />
-        </Stack.Navigator>
-      </NavigationContainer>
+            {/* 메인 앱 (하단 탭 네비게이션) */}
+            <Stack.Screen name="MainApp" component={MainTabNavigator} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PortalProvider>
     </SafeAreaProvider>
   );
 }
