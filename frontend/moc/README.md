@@ -45,6 +45,7 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **lottie-react-native:** ^7.3.4
 - **react-native-linear-gradient:** ^2.8.3
 - **@react-native-community/blur:** ^4.4.1
+- **react-native-gesture-handler:** ^2.29.1
 
 ### Graphics & Icons
 
@@ -52,30 +53,60 @@ AI 레시피 추천 / 공동구매 플랫폼 모바일 애플리케이션
 - **react-native-vector-icons:** ^10.2.0
 - **lucide-react-native:** ^0.554.0
 
-- **@react-native-picker/picker:** ^2.10.0
-- **react-native-wheel-pick:** ^1.2.6
+### UI Components
+
+- **@gorhom/bottom-sheet:** ^5.2.8 (BottomSheet 컴포넌트)
+- **@gorhom/portal:** ^1.0.14 (Portal/최상위 레이어 렌더링)
+- **@react-native-community/slider:** ^5.1.1 (슬라이더)
+- **@react-native-picker/picker:** ^2.10.0 (Picker)
+- **react-native-wheel-pick:** ^1.2.6 (휠 피커)
 
 ### Media & Camera
 - **react-native-vision-camera:** ^4.7.3
 - **react-native-image-picker:** ^7.2.0
+- **@react-native-camera-roll/camera-roll:** ^7.10.2 (갤러리/카메라롤 접근)
 
 ### Network
 
 - **axios:** ^1.7.0
 
+### Map & Location
+
+- **@mj-studio/react-native-naver-map:** ^2.6.7 (네이버 지도 SDK)
+- **@react-native-community/geolocation:** ^3.4.0 (위치 정보)
+
+### Storage
+
+- **@react-native-async-storage/async-storage:** ^2.1.0 (로컬 저장소)
+
+### Utilities
+
+- **date-fns:** ^4.1.0 (날짜/시간 포매팅 및 조작)
+- **geolib:** ^3.3.4 (지리적 좌표 계산 - 거리, 방향 등)
+
+### Keyboard
+
+- **react-native-keyboard-aware-scroll-view:** ^0.9.5 (키보드 인식 스크롤)
+
+### Push Notification
+
+- **@notifee/react-native:** ^9.1.8 (로컬/푸시 알림)
+- **@react-native-firebase/app:** ^23.7.0 (Firebase 코어)
+- **@react-native-firebase/messaging:** ^23.7.0 (Firebase Cloud Messaging)
 
 ### Performance
 
 - **react-native-worklets:** ^0.6.1
 
-=======
 ### Development Tools
 - **react-native-svg-transformer:** ^1.5.2 (SVG 파일을 React 컴포넌트로 변환)
 
 ### 한방 설치 명령어
-- npm install @react-navigation/native@^7.1.24 @react-navigation/bottom-tabs@^7.0.0 @react-navigation/native-stack@^7.8.5 react-native-screens@^4.18.0 react-native-safe-area-context@^5.6.2 react-native-reanimated@^4.1.5 @shopify/react-native-skia@^2.4.6 lottie-react-native@^7.3.4 react-native-linear-gradient@^2.8.3 @react-native-community/blur@^4.4.1 react-native-svg@^15.15.0 react-native-vector-icons@^10.2.0 lucide-react-native@^0.554.0 @react-native-async-storage/async-storage@^2.1.0 @react-native-picker/picker@^2.10.0 react-native-wheel-pick@^1.2.6 react-native-vision-camera@^4.7.3 react-native-image-picker@^7.2.0 axios@^1.7.0 react-native-worklets@^0.6.1
+```bash
+npm install @react-navigation/native@^7.1.24 @react-navigation/bottom-tabs@^7.0.0 @react-navigation/native-stack@^7.8.5 react-native-screens@^4.18.0 react-native-safe-area-context@^5.6.2 react-native-reanimated@^4.1.5 react-native-gesture-handler@^2.29.1 @shopify/react-native-skia@^2.4.6 lottie-react-native@^7.3.4 react-native-linear-gradient@^2.8.3 @react-native-community/blur@^4.4.1 react-native-svg@^15.15.0 react-native-vector-icons@^10.2.0 lucide-react-native@^0.554.0 @gorhom/bottom-sheet@^5.2.8 @gorhom/portal@^1.0.14 @react-native-community/slider@^5.1.1 @react-native-async-storage/async-storage@^2.1.0 @react-native-picker/picker@^2.10.0 react-native-wheel-pick@^1.2.6 react-native-vision-camera@^4.7.3 react-native-image-picker@^7.2.0 @react-native-camera-roll/camera-roll@^7.10.2 axios@^1.7.0 react-native-worklets@^0.6.1 @mj-studio/react-native-naver-map@^2.6.7 @react-native-community/geolocation@^3.4.0 date-fns@^4.1.0 geolib@^3.3.4 react-native-keyboard-aware-scroll-view@^0.9.5 @notifee/react-native@^9.1.8 @react-native-firebase/app@^23.7.0 @react-native-firebase/messaging@^23.7.0
 
-- npm install --save-dev react-native-svg-transformer
+npm install --save-dev react-native-svg-transformer@^1.5.2
+```
 ---
 
 ## 💻 개발 환경 설정
