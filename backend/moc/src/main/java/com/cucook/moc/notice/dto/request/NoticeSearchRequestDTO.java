@@ -1,17 +1,15 @@
-package com.cucook.moc.admin.dto.request;
+package com.cucook.moc.notice.dto.request;
 
 import lombok.*;
 
 /**
- * 공지사항 목록 검색 조건 DTO (cursor 기반)
+ * 공지 목록 검색 조건 (cursor 기반)
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @ToString
-public class AdminNoticeSearchRequestDTO {
+public class NoticeSearchRequestDTO {
 
     /** 제목 검색 키워드 */
     private String keyword;

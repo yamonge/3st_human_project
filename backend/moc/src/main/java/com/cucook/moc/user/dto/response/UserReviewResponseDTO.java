@@ -1,5 +1,6 @@
 package com.cucook.moc.user.dto.response;
 
+import com.cucook.moc.user.dto.ReviewedUserDetailDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;

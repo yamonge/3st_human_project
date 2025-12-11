@@ -3,18 +3,15 @@ package com.cucook.moc.user.service; // ⭐ user 패키지 아래에 service.imp
 import com.cucook.moc.user.dao.UserDAO;        // 신고 대상 사용자 정보 조회용 DAO (tb_user 테이블과 연결)
 import com.cucook.moc.user.dao.UserReportDAO;     // 사용자 신고 DAO
 import com.cucook.moc.user.dto.request.UserReportRequestDTO;
-import com.cucook.moc.user.dto.response.ReportedUserDetailDTO; // 신고 대상 사용자 상세 DTO
+import com.cucook.moc.user.dto.ReportedUserDetailDTO; // 신고 대상 사용자 상세 DTO
 import com.cucook.moc.user.dto.response.UserReportListResponseDTO;
 import com.cucook.moc.user.dto.response.UserReportResponseDTO;
-import com.cucook.moc.user.service.UserReportService; // 인터페이스 구현
 import com.cucook.moc.user.vo.UserReportVO;      // VO 사용
-import com.cucook.moc.user.vo.UserVO;          // 사용자 정보 조회용 VO (tb_user 테이블과 연결)
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

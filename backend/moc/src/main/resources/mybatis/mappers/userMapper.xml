@@ -139,6 +139,10 @@
     </update>
 
     <!-- userId로 조회 (마이프로필/채팅 senderNickname용) -->
+    <!--
+      user_id 로 유저 조회
+      - 공지 작성 시 adminUserId 로 넘어온 사용자가 실제 관리자(user_type='Y')인지도 확인하는 용도
+    -->
     <select id="selectById"
             parameterType="long"
             resultMap="UserResultMap">

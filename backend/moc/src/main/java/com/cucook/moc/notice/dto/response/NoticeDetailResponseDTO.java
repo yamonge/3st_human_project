@@ -1,24 +1,28 @@
-package com.cucook.moc.admin.dto.response;
+package com.cucook.moc.notice.dto.response;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.sql.Timestamp;
 
 /**
- * 공지사항 상세 조회 응답 DTO
+ * 공지 상세 응답 DTO
  */
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @ToString
-public class AdminNoticeDetailResponseDTO {
+public class NoticeDetailResponseDTO {
 
     private Long noticeId;
     private String title;
     private String content;
     private String imageUrl;
     private boolean pinned;
+    private boolean visible;
+    private long viewCount;
     private Timestamp createdDate;
     private Timestamp updatedDate;
 }
