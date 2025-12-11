@@ -17,6 +17,7 @@ import {
   NaverMapCircleOverlay,
 } from '@mj-studio/react-native-naver-map';
 import Geolocation from '@react-native-community/geolocation';
+import {getDistance} from 'geolib';
 import {Search, SlidersHorizontal, MessageCircle} from 'lucide-react-native';
 import PermissionModal from '../../components/common/PermissionModal';
 import MapFilterModal from '../../components/map/MapFilterModal';
@@ -112,23 +113,18 @@ export default function MapMainScreen({navigation}) {
   };
 
   /**
-   * 두 지점 간의 거리 계산 (Haversine 공식)
+   * 두 지점 간의 거리 계산 (geolib 사용)
    * @param {object} loc1 - 위치 1 {latitude, longitude}
    * @param {object} loc2 - 위치 2 {latitude, longitude}
    * @returns {number} 거리 (km)
    */
   const calculateDistance = (loc1, loc2) => {
-    const R = 6371; // 지구 반지름 (km)
-    const dLat = ((loc2.latitude - loc1.latitude) * Math.PI) / 180;
-    const dLon = ((loc2.longitude - loc1.longitude) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((loc1.latitude * Math.PI) / 180) *
-        Math.cos((loc2.latitude * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+    // geolib의 getDistance는 미터 단위로 반환하므로 1000으로 나눠서 km 변환
+    const distanceInMeters = getDistance(
+      {latitude: loc1.latitude, longitude: loc1.longitude},
+      {latitude: loc2.latitude, longitude: loc2.longitude},
+    );
+    return distanceInMeters / 1000; // km 단위로 변환
   };
 
   /**
@@ -299,7 +295,7 @@ export default function MapMainScreen({navigation}) {
         mapPadding={{
           top: 100,
           right: 20,
-          bottom: 100,
+          bottom: 60,
           left: 20,
         }}
         locationOverlay={

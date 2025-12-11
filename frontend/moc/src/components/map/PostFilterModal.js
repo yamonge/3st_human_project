@@ -17,7 +17,7 @@ import {colors} from '../../styles/common';
 /**
  * 게시물 필터 모달
  * - 재료 선택 (다중 선택)
- * - 인원수 슬라이더 (2~10명)
+ * - 인원수 슬라이더 (2~5명)
  * - 만날 시간 선택 (추후 구현)
  */
 export default function PostFilterModal({visible, onClose, onApply}) {
@@ -88,7 +88,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
    */
   const handleTimeConfirm = timeData => {
     console.log('[시간 선택 완료]', timeData);
-    setSelectedTime(timeData.text);
+    setSelectedTime(timeData); // ← 전체 객체 저장 (timestamp 포함!)
   };
 
   if (!visible) return null;
@@ -191,7 +191,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
                       styles.timeButtonText,
                       selectedTime && styles.timeButtonTextSelected,
                     ]}>
-                    {selectedTime || '시간 선택'}
+                    {selectedTime ? selectedTime.text : '시간 선택'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -219,6 +219,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
             visible={showTimePickerModal}
             onClose={() => setShowTimePickerModal(false)}
             onConfirm={handleTimeConfirm}
+            hideMinutes={true}
           />
         </View>
       </Portal>

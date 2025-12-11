@@ -32,7 +32,20 @@ export default StyleSheet.create({
     height: 44,
   },
 
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+
   headerTitle: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.textBlack,

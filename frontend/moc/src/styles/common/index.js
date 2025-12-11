@@ -15,6 +15,9 @@ export const colors = {
   // Text
   textDark: '#36454F',
   textLight: '#C6CEDD',
+  textGray: '#737373', // ← 추가!
+  textLightGray: '#A1A1A1',
+  textDarkGray: '#525252',
   textWhite: '#FFFFFF',
   textBlack: '#000000',
 

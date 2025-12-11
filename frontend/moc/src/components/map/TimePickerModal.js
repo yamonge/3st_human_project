@@ -1,7 +1,9 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {View, Text, TouchableOpacity, ScrollView, Modal} from 'react-native';
 import {X, Clock} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {format, addDays} from 'date-fns';
+import {ko} from 'date-fns/locale';
 import styles from '../../styles/components/map/TimePickerModalStyles';
 import {colors} from '../../styles/common';
 
@@ -12,19 +14,31 @@ import {colors} from '../../styles/common';
  * - 시간 선택 (1~12)
  * - 분 선택 (00, 05, 10, ..., 55)
  */
-export default function TimePickerModal({visible, onClose, onConfirm}) {
-  // 날짜 옵션
-  const dateOptions = [
-    {id: 'today', label: '오늘'},
-    {id: 'tomorrow', label: '내일'},
-    {id: 'dec2', label: '12월 2일 (화)'},
-    {id: 'dec3', label: '12월 3일 (수)'},
-    {id: 'dec4', label: '12월 4일 (목)'},
-    {id: 'dec5', label: '12월 5일 (금)'},
-    {id: 'dec6', label: '12월 6일 (토)'},
-    {id: 'dec7', label: '12월 7일 (일)'},
-    {id: 'dec8', label: '12월 8일 (월)'},
-  ];
+export default function TimePickerModal({
+  visible,
+  onClose,
+  onConfirm,
+  hideMinutes = false, // 분 숨김 옵션 (기본값: false)
+}) {
+  // 날짜 옵션 (date-fns로 동적 생성 - 오늘부터 7일간)
+  const dateOptions = useMemo(() => {
+    return Array.from({length: 9}, (_, i) => {
+      const date = addDays(new Date(), i);
+      let label;
+      if (i === 0) {
+        label = '오늘';
+      } else if (i === 1) {
+        label = '내일';
+      } else {
+        label = format(date, 'M월 d일 (E)', {locale: ko});
+      }
+      return {
+        id: format(date, 'yyyy-MM-dd'),
+        label: label,
+        date: date,
+      };
+    });
+  }, []);
 
   // 시간 (1~12)
   const hours = Array.from({length: 12}, (_, i) => i + 1);
@@ -33,7 +47,7 @@ export default function TimePickerModal({visible, onClose, onConfirm}) {
   const minutes = Array.from({length: 12}, (_, i) => i * 5);
 
   // 선택된 값
-  const [selectedDate, setSelectedDate] = useState('today');
+  const [selectedDate, setSelectedDate] = useState(dateOptions[0]?.id);
   const [selectedPeriod, setSelectedPeriod] = useState('pm'); // am or pm
   const [selectedHour, setSelectedHour] = useState(12);
   const [selectedMinute, setSelectedMinute] = useState(0);
@@ -44,6 +58,9 @@ export default function TimePickerModal({visible, onClose, onConfirm}) {
   const getSelectedTimeText = () => {
     const dateLabel = dateOptions.find(d => d.id === selectedDate)?.label;
     const periodLabel = selectedPeriod === 'am' ? '오전' : '오후';
+    if (hideMinutes) {
+      return `${dateLabel} ${periodLabel} ${selectedHour}시`;
+    }
     const minuteText = selectedMinute.toString().padStart(2, '0');
     return `${dateLabel} ${periodLabel} ${selectedHour}:${minuteText}`;
   };
@@ -52,11 +69,21 @@ export default function TimePickerModal({visible, onClose, onConfirm}) {
    * 확인 버튼
    */
   const handleConfirm = () => {
+    // Date 객체 생성 및 시간 설정
+    const fullDate = new Date(selectedDate);
+    const hour24 =
+      selectedPeriod === 'pm' && selectedHour !== 12
+        ? selectedHour + 12
+        : selectedPeriod === 'am' && selectedHour === 12
+        ? 0
+        : selectedHour;
+    fullDate.setHours(hour24);
+    fullDate.setMinutes(selectedMinute);
+    fullDate.setSeconds(0);
+    fullDate.setMilliseconds(0);
+
     const timeData = {
-      date: selectedDate,
-      period: selectedPeriod,
-      hour: selectedHour,
-      minute: selectedMinute,
+      timestamp: fullDate.toISOString(), // ISO 8601 형식
       text: getSelectedTimeText(),
     };
     console.log('[시간 선택 완료]', timeData);
@@ -197,33 +224,35 @@ export default function TimePickerModal({visible, onClose, onConfirm}) {
             </View>
           </View>
 
-          {/* 분 선택 */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>분</Text>
-            <View style={styles.timeGrid}>
-              {minutes.map(minute => {
-                const isSelected = selectedMinute === minute;
-                return (
-                  <TouchableOpacity
-                    key={minute}
-                    style={[
-                      styles.timeButton,
-                      isSelected && styles.timeButtonSelected,
-                    ]}
-                    onPress={() => setSelectedMinute(minute)}
-                    activeOpacity={0.7}>
-                    <Text
+          {/* 분 선택 (hideMinutes가 false일 때만 표시) */}
+          {!hideMinutes && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>분</Text>
+              <View style={styles.timeGrid}>
+                {minutes.map(minute => {
+                  const isSelected = selectedMinute === minute;
+                  return (
+                    <TouchableOpacity
+                      key={minute}
                       style={[
-                        styles.timeButtonText,
-                        isSelected && styles.timeButtonTextSelected,
-                      ]}>
-                      {minute.toString().padStart(2, '0')}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                        styles.timeButton,
+                        isSelected && styles.timeButtonSelected,
+                      ]}
+                      onPress={() => setSelectedMinute(minute)}
+                      activeOpacity={0.7}>
+                      <Text
+                        style={[
+                          styles.timeButtonText,
+                          isSelected && styles.timeButtonTextSelected,
+                        ]}>
+                        {minute.toString().padStart(2, '0')}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* 선택된 시간 표시 */}
           <View style={styles.selectedTimeContainer}>

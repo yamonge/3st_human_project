@@ -79,3 +79,4 @@ package.json
 yarn.lock
 .env
 example.env
+google-services.json

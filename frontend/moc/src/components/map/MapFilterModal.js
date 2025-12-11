@@ -1,14 +1,8 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  Platform,
-} from 'react-native';
+import {View, Text, TouchableOpacity, Pressable, Platform} from 'react-native';
 import {X} from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
+import {Portal} from '@gorhom/portal';
 import styles from '../../styles/components/map/MapFilterModalStyles';
 import {colors} from '../../styles/common';
 
@@ -30,12 +24,10 @@ export default function MapFilterModal({visible, onClose, onApply}) {
     onClose();
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}>
+    <Portal>
       {/* 배경 오버레이 */}
       <Pressable style={styles.overlay} onPress={onClose}>
         {/* 모달 콘텐츠 */}
@@ -89,6 +81,6 @@ export default function MapFilterModal({visible, onClose, onApply}) {
           </TouchableOpacity>
         </Pressable>
       </Pressable>
-    </Modal>
+    </Portal>
   );
 }

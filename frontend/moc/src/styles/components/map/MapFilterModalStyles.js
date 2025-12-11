@@ -4,8 +4,12 @@ import {colors, spacing, fontSizes} from '../../common';
 export default StyleSheet.create({
   // 배경 오버레이
   overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },

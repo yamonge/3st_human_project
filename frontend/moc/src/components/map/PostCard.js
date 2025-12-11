@@ -9,6 +9,8 @@ import {
   ChevronUp,
   MapPin,
 } from 'lucide-react-native';
+import {formatDistanceToNow} from 'date-fns';
+import {ko} from 'date-fns/locale';
 import styles from '../../styles/components/map/PostCardStyles';
 import {colors} from '../../styles/common';
 
@@ -30,6 +32,12 @@ export default function PostCard({post, onJoin}) {
     }
   };
 
+  // createdAt으로 자동 계산
+  const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
+    addSuffix: true,
+    locale: ko,
+  });
+
   return (
     <View style={styles.card}>
       {/* 카드 내용 */}
@@ -38,7 +46,7 @@ export default function PostCard({post, onJoin}) {
         <View style={styles.cardHeader}>
           <View style={styles.leftSection}>
             <Text style={styles.storeName}>{post.storeName}</Text>
-            <Text style={styles.timeAgo}>{post.timeAgo}</Text>
+            <Text style={styles.timeAgo}>{timeAgo}</Text>
           </View>
           <View style={styles.distanceContainer}>
             <MapPin size={14} color={colors.textGray} />

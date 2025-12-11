@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   chatFab: {
     position: 'absolute',
     right: 20,
-    bottom: 140, // 네비게이션 바 위
+    bottom: 100, // 네비게이션 바 위
     width: 56,
     height: 56,
     borderRadius: 28,

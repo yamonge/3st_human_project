@@ -1,9 +1,10 @@
 import React, {useMemo, useRef, useState, useEffect} from 'react';
 import {View, Text, TouchableOpacity, FlatList, Alert} from 'react-native';
 import BottomSheet, {BottomSheetFlatList} from '@gorhom/bottom-sheet';
-import {RefreshCw, Filter, AlertCircle} from 'lucide-react-native';
+import {RefreshCw, Filter, AlertCircle, X} from 'lucide-react-native';
 import PostCard from './PostCard';
 import PostFilterModal from './PostFilterModal';
+import PostCreateModal from './PostCreateModal';
 import {getPostsByLocation} from '../../api/map';
 import styles from '../../styles/components/map/PostListBottomSheetStyles';
 import {colors} from '../../styles/common';
@@ -29,6 +30,9 @@ export default function PostListBottomSheet({
     peopleCount: 2,
     time: null,
   });
+
+  // 게시물 작성 모달
+  const [showPostCreateModal, setShowPostCreateModal] = useState(false);
 
   // visible 변경 시 바텀시트 열기/닫기
   useEffect(() => {
@@ -74,7 +78,7 @@ export default function PostListBottomSheet({
       {
         id: 1,
         storeName: selectedMarker.name,
-        timeAgo: '10분 전',
+        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10분 전
         distance: selectedMarker.distance
           ? `${selectedMarker.distance.toFixed(1)}km`
           : '1.7km',
@@ -89,7 +93,7 @@ export default function PostListBottomSheet({
       {
         id: 2,
         storeName: selectedMarker.name,
-        timeAgo: '1시간 전',
+        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1시간 전
         distance: selectedMarker.distance
           ? `${selectedMarker.distance.toFixed(1)}km`
           : '2.1km',
@@ -139,7 +143,7 @@ export default function PostListBottomSheet({
    */
   const handleWritePress = () => {
     console.log('[글쓰기 클릭]', selectedMarker?.name);
-    // TODO: navigation.navigate('PostCreate', {marker: selectedMarker});
+    setShowPostCreateModal(true);
   };
 
   /**
@@ -177,6 +181,12 @@ export default function PostListBottomSheet({
       style={styles.bottomSheetContainer}>
       {/* 헤더 */}
       <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={onClose}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+          <X size={20} color={colors.textBlack} strokeWidth={2} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>게시물 목록</Text>
         <TouchableOpacity
           style={styles.refreshButton}
@@ -220,6 +230,13 @@ export default function PostListBottomSheet({
         visible={showPostFilterModal}
         onClose={() => setShowPostFilterModal(false)}
         onApply={handleApplyPostFilter}
+      />
+
+      {/* 게시물 작성 모달 */}
+      <PostCreateModal
+        visible={showPostCreateModal}
+        onClose={() => setShowPostCreateModal(false)}
+        storeName={selectedMarker?.name || storeName}
       />
     </BottomSheet>
   );
