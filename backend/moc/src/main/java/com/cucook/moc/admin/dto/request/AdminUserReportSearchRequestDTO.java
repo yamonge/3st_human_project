@@ -24,6 +24,9 @@ public class AdminUserReportSearchRequestDTO {
     /** PENDING / PROCESSED / ALL (tb_user_report.processing_status_cd) */
     private String statusCd;
 
-    private Integer page;
-    private Integer size;
+     /** 마지막으로 조회한 user_report_id (첫 요청 시 null) */
+    private Long lastUserReportId;
+
+    /** 한 번에 조회할 데이터 수 */
+    private Integer limit;
 }
