@@ -3,12 +3,8 @@ import {colors, spacing} from '../../common';
 
 export default StyleSheet.create({
   // 배경 오버레이 (어두운 반투명)
-  overlay: {
+  overlay2: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     width: '100%',
     height: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -20,14 +16,8 @@ export default StyleSheet.create({
   modalContainer: {
     width: 330,
     maxHeight: 553,
-    backgroundColor: colors.backgroundWhite,
     borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 25},
-    shadowOpacity: 0.25,
-    shadowRadius: 50,
-    elevation: 25,
+    backgroundColor: colors.backgroundWhite,
   },
 
   // 헤더
@@ -37,8 +27,6 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
   },
 
   headerLeft: {

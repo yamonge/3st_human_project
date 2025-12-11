@@ -18,7 +18,7 @@ import {
 // import {getMyChatRooms, deleteChatRoom} from '../../api/chat';
 import {colors} from '../../styles/common';
 import styles from '../../styles/components/chat/ChatRoomListModalStyles';
-import ChatRoomDetail from './ChatRoomDetail';
+import ChatRoomScreen from './ChatRoomScreen';
 
 // 더미 데이터
 const DUMMY_CHAT_ROOMS = [
@@ -243,55 +243,52 @@ export default function ChatRoomListModal({visible, onClose, navigation}) {
   if (!visible) return null;
 
   return (
-    <>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <MessageCircle
-                size={24}
-                color={colors.primaryBlue}
-                strokeWidth={2}
-              />
-              <Text style={styles.headerTitle}>채팅방 목록</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <X size={20} color={colors.textBlack} strokeWidth={2} />
-            </TouchableOpacity>
-          </View>
-          {loading ? (
-            <View style={styles.emptyContainer}>
-              <ActivityIndicator size="large" color={colors.primaryBlue} />
-            </View>
-          ) : chatRooms.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>참여한 채팅방이 없습니다</Text>
-            </View>
-          ) : (
-            <SwipeListView
-              data={chatRooms}
-              keyExtractor={item => item.chatRoomId.toString()}
-              renderItem={renderChatRoomCard}
-              renderHiddenItem={renderHiddenItem}
-              rightOpenValue={-160}
-              disableRightSwipe
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.listContent}
-              style={styles.listContainer}
+    <View style={styles.overlay2}>
+      <View style={styles.modalContainer}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <MessageCircle
+              size={24}
+              color={colors.primaryBlue}
+              strokeWidth={2}
             />
-          )}
+            <Text style={styles.headerTitle}>채팅방 목록</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+            <X size={20} color={colors.textBlack} strokeWidth={2} />
+          </TouchableOpacity>
         </View>
+        {loading ? (
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color={colors.primaryBlue} />
+          </View>
+        ) : chatRooms.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>참여한 채팅방이 없습니다</Text>
+          </View>
+        ) : (
+          <SwipeListView
+            data={chatRooms}
+            keyExtractor={item => item.chatRoomId.toString()}
+            renderItem={renderChatRoomCard}
+            renderHiddenItem={renderHiddenItem}
+            rightOpenValue={-160}
+            disableRightSwipe
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            style={styles.listContainer}
+          />
+        )}
       </View>
-      <ChatRoomDetail
+      <ChatRoomScreen
         visible={showChatRoom}
         onClose={handleCloseChatRoom}
-        chatRoomId={selectedChatRoom?.chatRoomId}
         placeName={selectedChatRoom?.placeName}
         statusCd={selectedChatRoom?.statusCd}
       />
-    </>
+    </View>
   );
 }

@@ -3,12 +3,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Mail, Lock, Eye, EyeOff} from 'lucide-react-native';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -138,13 +136,13 @@ export default function LoginScreen({navigation}) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={loginStyles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView
+    <>
+      <KeyboardAwareScrollView
         contentContainerStyle={loginStyles.scrollContainer}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        extraScrollHeight={100}>
         <View style={loginStyles.content}>
           {/* 상단 일러스트 */}
           <View style={loginStyles.illustrationContainer}>
@@ -240,7 +238,7 @@ export default function LoginScreen({navigation}) {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* 로딩 오버레이 */}
       {loading && (
@@ -248,6 +246,6 @@ export default function LoginScreen({navigation}) {
           <ActivityIndicator size="large" color={colors.textWhite} />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </>
   );
 }
