@@ -1,4 +1,4 @@
-package com.cucook.moc.user.dto.response;
+package com.cucook.moc.user.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

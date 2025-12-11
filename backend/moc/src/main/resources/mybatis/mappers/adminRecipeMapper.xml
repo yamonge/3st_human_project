@@ -1,0 +1,61 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cucook.moc.admin.dao.AdminRecipeDAO">
+
+    <!-- 레시피(게시글) 목록: cursor 기반(lastRecipeId + limit) -->
+    <select id="selectAdminRecipeList"
+            parameterType="com.cucook.moc.admin.dto.request.AdminRecipeSearchRequestDTO"
+            resultType="com.cucook.moc.admin.vo.AdminRecipeVO">
+
+        SELECT
+        r.recipe_id      AS recipeId,
+        r.owner_user_id  AS ownerUserId,
+        r.title          AS title,
+        r.is_public      AS isPublic,
+        r.is_deleted     AS isDeleted,
+        r.report_cnt     AS reportCnt,
+        r.created_date   AS createdDate,
+        u.user_nickname  AS ownerNickname
+        FROM tb_recipe r
+        LEFT JOIN tb_user u ON r.owner_user_id = u.user_id
+        WHERE 1=1
+        AND r.is_deleted = 'N'
+        <if test="keyword != null and keyword != ''">
+            AND (r.title LIKE '%' || #{keyword} || '%'
+            OR  u.user_nickname LIKE '%' || #{keyword} || '%')
+        </if>
+        <if test="visibility != null and visibility != '' and visibility != 'ALL'">
+            <choose>
+                <when test="visibility == 'PUBLIC'">
+                    AND r.is_public = 'Y'
+                </when>
+                <when test="visibility == 'HIDDEN'">
+                    AND r.is_public = 'N'
+                </when>
+            </choose>
+        </if>
+        <if test="lastRecipeId != null">
+            AND r.recipe_id &lt; #{lastRecipeId}
+        </if>
+        ORDER BY r.recipe_id DESC
+        <if test="limit != null">
+            FETCH FIRST #{limit} ROWS ONLY
+        </if>
+    </select>
+
+    <!-- 공개/숨김 전환 -->
+    <update id="updateRecipeVisibility">
+        UPDATE tb_recipe
+        SET is_public = #{isPublic}
+        WHERE recipe_id = #{recipeId}
+    </update>
+
+    <!-- 소프트 삭제 (is_deleted = 'Y') -->
+    <update id="softDeleteRecipe">
+        UPDATE tb_recipe
+        SET is_deleted = 'Y'
+        WHERE recipe_id = #{recipeId}
+    </update>
+
+</mapper>

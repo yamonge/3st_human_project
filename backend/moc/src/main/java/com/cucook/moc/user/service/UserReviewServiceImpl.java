@@ -3,18 +3,15 @@ package com.cucook.moc.user.service;
 import com.cucook.moc.user.dao.UserDAO;
 import com.cucook.moc.user.dao.UserReviewDAO;
 import com.cucook.moc.user.dto.request.UserReviewRequestDTO;
-import com.cucook.moc.user.dto.response.ReviewedUserDetailDTO;
+import com.cucook.moc.user.dto.ReviewedUserDetailDTO;
 import com.cucook.moc.user.dto.response.UserReviewListResponseDTO;
 import com.cucook.moc.user.dto.response.UserReviewResponseDTO;
-import com.cucook.moc.user.service.UserReviewService;
 import com.cucook.moc.user.vo.UserReviewVO;
-import com.cucook.moc.user.vo.UserVO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
