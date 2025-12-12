@@ -12,7 +12,7 @@ import com.cucook.moc.recipe.vo.AiRecipeLogVO;
 import com.cucook.moc.recipe.vo.RecipeIngredientVO;
 import com.cucook.moc.recipe.vo.RecipeStepVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
-import com.cucook.moc.gemini.GeminiApiUtils;
+import com.cucook.moc.recipe.client.GeminiApiUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,58 +74,40 @@ public class RecipeServiceImpl implements RecipeService {
         List<RecommendedRecipeDTO> processedRecipes = new ArrayList<>();
         for (RecommendedRecipeDTO recipeDTO : generatedRecipes) {
             try {
-                // System.out.println("0"); // 디버깅용 출력 제거
-                // userId는 String, VO의 ownerUserId, createdId는 Long이므로 변환 필요
                 Long userIdLong = (requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty()) ? Long.valueOf(requestDTO.getUserId()) : null;
 
-                RecipeVO recipeVO = mapToRecipeVO(recipeDTO, userIdLong); // ⭐ userId 파라미터 타입 Long으로 변경
-                // System.out.println("1"); // 디버깅용 출력 제거
-                String thumbnailUrl = getCategoryImage(recipeVO.getCuisineStyleCd(), recipeVO.getTitle());
-                // System.out.println("2"); // 디버깅용 출력 제거
+                RecipeVO recipeVO = mapToRecipeVO(recipeDTO, userIdLong);
+                // category 기반으로 썸네일 선택 (AI는 category만 생성)
+                String thumbnailUrl = getCategoryImageByCategory(recipeDTO.getCategory());
                 recipeVO.setThumbnailUrl(thumbnailUrl);
-                // System.out.println("3"); // 디버깅용 출력 제거
 
                 recipeDAO.insertRecipe(recipeVO);
-                // System.out.println("4"); // 디버깅용 출력 제거
-                Long generatedRecipeId = recipeVO.getRecipeId(); // 시퀀스 값 반환
-                // System.out.println("5"); // 디버깅용 출력 제거
+                Long generatedRecipeId = recipeVO.getRecipeId();
 
-                List<RecipeStepVO> stepVOs = mapToRecipeStepVOs(recipeDTO.getCookingSteps(), generatedRecipeId, userIdLong); // ⭐ createdId 파라미터 타입 Long으로 변경
-                // System.out.println("6"); // 디버깅용 출력 제거
-                for(RecipeStepVO step : stepVOs) {
+                List<RecipeStepVO> stepVOs = mapToRecipeStepVOs(recipeDTO.getCookingSteps(), generatedRecipeId, userIdLong);
+                for (RecipeStepVO step : stepVOs) {
                     if (step.getImageUrl() == null || step.getImageUrl().isEmpty() || step.getImageUrl().equals("placeholder_url")) {
                         step.setImageUrl(thumbnailUrl);
                     }
                 }
-                // System.out.println("7"); // 디버깅용 출력 제거
                 recipeStepService.saveAllRecipeSteps(stepVOs);
-                // System.out.println("8"); // 디버깅용 출력 제거
 
-                List<RecipeIngredientVO> ingredientVOs = mapToRecipeIngredientVOs(recipeDTO.getRequiredIngredients(), generatedRecipeId, userIdLong); // ⭐ createdId 파라미터 타입 Long으로 변경
+                List<RecipeIngredientVO> ingredientVOs = mapToRecipeIngredientVOs(recipeDTO.getRequiredIngredients(), generatedRecipeId, userIdLong);
                 for (RecipeIngredientVO ingredientVO : ingredientVOs) {
                     boolean isUserOwned = requestDTO.getSelectedIngredients().stream()
                             .anyMatch(si -> si.getIngredientName().equals(ingredientVO.getIngredientName()));
                     ingredientVO.setIsOwnedDefault(isUserOwned ? "Y" : "N");
                 }
-                // System.out.println("9"); // 디버깅용 출력 제거
                 recipeIngredientService.saveAllRecipeIngredients(ingredientVOs);
 
-
-                // 저장된 레시피 정보를 DTO에 업데이트
-                // System.out.println("10"); // 디버깅용 출력 제거
                 recipeDTO.setRecipeId(generatedRecipeId);
-                // System.out.println("11"); // 디버깅용 출력 제거
                 recipeDTO.setThumbnailUrl(thumbnailUrl);
 
-                // 재료 매칭률 및 부족한 재료 개수 계산
-                // System.out.println("12"); // 디버깅용 출력 제거
                 List<RecipeIngredientResponseDTO> responseIngredients = calculateIngredientOwnership(
                         requestDTO.getSelectedIngredients(),
                         ingredientVOs
                 );
-                // System.out.println("13"); // 디버깅용 출력 제거
                 recipeDTO.setRequiredIngredients(responseIngredients);
-                // System.out.println("14"); // 디버깅용 출력 제거
 
                 processedRecipes.add(recipeDTO);
 
@@ -167,58 +149,91 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     /**
-     * Gemini AI에 전송할 프롬프트를 생성합니다.
-     * @param requestDTO 사용자 요청 DTO
-     * @return Gemini AI 프롬프트 문자열
+     * Gemini에 전달할 최적화된 레시피 생성 프롬프트를 구성합니다.
      */
     private String createGeminiPrompt(RecipeGenerationRequestDTO requestDTO) {
-        StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("당신은 요리 전문가 AI 입니다. 사용자가 제공한 재료와 필터 조건에 맞춰 최적의 레시피 3개를 JSON 형식으로 생성해주세요.\n");
-        promptBuilder.append("반드시 다음 JSON 형식에 맞춰 생성해야 합니다: [{\"title\":\"레시피1 제목\", \"summary\":\"간단 요약\", \"difficultyCd\":\"EASY\", \"cookTimeMin\":30, \"cuisineStyleCd\":\"KOR\", \"category\":\"rice_dish\", \"requiredIngredients\":[{\"ingredientName\":\"재료1\", \"quantityDesc\":\"수량\"}], \"cookingSteps\":[{\"stepNo\":1, \"stepDesc\":\"단계1 설명\"}]}, ...]\n");
 
-        promptBuilder.append("\n[카테고리 규칙]\n");
-        promptBuilder.append("각 레시피마다 'category' 필드를 포함해야 합니다.\n");
-        promptBuilder.append("category는 아래 값 중 하나만 사용하세요: [\"rice_dish\",\"noodle\",\"soup_stew\",\"stir_fry\",\"grill_roast\",\"salad\",\"side_dish\",\"dessert_snack\"]\n");
+        String ingredientList = requestDTO.getSelectedIngredients().stream()
+                .map(ing -> {
+                    StringBuilder sb = new StringBuilder("- ").append(ing.getIngredientName());
+                    if (ing.getUsageType() != null && !ing.getUsageType().isEmpty()) {
+                        sb.append(" (사용량: ").append(ing.getUsageType()).append(")");
+                    }
+                    if (ing.getAmountHint() != null && !ing.getAmountHint().isEmpty()) {
+                        sb.append(" (추정량: ").append(ing.getAmountHint()).append(")");
+                    }
+                    return sb.toString();
+                })
+                .collect(Collectors.joining("\n"));
 
+        String difficulty = (requestDTO.getFilterDifficultyCd() != null && !requestDTO.getFilterDifficultyCd().isEmpty())
+                ? requestDTO.getFilterDifficultyCd() : "ANY";
 
-        promptBuilder.append("\n사용자 선택 재료:\n");
-        requestDTO.getSelectedIngredients().forEach(ing -> {
-            promptBuilder.append("- ").append(ing.getIngredientName());
-            if (ing.getUsageType() != null && !ing.getUsageType().isEmpty()) {
-                promptBuilder.append(" (사용량: ").append(ing.getUsageType()).append(")");
-            }
-            if (ing.getAmountHint() != null && !ing.getAmountHint().isEmpty()) {
-                promptBuilder.append(" (양 힌트: ").append(ing.getAmountHint()).append(")");
-            }
-            promptBuilder.append("\n");
-        });
+        String cuisine = (requestDTO.getFilterCuisineCd() != null && !requestDTO.getFilterCuisineCd().isEmpty())
+                ? requestDTO.getFilterCuisineCd() : "ANY";
 
-        promptBuilder.append("\n필터 조건:\n");
-        promptBuilder.append("- 요리 스타일: ").append(requestDTO.getFilterCuisineCd()).append("\n");
-        promptBuilder.append("- 난이도: ").append(requestDTO.getFilterDifficultyCd()).append("\n");
-        promptBuilder.append("- 조리 시간: ").append(requestDTO.getFilterCookTimeCd()).append("\n");
+        String cookTime = (requestDTO.getFilterCookTimeCd() != null && !requestDTO.getFilterCookTimeCd().isEmpty())
+                ? requestDTO.getFilterCookTimeCd() : "ANY";
 
-        promptBuilder.append("\n생성 규칙:\n");
-        promptBuilder.append("- 제공된 모든 재료를 최대한 활용해주세요.\n");
-        promptBuilder.append("- 레시피 3개를 생성하고, JSON 배열 형태로 반환해주세요.\n");
-        promptBuilder.append("- 각 레시피는 제목, 요약, 난이도, 조리시간(분 단위 숫자), 요리 스타일, 카테고리, 필요한 재료 목록, 조리 순서를 포함해야 합니다.\n");
-        promptBuilder.append("- 필요한 재료 목록에는 재료명과 수량설명(예: 200g, 1개, 1/2컵)이 포함되어야 합니다.\n");
-        promptBuilder.append("- 조리 순서에는 단계 번호, 단계 설명이 포함되어야 합니다.\n");
-        promptBuilder.append("- 부족한 재료가 있더라도 사용자가 선택한 재료를 중심으로 맛있고 창의적인 레시피를 제안해주세요.\n");
+        String promptTemplate =
+                "당신은 최상급 요리 전문가 AI이며, 반드시 JSON만 반환해야 합니다.\n" +
+                        "\n" +
+                        "### [역할]\n" +
+                        "- 사용자의 냉장고 재료만으로 창의적이고 실현 가능한 요리 3개를 추천\n" +
+                        "- 각 레시피는 정확한 조리 단계를 포함해야 하며 한국인이 맛있다고 느끼는 밸런스를 유지\n" +
+                        "- 절대 JSON 외의 텍스트를 출력하지 말 것\n" +
+                        "\n" +
+                        "### [사용자 재료 리스트]\n" +
+                        "{{INGREDIENT_LIST}}\n" +
+                        "\n" +
+                        "### [사용자 필터 조건]\n" +
+                        "- 요리 스타일(cuisineStyleCd): {{CUISINE}}\n" +
+                        "- 난이도(difficultyCd): {{DIFFICULTY}}\n" +
+                        "- 조리 시간(cookTimeMin): {{COOK_TIME}}\n" +
+                        "\n" +
+                        "### [카테고리 규칙]\n" +
+                        "각 레시피의 category는 아래 중 하나여야 한다:\n" +
+                        "[\"rice_dish\", \"noodle\", \"soup_stew\", \"stir_fry\", \"grill_roast\", \"salad\", \"side_dish\", \"dessert_snack\"]\n" +
+                        "\n" +
+                        "### [출력 JSON 스키마]\n" +
+                        "[\n" +
+                        "  {\n" +
+                        "    \"title\": \"string\",\n" +
+                        "    \"summary\": \"string\",\n" +
+                        "    \"difficultyCd\": \"EASY | NORMAL | HARD\",\n" +
+                        "    \"cookTimeMin\": number,\n" +
+                        "    \"cuisineStyleCd\": \"KOR | CHN | JPN | WES | ETC\",\n" +
+                        "    \"category\": \"rice_dish | noodle | soup_stew | stir_fry | grill_roast | salad | side_dish | dessert_snack\",\n" +
+                        "    \"requiredIngredients\": [ { \"ingredientName\": \"string\", \"quantityDesc\": \"string\" } ],\n" +
+                        "    \"cookingSteps\": [ { \"stepNo\": number, \"stepDesc\": \"string\", \"imageUrl\": \"string\" } ]\n" +
+                        "  }\n" +
+                        "]\n" +
+                        "\n" +
+                        "### [출력 규칙]\n" +
+                        "- 반드시 JSON 배열을 출력할 것\n" +
+                        "- 레시피는 3개 생성할 것\n" +
+                        "- 재료 이름은 정규화된 한글 식재료명으로 출력\n" +
+                        "- 재료량은 '1개', '200g', '1컵' 등 구체적으로\n" +
+                        "- 모든 단계(stepDesc)는 실제로 요리 가능한 수준으로 상세하게 작성\n" +
+                        "\n" +
+                        "### [이미지 규칙]\n" +
+                        "- 당신은 어떤 이미지 URL도 생성하지 않습니다.\n" +
+                        "- imageUrl 또는 thumbnailUrl을 생성하거나 포함하지 마세요.\n" +
+                        "- 서버에서 recipe.category 값을 기준으로 이미지가 자동 매핑됩니다.\n" +
+                        "- 모델은 반드시 category만 정확하게 생성해야 합니다.\n";
 
-        return promptBuilder.toString();
+        return promptTemplate
+                .replace("{{INGREDIENT_LIST}}", ingredientList)
+                .replace("{{DIFFICULTY}}", difficulty)
+                .replace("{{CUISINE}}", cuisine)
+                .replace("{{COOK_TIME}}", cookTime);
     }
-
-
     /**
-     * Gemini AI의 JSON 응답을 RecommendedRecipeDTO 리스트로 파싱합니다.
-     * @param aiResponseJson Gemini AI의 원본 JSON 응답
-     * @param requestDTO 요청 DTO (기본값 설정용)
-     * @return 파싱된 RecommendedRecipeDTO 리스트
-     * @throws Exception JSON 파싱 중 오류 발생 시
+     * Gemini AI 응답(JSON)을 RecommendedRecipeDTO 리스트로 파싱
      */
     private List<RecommendedRecipeDTO> parseGeminiRecipeResponse(String aiResponseJson, RecipeGenerationRequestDTO requestDTO) throws Exception {
-        List<RecommendedRecipeDTO> recipes = objectMapper.readValue(aiResponseJson, new TypeReference<List<RecommendedRecipeDTO>>() {});
+        List<RecommendedRecipeDTO> recipes =
+                objectMapper.readValue(aiResponseJson, new TypeReference<List<RecommendedRecipeDTO>>() {});
 
         for (RecommendedRecipeDTO recipe : recipes) {
             if (recipe.getCuisineStyleCd() == null || recipe.getCuisineStyleCd().isEmpty()) {
@@ -232,104 +247,103 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     /**
-     * RecommendedRecipeDTO를 RecipeVO로 매핑합니다.
-     * @param dto RecommendedRecipeDTO 객체
-     * @param userId 생성자 ID (Long 타입으로 직접 받음)
-     * @return 매핑된 RecipeVO 객체
+     * RecommendedRecipeDTO → RecipeVO 매핑
      */
-    private RecipeVO mapToRecipeVO(RecommendedRecipeDTO dto, Long userId) { // ⭐ userId 파라미터 타입 Long
+    private RecipeVO mapToRecipeVO(RecommendedRecipeDTO dto, Long userId) {
         RecipeVO vo = new RecipeVO();
-        vo.setOwnerUserId(userId); // ⭐ Long 타입 그대로 사용
+        vo.setOwnerUserId(userId);
         vo.setSourceType("AI_GENERATED");
         vo.setTitle(dto.getTitle());
         vo.setSummary(dto.getSummary());
-        vo.setThumbnailUrl(dto.getThumbnailUrl());
+        vo.setThumbnailUrl(null); // 나중에 카테고리 기반으로 설정
         vo.setDifficultyCd(dto.getDifficultyCd());
         vo.setCookTimeMin(dto.getCookTimeMin());
         vo.setCuisineStyleCd(dto.getCuisineStyleCd());
-        vo.setCategory(dto.getCategory()); // ⭐ RecipeVO에서 category 필드 제거했으므로 이 라인 제거 필요
+
+        // AI가 category는 정확히 생성, (Java가 이미지 선택)
+        vo.setCategory(dto.getCategory());
+
         vo.setIsPublic("N");
         vo.setIsDeleted("N");
         vo.setViewCnt(0);
         vo.setLikeCnt(0);
         vo.setReportCnt(0);
-        vo.setCreatedId(userId); // ⭐ Long 타입 그대로 사용
+        vo.setCreatedId(userId);
         return vo;
     }
 
     /**
-     * RecipeStepResponseDTO 리스트를 RecipeStepVO 리스트로 매핑합니다.
-     * @param dtos RecipeStepResponseDTO 리스트
-     * @param recipeId 연결할 레시피 ID
-     * @param createdId 생성자 ID (Long 타입으로 직접 받음)
-     * @return 매핑된 RecipeStepVO 리스트
+     * RecipeStepDTO → RecipeStepVO 변환
      */
-    private List<RecipeStepVO> mapToRecipeStepVOs(List<RecipeStepResponseDTO> dtos, Long recipeId, Long createdId) { // ⭐ createdId 파라미터 타입 Long
+    private List<RecipeStepVO> mapToRecipeStepVOs(List<RecipeStepResponseDTO> dtos, Long recipeId, Long createdId) {
         return dtos.stream().map(dto -> {
             RecipeStepVO vo = new RecipeStepVO();
             vo.setRecipeId(recipeId);
             vo.setStepNo(dto.getStepNo());
             vo.setStepDesc(dto.getStepDesc());
-            vo.setImageUrl(dto.getImageUrl());
-            vo.setCreatedId(createdId); // ⭐ Long 타입 그대로 사용
+            vo.setImageUrl(null); // 나중에 thumbnail로 처리
+            vo.setCreatedId(createdId);
             return vo;
         }).collect(Collectors.toList());
     }
 
     /**
-     * RecipeIngredientResponseDTO 리스트를 RecipeIngredientVO 리스트로 매핑합니다.
-     * @param dtos RecipeIngredientResponseDTO 리스트
-     * @param recipeId 연결할 레시피 ID
-     * @param createdId 생성자 ID (Long 타입으로 직접 받음)
-     * @return 매핑된 RecipeIngredientVO 리스트
+     * RecipeIngredientDTO → RecipeIngredientVO 변환
      */
-    private List<RecipeIngredientVO> mapToRecipeIngredientVOs(List<RecipeIngredientResponseDTO> dtos, Long recipeId, Long createdId) { // ⭐ createdId 파라미터 타입 Long
+    private List<RecipeIngredientVO> mapToRecipeIngredientVOs(List<RecipeIngredientResponseDTO> dtos, Long recipeId, Long createdId) {
         return dtos.stream().map(dto -> {
             RecipeIngredientVO vo = new RecipeIngredientVO();
             vo.setRecipeId(recipeId);
             vo.setIngredientName(dto.getIngredientName());
             vo.setQuantityDesc(dto.getQuantityDesc());
             vo.setIsOwnedDefault("N");
-            vo.setCreatedId(createdId); // ⭐ Long 타입 그대로 사용
+            vo.setCreatedId(createdId);
             return vo;
         }).collect(Collectors.toList());
     }
 
-
     /**
-     * DB에 저장된 카테고리별 이미지 중 적절한 이미지를 선택하여 URL을 반환합니다.
-     * @param cuisineStyleCd 요리 스타일 코드
-     * @param recipeTitle 레시피 제목 (검색 키워드로 활용될 수 있음)
-     * @return 이미지 URL
+     * 카테고리 기반 썸네일 이미지 자동 선택
      */
-    private String getCategoryImage(String cuisineStyleCd, String recipeTitle) {
-        // TODO: 실제 DB에서 카테고리별 이미지 조회 로직 구현 필요
-        switch (cuisineStyleCd) {
-            case "KOR": return "https://moc.cucook.com/images/korean_dish_default.jpg";
-            case "CHN": return "https://moc.cucook.com/images/chinese_dish_default.jpg";
-            case "JPN": return "https://moc.cucook.com/images/japanese_dish_default.jpg";
-            case "WES": return "https://moc.cucook.com/images/western_dish_default.jpg";
-            default: return "https://moc.cucook.com/images/default_dish.jpg";
+    private String getCategoryImageByCategory(String category) {
+        if (category == null) return "https://moc.cucook.com/images/default_dish.jpg";
+
+        switch (category) {
+            case "rice_dish":
+                return "https://moc.cucook.com/images/category_rice.jpg";
+            case "noodle":
+                return "https://moc.cucook.com/images/category_noodle.jpg";
+            case "soup_stew":
+                return "https://moc.cucook.com/images/category_soup.jpg";
+            case "stir_fry":
+                return "https://moc.cucook.com/images/category_stir_fry.jpg";
+            case "grill_roast":
+                return "https://moc.cucook.com/images/category_grill.jpg";
+            case "salad":
+                return "https://moc.cucook.com/images/category_salad.jpg";
+            case "side_dish":
+                return "https://moc.cucook.com/images/category_side.jpg";
+            case "dessert_snack":
+                return "https://moc.cucook.com/images/category_dessert.jpg";
+            default:
+                return "https://moc.cucook.com/images/default_dish.jpg";
         }
     }
 
     /**
-     * 사용자가 선택한 재료와 레시피에 필요한 재료를 비교하여 보유 여부를 계산하고,
-     * RecipeIngredientResponseDTO 리스트로 반환합니다.
-     * @param userSelectedIngredients 사용자 선택 재료 DTO 리스트
-     * @param recipeRequiredIngredientVOs 레시피에 필요한 재료 VO 리스트 (DB에 저장될 재료 목록)
-     * @return 보유 여부가 계산된 RecipeIngredientResponseDTO 리스트
+     * 재료 보유 여부 계산
      */
     private List<RecipeIngredientResponseDTO> calculateIngredientOwnership(
             List<SelectedIngredientRequestDTO> userSelectedIngredients,
             List<RecipeIngredientVO> recipeRequiredIngredientVOs) {
 
-        Map<String, SelectedIngredientRequestDTO> userIngredientMap = userSelectedIngredients.stream()
-                .collect(Collectors.toMap(
-                        SelectedIngredientRequestDTO::getIngredientName,
-                        ing -> ing,
-                        (existing, replacement) -> existing
-                ));
+        Map<String, SelectedIngredientRequestDTO> userIngredientMap =
+                userSelectedIngredients.stream()
+                        .collect(Collectors.toMap(
+                                SelectedIngredientRequestDTO::getIngredientName,
+                                ing -> ing,
+                                (existing, replacement) -> existing
+                        ));
 
         return recipeRequiredIngredientVOs.stream().map(vo -> {
             RecipeIngredientResponseDTO dto = new RecipeIngredientResponseDTO();
@@ -341,30 +355,38 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     /**
-     * AI 레시피 생성 로그를 저장합니다.
-     * @param requestDTO AI 요청 DTO
-     * @param prompt Gemini AI에 보낸 프롬프트
-     * @param aiResponse Gemini AI로부터 받은 응답
-     * @param resultCount 생성된 레시피 수
+     * AI 레시피 생성 로그 저장
      */
-    private void logAiRecipeGeneration(RecipeGenerationRequestDTO requestDTO, String prompt, String aiResponse, int resultCount) {
+    private void logAiRecipeGeneration(
+            RecipeGenerationRequestDTO requestDTO,
+            String prompt,
+            String aiResponse,
+            int resultCount) {
+
         AiRecipeLogVO logVO = new AiRecipeLogVO();
 
-        // requestDTO.getUserId()는 String, logVO.userId는 Long이므로 변환
-        logVO.setUserId(requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty() ? Long.valueOf(requestDTO.getUserId()) : null);
+        logVO.setUserId(
+                requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty()
+                        ? Long.valueOf(requestDTO.getUserId())
+                        : null
+        );
 
-        // requestDTO.getCameraSessionId()는 String, logVO.cameraSessionId는 Long이므로 변환
-        logVO.setBaseSourceCd(requestDTO.getCameraSessionId() != null && !requestDTO.getCameraSessionId().isEmpty() ? "CAMERA" : "MANUAL");
+        logVO.setBaseSourceCd(
+                requestDTO.getCameraSessionId() != null && !requestDTO.getCameraSessionId().isEmpty()
+                        ? "CAMERA"
+                        : "MANUAL"
+        );
 
         if (requestDTO.getCameraSessionId() != null && !requestDTO.getCameraSessionId().isEmpty()) {
             logVO.setCameraSessionId(Long.valueOf(requestDTO.getCameraSessionId()));
-        } else {
-            logVO.setCameraSessionId(null);
         }
 
-        logVO.setManualIngredients(requestDTO.getSelectedIngredients().stream()
-                .map(SelectedIngredientRequestDTO::getIngredientName)
-                .collect(Collectors.joining(",")));
+        logVO.setManualIngredients(
+                requestDTO.getSelectedIngredients().stream()
+                        .map(SelectedIngredientRequestDTO::getIngredientName)
+                        .collect(Collectors.joining(","))
+        );
+
         logVO.setFilterCuisineCd(requestDTO.getFilterCuisineCd());
         logVO.setFilterDiffCd(requestDTO.getFilterDifficultyCd());
         logVO.setFilterTimeCd(requestDTO.getFilterCookTimeCd());
@@ -373,81 +395,53 @@ public class RecipeServiceImpl implements RecipeService {
         logVO.setAiResponse(aiResponse);
         logVO.setResultCnt(resultCount);
 
-        // requestDTO.getUserId()는 String, logVO.createdId는 Long이므로 변환
-        logVO.setCreatedId(requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty() ? Long.valueOf(requestDTO.getUserId()) : null);
+        logVO.setCreatedId(
+                requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty()
+                        ? Long.valueOf(requestDTO.getUserId())
+                        : null
+        );
 
         aiRecipeLogService.saveAiRecipeLog(logVO);
     }
 
     /**
-     * 특정 레시피의 공개(`is_public`) 상태를 업데이트(토글)합니다.
-     * 사용자가 자신의 레시피를 '공유'하거나 '공유 취소'하는 것으로 간주합니다.
-     *
-     * @param recipeId 상태를 업데이트할 레시피의 ID
-     * @param userId 해당 레시피의 소유자 ID (권한 확인용)
-     * @param shareStatus 공유 여부 (true: 공개, false: 비공개)
-     * @return 업데이트 성공 여부 (true/false)
-     * @throws IllegalArgumentException 레시피를 찾을 수 없거나 권한이 없을 경우
+     * 공개 상태 토글
      */
     @Override
-    @Transactional // 데이터 변경 작업이므로 트랜잭션 적용
+    @Transactional
     public boolean toggleRecipeShareStatus(Long recipeId, Long userId, boolean shareStatus) {
-        // 1. 레시피 존재 여부 확인
         RecipeVO recipe = recipeDAO.selectRecipeById(recipeId);
-        if (recipe == null) {
-            throw new IllegalArgumentException("레시피 (ID: " + recipeId + ")를 찾을 수 없습니다.");
-        }
+        if (recipe == null) throw new IllegalArgumentException("레시피를 찾을 수 없습니다.");
 
-        // 2. 권한 검사: 레시피 소유자만 공유 상태를 변경할 수 있음
-        //    userId는 Long 타입, recipe.getOwnerUserId()도 Long 타입이므로 equals 사용
-        if (!recipe.getOwnerUserId().equals(userId)) {
-            throw new IllegalArgumentException("이 레시피 (ID: " + recipeId + ")의 공유 상태를 변경할 권한이 없습니다.");
-        }
+        if (!recipe.getOwnerUserId().equals(userId))
+            throw new IllegalArgumentException("공유 상태 변경 권한이 없습니다.");
 
-        // 3. is_public 상태를 'Y' 또는 'N'으로 변환
-        String isPublicFlag = shareStatus ? "Y" : "N";
+        String isPublic = shareStatus ? "Y" : "N";
 
-        // 4. 현재 상태와 요청 상태가 다를 경우에만 DB 업데이트 수행
-        //    equalsIgnoreCase를 사용하여 "Y" / "y" 모두 처리
-        if (!recipe.getIsPublic().equalsIgnoreCase(isPublicFlag)) {
-            int updatedCount = recipeDAO.updateRecipeIsPublic(recipeId, userId, isPublicFlag); // DAO 호출
-            return updatedCount > 0; // 업데이트 성공 여부 반환
+        if (!recipe.getIsPublic().equalsIgnoreCase(isPublic)) {
+            int updated = recipeDAO.updateRecipeIsPublic(recipeId, userId, isPublic);
+            return updated > 0;
         }
-        // 현재 상태와 요청 상태가 이미 일치하면 DB 업데이트할 필요 없음 (성공으로 간주)
         return true;
     }
 
     /**
-     * 특정 사용자가 '공유'(공개)한 모든 레시피 목록을 조회합니다.
-     * 마이페이지 '공유한 게시글' 탭의 목록 표시용입니다.
-     *
-     * @param userId 공유한 레시피 목록을 조회할 사용자의 ID
-     * @return 해당 사용자가 공유한 레시피 목록과 총 개수를 담은 응답 DTO
+     * 특정 사용자가 공유한 레시피 목록 조회
      */
     @Override
     @Transactional(readOnly = true)
     public RecipeListResponseDTO getSharedRecipesByUserId(Long userId) {
-        // 1. DAO를 통해 공유된 레시피 VO 리스트 조회
-        List<RecipeVO> sharedRecipeVOs = recipeDAO.selectSharedRecipesByUserId(userId);
-
-        // 2. VO 리스트 -> RecipeResponseDTO 리스트 변환 (편의 메서드 활용)
-        List<RecipeResponseDTO> dtoList = sharedRecipeVOs.stream()
-                .map(RecipeResponseDTO::from) // RecipeResponseDTO.from() 사용
-                .collect(Collectors.toList());
-
-        // 3. DTO 리스트와 총 개수를 담아 반환
-        return new RecipeListResponseDTO(dtoList, dtoList.size()); // ⭐ 이 라인이 문제 없음
+        List<RecipeVO> shared = recipeDAO.selectSharedRecipesByUserId(userId);
+        List<RecipeResponseDTO> dtoList =
+                shared.stream().map(RecipeResponseDTO::from).collect(Collectors.toList());
+        return new RecipeListResponseDTO(dtoList, dtoList.size());
     }
+
     /**
-     * 특정 사용자가 '공유'(공개)한 레시피의 총 개수를 조회합니다.
-     * 마이페이지 '공유한 게시글' 카드에 표시용입니다.
-     * `RecipeService` 인터페이스의 `countSharedRecipesByUserId` 메서드를 구현합니다.
-     *
-     * @param userId 개수를 조회할 사용자의 ID
-     * @return 공유된 레시피의 총 개수
+     * 특정 사용자가 공유한 레시피 수 조회
      */
-    @Override // ⭐ 인터페이스 구현 명시
-    @Transactional(readOnly = true) // 데이터 조회 작업이므로 읽기 전용 트랜잭션 적용
+    @Override
+    @Transactional(readOnly = true)
     public int countSharedRecipesByUserId(Long userId) {
         return recipeDAO.countSharedRecipesByUserId(userId);
     }
