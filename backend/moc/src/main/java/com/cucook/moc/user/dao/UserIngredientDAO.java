@@ -17,4 +17,6 @@ public interface UserIngredientDAO {
     int updateUserIngredient(UserIngredientVO vo);
 
     int deleteUserIngredient(Long userIngredientId);
+
+    Long findIdByUserIdAndIngredientName(Long userId, String ingredientName);
 }
