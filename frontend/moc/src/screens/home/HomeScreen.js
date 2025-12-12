@@ -14,7 +14,6 @@ import {
   initNotification,
   requestNotificationPermission,
 } from '../../utils/notificationService';
-import RecipeTestScreenAxios from '../../testchs/RecipeTestScreenAxios';
 
 /**
  * 메인 홈 화면
