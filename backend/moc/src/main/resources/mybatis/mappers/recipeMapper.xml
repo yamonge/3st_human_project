@@ -3,42 +3,33 @@
 <mapper namespace="com.cucook.moc.recipe.dao.RecipeDAO">
 
     <insert id="insertRecipe" parameterType="com.cucook.moc.recipe.vo.RecipeVO">
-        <selectKey keyProperty="recipeId" resultType="java.lang.Long" order="BEFORE">
-            SELECT seq_tb_recipe.NEXTVAL FROM DUAL
+        <selectKey keyProperty="recipeId" resultType="long" order="BEFORE">
+            SELECT seq_tb_recipe.NEXTVAL FROM dual
         </selectKey>
+
         INSERT INTO tb_recipe (
         recipe_id,
         owner_user_id,
         source_type,
-        external_ref_id,
         title,
         summary,
         thumbnail_url,
         difficulty_cd,
         cook_time_min,
         cuisine_style_cd,
-        is_public,
-        is_deleted,
-        view_cnt,
-        like_cnt,
-        report_cnt,
+        category,
         created_id
         ) VALUES (
         #{recipeId},
         #{ownerUserId},
         #{sourceType},
-        #{externalRefId, jdbcType=VARCHAR},
         #{title},
-        #{summary},
-        #{thumbnailUrl},
+        #{summary, jdbcType=VARCHAR},
+        #{thumbnailUrl, jdbcType=VARCHAR},
         #{difficultyCd},
-        #{cookTimeMin, jdbcType=NUMERIC},
+        #{cookTimeMin},
         #{cuisineStyleCd},
-        #{isPublic},
-        #{isDeleted},
-        #{viewCnt},
-        #{likeCnt},
-        #{reportCnt},
+        #{category},
         #{createdId}
         )
     </insert>

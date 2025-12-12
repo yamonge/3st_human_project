@@ -14,6 +14,7 @@ import {
   initNotification,
   requestNotificationPermission,
 } from '../../utils/notificationService';
+import RecipeTestScreenAxios from '../../testchs/RecipeTestScreenAxios';
 
 /**
  * 메인 홈 화면
@@ -148,6 +149,7 @@ export default function HomeScreen({navigation}) {
             <Text style={homeStyles.subGreeting}>
               My Own Chef에 어서오세요!
             </Text>
+            <RecipeTestScreenAxios />
           </View>
 
           {/* 메뉴 섹션 */}
