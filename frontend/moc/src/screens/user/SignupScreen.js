@@ -26,8 +26,10 @@ import Button from '../../components/common/Button';
 import Checkbox from '../../components/common/Checkbox';
 import DatePickerModal from '../../components/common/DatePickerModal';
 import {signupStyles} from '../../styles/screens/user/signupStyles';
+import {loginStyles} from '../../styles/screens/user/loginStyles';
 import {colors} from '../../styles/common';
 import authAPI from '../../api/auth';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 /**
  * 회원가입 화면
@@ -265,9 +267,12 @@ export default function SignupScreen({navigation}) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={signupStyles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAwareScrollView
+      contentContainerStyle={loginStyles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      enableOnAndroid={true}
+      extraScrollHeight={100}>
       {/* 헤더 */}
       <View style={signupStyles.header}>
         <TouchableOpacity
@@ -601,6 +606,6 @@ export default function SignupScreen({navigation}) {
           <ActivityIndicator size="large" color={colors.textWhite} />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
