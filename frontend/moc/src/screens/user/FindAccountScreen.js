@@ -387,10 +387,10 @@ export default function FindAccountScreen({navigation}) {
                     • 가입 시 사용한 이메일을 입력해주세요
                   </Text>
                   <Text style={findAccountStyles.infoBoxItem}>
-                    • 임시 비밀번호는 즉시 발송됩니다
+                    • 이메일로 비밀번호 변경 링크가 발송됩니다
                   </Text>
                   <Text style={findAccountStyles.infoBoxItem}>
-                    • 로그인 후 반드시 비밀번호를 변경하세요
+                    • 링크를 통해 바로 비밀번호를 변경할 수 있습니다
                   </Text>
                 </View>
               </View>

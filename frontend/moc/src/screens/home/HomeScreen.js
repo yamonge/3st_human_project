@@ -10,7 +10,10 @@ import {
 import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
 import {homeStyles} from '../../styles/screens/home/homeStyles';
-import RecipeTestScreenAxios from '../../testchs/RecipeTestScreenAxios';
+import {
+  initNotification,
+  requestNotificationPermission,
+} from '../../utils/notificationService';
 
 /**
  * 메인 홈 화면
@@ -23,17 +26,17 @@ export default function HomeScreen({navigation}) {
   // 사용자 정보 (임시)
   const [userName, setUserName] = useState('둘리');
 
-  // // 알림 초기화 및 권한 요청 (홈 화면 렌더링 완료 후)
-  // useEffect(() => {
-  //   // requestAnimationFrame: 다음 프레임에서 실행 (렌더링 완료 보장)
-  //   requestAnimationFrame(() => {
-  //     requestAnimationFrame(() => {
-  //       // 2프레임 대기 후 실행 (확실한 렌더링 완료)
-  //       initNotification();
-  //       requestNotificationPermission();
-  //     });
-  //   });
-  // }, []);
+  // 알림 초기화 및 권한 요청 (홈 화면 렌더링 완료 후)
+  useEffect(() => {
+    // requestAnimationFrame: 다음 프레임에서 실행 (렌더링 완료 보장)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // 2프레임 대기 후 실행 (확실한 렌더링 완료)
+        initNotification();
+        requestNotificationPermission();
+      });
+    });
+  }, []);
 
   // 인기 레시피 데이터 (임시 - 추후 API 연동)
   const [popularRecipes, setPopularRecipes] = useState([
@@ -145,7 +148,6 @@ export default function HomeScreen({navigation}) {
             <Text style={homeStyles.subGreeting}>
               My Own Chef에 어서오세요!
             </Text>
-            <RecipeTestScreenAxios />
           </View>
 
           {/* 메뉴 섹션 */}

@@ -1,11 +1,11 @@
 package com.cucook.moc.user.dto.response; // ⭐ user 패키지
 
+import com.cucook.moc.user.dto.ReportedUserDetailDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime; // UI 표시용
 import java.time.format.DateTimeFormatter; // 날짜 포맷팅용
 
 @Data

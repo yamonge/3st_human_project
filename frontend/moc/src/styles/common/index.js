@@ -15,6 +15,9 @@ export const colors = {
   // Text
   textDark: '#36454F',
   textLight: '#C6CEDD',
+  textGray: '#737373', // ← 추가!
+  textLightGray: '#A1A1A1',
+  textDarkGray: '#525252',
   textWhite: '#FFFFFF',
   textBlack: '#000000',
 
@@ -34,9 +37,19 @@ export const colors = {
   success: '#34C759',
   warning: '#FF9500',
 
+  // Map (지도 화면 전용)
+  mapSearchBorder: '#D2D6DB',
+  mapPlaceholder: '#9DA4AE',
+  mapBadgeRed: '#FB2C36',
+  mapIconBlue: '#155DFC',
+
   // Opacity
   blackOverlay: 'rgba(0, 0, 0, 0.5)',
   whiteOverlay: 'rgba(255, 255, 255, 0.8)',
+
+  //White
+  white: '#ffffff',
+  backgroundWhite: '#ffffff',
 };
 
 // 폰트 (Typography)

@@ -1,4 +1,4 @@
-package com.cucook.moc.user.dto.response; // ⭐ user 패키지
+package com.cucook.moc.user.dto; // ⭐ user 패키지
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
