@@ -1,5 +1,6 @@
 package com.cucook.moc.recipe.service.impl;
 
+import com.cucook.moc.recipe.client.GeminiApiUtils;
 import com.cucook.moc.recipe.dao.RecipeDAO;
 import com.cucook.moc.recipe.dto.request.RecipeGenerationRequestDTO;
 import com.cucook.moc.recipe.dto.request.SelectedIngredientRequestDTO;
@@ -12,12 +13,15 @@ import com.cucook.moc.recipe.vo.AiRecipeLogVO;
 import com.cucook.moc.recipe.vo.RecipeIngredientVO;
 import com.cucook.moc.recipe.vo.RecipeStepVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
-import com.cucook.moc.recipe.client.GeminiApiUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.cucook.moc.user.dao.UserIngredientDAO;
+import com.cucook.moc.user.dto.request.UserIngredientRequestDTO;
+import com.cucook.moc.user.service.UserIngredientService;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -34,24 +38,58 @@ public class RecipeServiceImpl implements RecipeService {
     private final RecipeIngredientService recipeIngredientService;
     private final RecipeStepService recipeStepService;
 
+    // 🔥 추가: 사용자 재료 관련 의존성
+    private final UserIngredientService userIngredientService;
+    private final UserIngredientDAO userIngredientDAO;
+
     @Autowired
     public RecipeServiceImpl(RecipeDAO recipeDAO,
                              AiRecipeLogService aiRecipeLogService,
                              GeminiApiUtils geminiApiUtils,
                              ObjectMapper objectMapper,
                              RecipeIngredientService recipeIngredientService,
-                             RecipeStepService recipeStepService) {
+                             RecipeStepService recipeStepService,
+                             UserIngredientService userIngredientService,
+                             UserIngredientDAO userIngredientDAO) {
         this.recipeDAO = recipeDAO;
         this.aiRecipeLogService = aiRecipeLogService;
         this.geminiApiUtils = geminiApiUtils;
         this.objectMapper = objectMapper;
         this.recipeIngredientService = recipeIngredientService;
         this.recipeStepService = recipeStepService;
+        this.userIngredientService = userIngredientService;
+        this.userIngredientDAO = userIngredientDAO;
     }
 
     @Override
     @Transactional
     public RecipeRecommendationResponseDTO recommendRecipes(RecipeGenerationRequestDTO requestDTO) {
+
+        if (requestDTO.getSelectedIngredients() == null) {
+            requestDTO.setSelectedIngredients(new ArrayList<>());
+        }
+
+        if (requestDTO.getSelectedIngredients() != null && requestDTO.getUserId() != null) {
+            Long userId = Long.valueOf(requestDTO.getUserId());
+
+            for (SelectedIngredientRequestDTO ing : requestDTO.getSelectedIngredients()) {
+                // usageType == "ALL" 인 것만 삭제
+                if ("ALL".equalsIgnoreCase(ing.getUsageType())) {
+                    try {
+                        Long userIngredientId =
+                                userIngredientDAO.findIdByUserIdAndIngredientName(userId, ing.getIngredientName());
+
+                        if (userIngredientId != null) {
+                            userIngredientService.deleteUserIngredient(userId, userIngredientId);
+                            System.out.println("[RecipeService] 사용자 재료 삭제됨: " + ing.getIngredientName());
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[RecipeService] 재료 삭제 실패: " + ing.getIngredientName() + " / " + e.getMessage());
+                    }
+                }
+            }
+        }
+
         String prompt = createGeminiPrompt(requestDTO);
         String aiResponseJson = "";
         try {
@@ -72,27 +110,34 @@ public class RecipeServiceImpl implements RecipeService {
         }
 
         List<RecommendedRecipeDTO> processedRecipes = new ArrayList<>();
+
         for (RecommendedRecipeDTO recipeDTO : generatedRecipes) {
             try {
-                Long userIdLong = (requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty()) ? Long.valueOf(requestDTO.getUserId()) : null;
+                Long userIdLong = (requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty())
+                        ? Long.valueOf(requestDTO.getUserId())
+                        : null;
 
+                // 레시피 저장
                 RecipeVO recipeVO = mapToRecipeVO(recipeDTO, userIdLong);
-                // category 기반으로 썸네일 선택 (AI는 category만 생성)
-                String thumbnailUrl = getCategoryImageByCategory(recipeDTO.getCategory());
-                recipeVO.setThumbnailUrl(thumbnailUrl);
-
+                recipeVO.setThumbnailUrl(null); // 썸네일은 프론트에서 category 기반 처리
                 recipeDAO.insertRecipe(recipeVO);
                 Long generatedRecipeId = recipeVO.getRecipeId();
 
-                List<RecipeStepVO> stepVOs = mapToRecipeStepVOs(recipeDTO.getCookingSteps(), generatedRecipeId, userIdLong);
+                // 조리 단계 저장
+                List<RecipeStepVO> stepVOs =
+                        mapToRecipeStepVOs(recipeDTO.getCookingSteps(), generatedRecipeId, userIdLong);
                 for (RecipeStepVO step : stepVOs) {
-                    if (step.getImageUrl() == null || step.getImageUrl().isEmpty() || step.getImageUrl().equals("placeholder_url")) {
-                        step.setImageUrl(thumbnailUrl);
+                    if (step.getImageUrl() == null
+                            || step.getImageUrl().isEmpty()
+                            || "placeholder_url".equals(step.getImageUrl())) {
+                        step.setImageUrl(null); // 이미지도 프론트에서 처리
                     }
                 }
                 recipeStepService.saveAllRecipeSteps(stepVOs);
 
-                List<RecipeIngredientVO> ingredientVOs = mapToRecipeIngredientVOs(recipeDTO.getRequiredIngredients(), generatedRecipeId, userIdLong);
+                // 재료 저장
+                List<RecipeIngredientVO> ingredientVOs =
+                        mapToRecipeIngredientVOs(recipeDTO.getRequiredIngredients(), generatedRecipeId, userIdLong);
                 for (RecipeIngredientVO ingredientVO : ingredientVOs) {
                     boolean isUserOwned = requestDTO.getSelectedIngredients().stream()
                             .anyMatch(si -> si.getIngredientName().equals(ingredientVO.getIngredientName()));
@@ -100,13 +145,12 @@ public class RecipeServiceImpl implements RecipeService {
                 }
                 recipeIngredientService.saveAllRecipeIngredients(ingredientVOs);
 
+                // 응답 DTO에 recipeId, 썸네일, 재료 보유 여부 세팅
                 recipeDTO.setRecipeId(generatedRecipeId);
-                recipeDTO.setThumbnailUrl(thumbnailUrl);
+                recipeDTO.setThumbnailUrl(null);
 
-                List<RecipeIngredientResponseDTO> responseIngredients = calculateIngredientOwnership(
-                        requestDTO.getSelectedIngredients(),
-                        ingredientVOs
-                );
+                List<RecipeIngredientResponseDTO> responseIngredients =
+                        calculateIngredientOwnership(requestDTO.getSelectedIngredients(), ingredientVOs);
                 recipeDTO.setRequiredIngredients(responseIngredients);
 
                 processedRecipes.add(recipeDTO);
@@ -117,28 +161,31 @@ public class RecipeServiceImpl implements RecipeService {
             }
         }
 
-        processedRecipes.sort(Comparator
-                .<RecommendedRecipeDTO>comparingDouble(recipe -> {
-                    double totalRecipeIngredients = recipe.getRequiredIngredients().size();
-                    long matchingIngredients = recipe.getRequiredIngredients().stream()
-                            .filter(RecipeIngredientResponseDTO::isOwned)
-                            .count();
-                    return totalRecipeIngredients > 0 ? (double) matchingIngredients / totalRecipeIngredients : 0.0;
-                }).reversed()
-                .thenComparingInt(recipe -> (int) recipe.getRequiredIngredients().stream()
-                        .filter(ing -> !ing.isOwned())
-                        .count())
-                .thenComparing(recipe -> {
-                    if (requestDTO.getFilterDifficultyCd() != null) {
-                        if (requestDTO.getFilterDifficultyCd().equalsIgnoreCase(recipe.getDifficultyCd())) return 0;
-                    }
-                    if ("EASY".equalsIgnoreCase(recipe.getDifficultyCd())) return 1;
-                    if ("NORMAL".equalsIgnoreCase(recipe.getDifficultyCd())) return 2;
-                    if ("HARD".equalsIgnoreCase(recipe.getDifficultyCd())) return 3;
-                    return 4;
-                })
+        // ✅ 5단계: 추천 우선순위 정렬 (보유 재료 비율, 부족 재료 수, 난이도)
+        processedRecipes.sort(
+                Comparator.<RecommendedRecipeDTO>comparingDouble(recipe -> {
+                            double total = recipe.getRequiredIngredients().size();
+                            long owned = recipe.getRequiredIngredients().stream()
+                                    .filter(RecipeIngredientResponseDTO::isOwned)
+                                    .count();
+                            return total > 0 ? (double) owned / total : 0.0;
+                        }).reversed()
+                        .thenComparingInt(recipe -> (int) recipe.getRequiredIngredients().stream()
+                                .filter(ing -> !ing.isOwned())
+                                .count())
+                        .thenComparing(recipe -> {
+                            if (requestDTO.getFilterDifficultyCd() != null &&
+                                    requestDTO.getFilterDifficultyCd().equalsIgnoreCase(recipe.getDifficultyCd())) {
+                                return 0;
+                            }
+                            if ("EASY".equalsIgnoreCase(recipe.getDifficultyCd())) return 1;
+                            if ("NORMAL".equalsIgnoreCase(recipe.getDifficultyCd())) return 2;
+                            if ("HARD".equalsIgnoreCase(recipe.getDifficultyCd())) return 3;
+                            return 4;
+                        })
         );
 
+        // ✅ 6단계: 상위 3개만 반환
         List<RecommendedRecipeDTO> finalRecommendedRecipes = processedRecipes.stream()
                 .limit(3)
                 .collect(Collectors.toList());
@@ -228,10 +275,12 @@ public class RecipeServiceImpl implements RecipeService {
                 .replace("{{CUISINE}}", cuisine)
                 .replace("{{COOK_TIME}}", cookTime);
     }
+
     /**
      * Gemini AI 응답(JSON)을 RecommendedRecipeDTO 리스트로 파싱
      */
-    private List<RecommendedRecipeDTO> parseGeminiRecipeResponse(String aiResponseJson, RecipeGenerationRequestDTO requestDTO) throws Exception {
+    private List<RecommendedRecipeDTO> parseGeminiRecipeResponse(String aiResponseJson,
+                                                                 RecipeGenerationRequestDTO requestDTO) throws Exception {
         List<RecommendedRecipeDTO> recipes =
                 objectMapper.readValue(aiResponseJson, new TypeReference<List<RecommendedRecipeDTO>>() {});
 
@@ -255,13 +304,11 @@ public class RecipeServiceImpl implements RecipeService {
         vo.setSourceType("AI_GENERATED");
         vo.setTitle(dto.getTitle());
         vo.setSummary(dto.getSummary());
-        vo.setThumbnailUrl(null); // 나중에 카테고리 기반으로 설정
+        vo.setThumbnailUrl(null); // 썸네일은 프론트에서 처리
         vo.setDifficultyCd(dto.getDifficultyCd());
         vo.setCookTimeMin(dto.getCookTimeMin());
         vo.setCuisineStyleCd(dto.getCuisineStyleCd());
-
-        // AI가 category는 정확히 생성, (Java가 이미지 선택)
-        vo.setCategory(dto.getCategory());
+        vo.setCategory(dto.getCategory()); // 프론트에서 이미지 매핑에 사용
 
         vo.setIsPublic("N");
         vo.setIsDeleted("N");
@@ -275,13 +322,15 @@ public class RecipeServiceImpl implements RecipeService {
     /**
      * RecipeStepDTO → RecipeStepVO 변환
      */
-    private List<RecipeStepVO> mapToRecipeStepVOs(List<RecipeStepResponseDTO> dtos, Long recipeId, Long createdId) {
+    private List<RecipeStepVO> mapToRecipeStepVOs(List<RecipeStepResponseDTO> dtos,
+                                                  Long recipeId,
+                                                  Long createdId) {
         return dtos.stream().map(dto -> {
             RecipeStepVO vo = new RecipeStepVO();
             vo.setRecipeId(recipeId);
             vo.setStepNo(dto.getStepNo());
             vo.setStepDesc(dto.getStepDesc());
-            vo.setImageUrl(null); // 나중에 thumbnail로 처리
+            vo.setImageUrl(null); // 단계 이미지도 프론트에서 처리
             vo.setCreatedId(createdId);
             return vo;
         }).collect(Collectors.toList());
@@ -290,7 +339,9 @@ public class RecipeServiceImpl implements RecipeService {
     /**
      * RecipeIngredientDTO → RecipeIngredientVO 변환
      */
-    private List<RecipeIngredientVO> mapToRecipeIngredientVOs(List<RecipeIngredientResponseDTO> dtos, Long recipeId, Long createdId) {
+    private List<RecipeIngredientVO> mapToRecipeIngredientVOs(List<RecipeIngredientResponseDTO> dtos,
+                                                              Long recipeId,
+                                                              Long createdId) {
         return dtos.stream().map(dto -> {
             RecipeIngredientVO vo = new RecipeIngredientVO();
             vo.setRecipeId(recipeId);
@@ -300,34 +351,6 @@ public class RecipeServiceImpl implements RecipeService {
             vo.setCreatedId(createdId);
             return vo;
         }).collect(Collectors.toList());
-    }
-
-    /**
-     * 카테고리 기반 썸네일 이미지 자동 선택
-     */
-    private String getCategoryImageByCategory(String category) {
-        if (category == null) return "https://moc.cucook.com/images/default_dish.jpg";
-
-        switch (category) {
-            case "rice_dish":
-                return "https://moc.cucook.com/images/category_rice.jpg";
-            case "noodle":
-                return "https://moc.cucook.com/images/category_noodle.jpg";
-            case "soup_stew":
-                return "https://moc.cucook.com/images/category_soup.jpg";
-            case "stir_fry":
-                return "https://moc.cucook.com/images/category_stir_fry.jpg";
-            case "grill_roast":
-                return "https://moc.cucook.com/images/category_grill.jpg";
-            case "salad":
-                return "https://moc.cucook.com/images/category_salad.jpg";
-            case "side_dish":
-                return "https://moc.cucook.com/images/category_side.jpg";
-            case "dessert_snack":
-                return "https://moc.cucook.com/images/category_dessert.jpg";
-            default:
-                return "https://moc.cucook.com/images/default_dish.jpg";
-        }
     }
 
     /**
@@ -357,11 +380,10 @@ public class RecipeServiceImpl implements RecipeService {
     /**
      * AI 레시피 생성 로그 저장
      */
-    private void logAiRecipeGeneration(
-            RecipeGenerationRequestDTO requestDTO,
-            String prompt,
-            String aiResponse,
-            int resultCount) {
+    private void logAiRecipeGeneration(RecipeGenerationRequestDTO requestDTO,
+                                       String prompt,
+                                       String aiResponse,
+                                       int resultCount) {
 
         AiRecipeLogVO logVO = new AiRecipeLogVO();
 
