@@ -99,9 +99,8 @@ export default function HomeScreen({navigation}) {
         // navigation.navigate('Voice');
         break;
       case 'board':
-        // TODO: 레시피 게시판 이동
-        Alert.alert('레시피 게시판', '레시피 게시판으로 이동합니다.');
-        // navigation.navigate('RecipeBoard');
+        // 레시피 게시판 이동
+        navigation.navigate('RecipeBoard');
         break;
       case 'shopping':
         // 지도 플로우 이동 (권한 체크)
