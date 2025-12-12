@@ -1,5 +1,21 @@
 import api from './axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
+
+/**
+ * FCM 토큰 가져오기
+ * @returns {Promise<string|null>} FCM 토큰
+ */
+const getFCMToken = async () => {
+  try {
+    const token = await messaging().getToken();
+    console.log('[FCM 토큰 가져오기 성공]', token);
+    return token;
+  } catch (error) {
+    console.error('[FCM 토큰 가져오기 실패]', error);
+    return null;
+  }
+};
 
 /**
  * 인증 관련 API
@@ -14,9 +30,13 @@ export const authAPI = {
    */
   login: async (email, password) => {
     try {
+      // FCM 토큰 가져오기
+      const fcmToken = await getFCMToken();
+
       const response = await api.post('/auth/login', {
         userEmail: email,
         userPassword: password,
+        fcmToken: fcmToken, // FCM 토큰 추가
       });
 
       // 사용자 정보 저장 (닉네임, 이메일, 이름)
@@ -184,7 +204,13 @@ export const authAPI = {
    */
   signup: async userData => {
     try {
-      const response = await api.post('/auth/signup', userData);
+      // FCM 토큰 가져오기
+      const fcmToken = await getFCMToken();
+
+      const response = await api.post('/auth/signup', {
+        ...userData,
+        fcmToken: fcmToken, // FCM 토큰 추가
+      });
       return response;
     } catch (error) {
       console.error('회원가입 에러:', error);
