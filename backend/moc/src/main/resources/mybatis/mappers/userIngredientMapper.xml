@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cucook.moc.user.dao.UserIngredientDAO">
 
-    <resultMap id="UserIngredientResultMap" type="UserIngredientVO">
+    <resultMap id="UserIngredientResultMap" type="com.cucook.moc.user.vo.UserIngredientVO">
         <id     property="userIngredientId" column="user_ingredient_id"/>
         <result property="userId"           column="user_id"/>
         <result property="ingredientName"   column="ingredient_name"/>
@@ -36,7 +36,7 @@
         #{ingredientName},
         #{quantityDesc},
         #{categoryCd},
-        NVL(#{usedFlag}, 'N'), -- NULL일 경우 'N' 기본값
+        NVL(#{usedFlag}, 'N'),
         #{memo},
         #{createdId}
         )
@@ -44,42 +44,37 @@
 
     <select id="selectUserIngredientsByUserId" parameterType="long" resultMap="UserIngredientResultMap">
         SELECT
-            user_ingredient_id,
-            user_id,
-            ingredient_name,
-            quantity_desc,
-            category_cd,
-            used_flag,
-            memo,
-            created_id,
-            created_date,
-            updated_id,
-            updated_date
-        FROM
-            tb_user_ingredient
-        WHERE
-            user_id = #{userId}
-        ORDER BY
-            ingredient_name ASC -- 이름 순 정렬
+        user_ingredient_id,
+        user_id,
+        ingredient_name,
+        quantity_desc,
+        category_cd,
+        used_flag,
+        memo,
+        created_id,
+        created_date,
+        updated_id,
+        updated_date
+        FROM tb_user_ingredient
+        WHERE user_id = #{value}
+        ORDER BY ingredient_name ASC
     </select>
 
     <select id="selectUserIngredientById" parameterType="long" resultMap="UserIngredientResultMap">
         SELECT
-            user_ingredient_id,
-            user_id,
-            ingredient_name,
-            quantity_desc,
-            category_cd,
-            used_flag,
-            memo,
-            created_id,
-            created_date,
-            updated_id,
-            updated_date
-        FROM
-            tb_user_ingredient
-        WHERE
-            user_ingredient_id = #{userIngredientId}
+        user_ingredient_id,
+        user_id,
+        ingredient_name,
+        quantity_desc,
+        category_cd,
+        used_flag,
+        memo,
+        created_id,
+        created_date,
+        updated_id,
+        updated_date
+        FROM tb_user_ingredient
+        WHERE user_ingredient_id = #{value}
     </select>
 
     <update id="updateUserIngredient" parameterType="com.cucook.moc.user.vo.UserIngredientVO">
@@ -105,13 +100,20 @@
             </if>
             updated_date = SYSTIMESTAMP
         </set>
-        WHERE
-        user_ingredient_id = #{userIngredientId}
+        WHERE user_ingredient_id = #{userIngredientId}
     </update>
 
     <delete id="deleteUserIngredient" parameterType="long">
         DELETE FROM tb_user_ingredient
-        WHERE user_ingredient_id = #{userIngredientId}
+        WHERE user_ingredient_id = #{value}
     </delete>
+
+    <select id="findIdByUserIdAndIngredientName" resultType="long">
+        SELECT user_ingredient_id
+        FROM tb_user_ingredient
+        WHERE user_id = #{userId}
+        AND ingredient_name = #{ingredientName}
+        FETCH FIRST 1 ROWS ONLY
+    </select>
 
 </mapper>
