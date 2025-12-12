@@ -17,6 +17,7 @@ import {loginStyles} from '../../styles/screens/user/loginStyles';
 import {colors} from '../../styles/common';
 import authAPI from '../../api/auth';
 import LoginLogo from '../../assets/images/user/loginLogo.svg';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 /**
  * 로그인 화면
@@ -138,9 +139,12 @@ export default function LoginScreen({navigation}) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={loginStyles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAwareScrollView
+      contentContainerStyle={loginStyles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      enableOnAndroid={true}
+      extraScrollHeight={100}>
       <ScrollView
         contentContainerStyle={loginStyles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -248,6 +252,6 @@ export default function LoginScreen({navigation}) {
           <ActivityIndicator size="large" color={colors.textWhite} />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }

@@ -473,7 +473,7 @@ export default function MetaballNavigation({state, navigation}) {
               <TouchableOpacity
                 onPress={() => {
                   if (isOpen) closeMenu();
-                  navigation.navigate('Chat');
+                  navigation.navigate('RecipeBoard');
                 }}>
                 <FileText
                   color={state.index === 1 ? '#3B82F6' : '#97A2B0'}
@@ -486,20 +486,20 @@ export default function MetaballNavigation({state, navigation}) {
               <TouchableOpacity
                 onPress={() => {
                   if (isOpen) closeMenu();
-                  navigation.navigate('List');
+                  navigation.navigate('Notification');
                 }}>
                 <Flag
-                  color={state.index === 3 ? '#3B82F6' : '#97A2B0'}
+                  color={state.index === 2 ? '#3B82F6' : '#97A2B0'}
                   size={28}
                 />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
                   if (isOpen) closeMenu();
-                  navigation.navigate('Tag');
+                  navigation.navigate('Profile');
                 }}>
                 <User
-                  color={state.index === 4 ? '#3B82F6' : '#97A2B0'}
+                  color={state.index === 3 ? '#3B82F6' : '#97A2B0'}
                   size={28}
                 />
               </TouchableOpacity>

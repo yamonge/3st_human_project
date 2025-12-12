@@ -2,6 +2,9 @@
  * @format
  */
 
+// Polyfill - 반드시 최상단에 위치
+import 'text-encoding';
+
 import {AppRegistry} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import App from './App';

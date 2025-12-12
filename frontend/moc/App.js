@@ -29,6 +29,8 @@ import RecipeDetailScreen from './src/screens/camera/RecipeDetailScreen';
 // 레시피 플로우
 import RecipeSelectionScreen from './src/screens/recipe/RecipeSelectionScreen';
 import IngredientInputScreen from './src/screens/recipe/IngredientInputScreen';
+import RecipeBoardScreen from './src/screens/recipeboard/RecipeBoardScreen';
+import RecipeBoardDetailScreen from './src/screens/recipeboard/RecipeDetailScreen';
 
 // 영수증 플로우
 import ReceiptSelectionScreen from './src/screens/receipt/ReceiptSelectionScreen';
@@ -40,16 +42,16 @@ import MapMainScreen from './src/screens/map/MapMainScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// 마이페이지
+import ProfileScreen from './src/screens/mypage/ProfileScreen';
+import IngredientManagementScreen from './src/screens/mypage/IngredientManagementScreen';
+import ReceivedReviewsScreen from './src/screens/mypage/ReceivedReviewsScreen';
+import SavedRecipesScreen from './src/screens/mypage/SavedRecipesScreen';
+import SharedRecipesScreen from './src/screens/mypage/SharedRecipesScreen';
+import ReportHistoryScreen from './src/screens/mypage/ReportHistoryScreen';
+
 // TODO: 임시 화면들 (추후 실제 화면으로 교체)
-function RecipeBoardScreen() {
-  return null; // 추후 구현
-}
-
 function NotificationScreen() {
-  return null; // 추후 구현
-}
-
-function ProfileScreen() {
   return null; // 추후 구현
 }
 
@@ -135,6 +137,15 @@ function MainTabNavigator() {
         }}
       />
 
+      {/* 게시판 상세 (탭바 숨김) */}
+      <Tab.Screen
+        name="RecipeBoardDetail"
+        component={RecipeBoardDetailScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
       {/* 레시피 플로우 서브 화면들 (탭바 숨김) */}
       <Tab.Screen
         name="IngredientInput"
@@ -148,6 +159,43 @@ function MainTabNavigator() {
       <Tab.Screen
         name="Gallery"
         component={GalleryScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
+      {/* 마이페이지 서브 화면들 (탭바 숨김) */}
+      <Tab.Screen
+        name="IngredientManagement"
+        component={IngredientManagementScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="ReceivedReviews"
+        component={ReceivedReviewsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="SavedRecipes"
+        component={SavedRecipesScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="SharedRecipes"
+        component={SharedRecipesScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="ReportHistory"
+        component={ReportHistoryScreen}
         options={{
           tabBarButton: () => null,
         }}
