@@ -294,6 +294,7 @@ public class UserServiceImpl implements UserService {
         dto.setUserId(user.getUserId());
         dto.setUserEmail(user.getUserEmail());         // 전체 이메일
         dto.setUserNickname(user.getUserNickname());   // 닉네임
+        dto.setUserProfileImageUrl(user.getUserProfileImageUrl()); //유저 프로필
 
         return dto;
     }
