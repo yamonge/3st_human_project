@@ -27,7 +27,7 @@ import Checkbox from '../../components/common/Checkbox';
 import DatePickerModal from '../../components/common/DatePickerModal';
 import {signupStyles} from '../../styles/screens/user/signupStyles';
 import {colors} from '../../styles/common';
-import {authAPI} from '../../api/auth';
+import authAPI from '../../api/auth';
 
 /**
  * 회원가입 화면
@@ -48,7 +48,6 @@ export default function SignupScreen({navigation}) {
 
   // 중복 체크 상태
   const [emailChecked, setEmailChecked] = useState(false);
-  const [nicknameChecked, setNicknameChecked] = useState(false);
 
   // 약관 동의 State
   const [agreeAll, setAgreeAll] = useState(false);
@@ -104,34 +103,31 @@ export default function SignupScreen({navigation}) {
     }
   };
 
-  // 닉네임 중복 체크
-  const handleCheckNickname = async () => {
+  // 닉네임 사용 가능 여부 체크 (회원가입 시점에만 사용)
+  const checkNicknameAvailable = async () => {
+    if (!nickname) {
+      Alert.alert('알림', '닉네임을 입력해주세요.');
+      return false;
+    }
+
+    if (nickname.length < 2) {
+      Alert.alert('알림', '닉네임은 2자 이상 입력해주세요.');
+      return false;
+    }
+
     try {
-      if (!nickname) {
-        Alert.alert('알림', '닉네임을 입력해주세요.');
-        return;
-      }
+      const response = await authAPI.checkNickname(nickname); // { available: boolean }
 
-      if (nickname.length < 2) {
-        Alert.alert('알림', '닉네임은 2자 이상 입력해주세요.');
-        return;
-      }
-
-      setLoading(true);
-      const response = await authAPI.checkNickname(nickname);
-
-      if (response.available) {
-        setNicknameChecked(true);
-        Alert.alert('사용 가능', '사용 가능한 닉네임입니다.');
-      } else {
-        setNicknameChecked(false);
+      if (!response.available) {
         Alert.alert('중복', '이미 사용 중인 닉네임입니다.');
+        return false;
       }
+
+      return true;
     } catch (err) {
       console.error('닉네임 중복 체크 실패:', err);
       Alert.alert('오류', '닉네임 중복 체크 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+      return false;
     }
   };
 
@@ -144,7 +140,6 @@ export default function SignupScreen({navigation}) {
   // 닉네임 변경 시 중복 체크 상태 초기화
   const handleNicknameChange = text => {
     setNickname(text);
-    setNicknameChecked(false);
   };
 
   // 생년월일 선택
@@ -188,7 +183,6 @@ export default function SignupScreen({navigation}) {
       !emailChecked ||
       !name ||
       !nickname ||
-      !nicknameChecked ||
       !birthDate ||
       !password ||
       !passwordConfirm ||
@@ -211,11 +205,6 @@ export default function SignupScreen({navigation}) {
         return;
       }
 
-      if (!nicknameChecked) {
-        setError('닉네임 중복 확인을 해주세요.');
-        return;
-      }
-
       if (password !== passwordConfirm) {
         setError('비밀번호가 일치하지 않습니다.');
         return;
@@ -223,6 +212,13 @@ export default function SignupScreen({navigation}) {
 
       if (!agreeTerms || !agreePrivacy) {
         setError('필수 약관에 동의해주세요.');
+        return;
+      }
+
+      const nicknameOk = await checkNicknameAvailable();
+      if (!nicknameOk) {
+        // Alert는 checkNicknameAvailable 내부에서 이미 호출됨
+        setError('이미 사용 중인 닉네임입니다.');
         return;
       }
 

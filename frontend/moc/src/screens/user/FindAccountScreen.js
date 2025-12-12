@@ -16,7 +16,7 @@ import Button from '../../components/common/Button';
 import DatePickerModal from '../../components/common/DatePickerModal';
 import {findAccountStyles} from '../../styles/screens/user/findAccountStyles';
 import {colors} from '../../styles/common';
-import {authAPI} from '../../api/auth';
+import authAPI from '../../api/auth';
 
 /**
  * 계정 찾기 화면 (이메일 찾기 + 비밀번호 찾기)
@@ -84,7 +84,7 @@ export default function FindAccountScreen({navigation}) {
   };
 
   // 이메일 찾기 처리
-  const handleFindId = async () => {
+  const handleFindEmail = async () => {
     try {
       if (!idName) {
         Alert.alert('알림', '이름을 입력해주세요.');
@@ -97,22 +97,15 @@ export default function FindAccountScreen({navigation}) {
       }
 
       setLoading(true);
+      setFindIdResult(null);
 
-      // TODO: 백엔드 연결 시 주석 해제
-      // const response = await authAPI.findId(
-      //   idName,
-      //   formatDateForAPI(idBirthDate),
-      // );
-      // setFindIdResult(response);
+      const timestamp = idBirthDate.toISOString().split('.')[0];
 
-      // 임시 데이터 (백엔드 연결 전)
-      setTimeout(() => {
-        setFindIdResult({
-          maskedEmail: 'exam***@example.com',
-          registeredDate: '2024년 1월 15일',
-        });
-        setLoading(false);
-      }, 1000);
+      // findEmail API 호출
+      const response = await authAPI.findEmail({
+        userEmail: result.userEmail, // 백엔드 DTO
+      });
+      setFindIdResult(response);
     } catch (err) {
       console.error('이메일 찾기 실패:', err);
 
@@ -146,20 +139,23 @@ export default function FindAccountScreen({navigation}) {
       setLoading(true);
 
       // TODO: 백엔드 연결 시 주석 해제
-      // const response = await authAPI.sendTemporaryPassword(
+      // const response = await authAPI.sendPasswordResetLink(
       //   pwEmail,
       //   pwName,
-      //   formatDateForAPI(pwBirthDate),
+      //   pwBirthDate
       // );
 
       // 임시 데이터 (백엔드 연결 전)
       setTimeout(() => {
         setPasswordSent(true);
-        Alert.alert('발송 완료', '임시 비밀번호가 이메일로 발송되었습니다.');
+        Alert.alert(
+          '발송 완료',
+          '비밀번호 변경용 링크가 이메일로 발송되었습니다.',
+        );
         setLoading(false);
       }, 1000);
     } catch (err) {
-      console.error('임시 비밀번호 발송 실패:', err);
+      console.error('비밀번호 변경용 링크 - 이메일 발송 실패:', err);
 
       if (err.response?.status === 404) {
         Alert.alert('알림', '일치하는 사용자 정보를 찾을 수 없습니다.');
@@ -252,9 +248,6 @@ export default function FindAccountScreen({navigation}) {
                   <Text style={findAccountStyles.resultId}>
                     {findIdResult.maskedEmail}
                   </Text>
-                  <Text style={findAccountStyles.resultDate}>
-                    가입일: {findIdResult.registeredDate}
-                  </Text>
                   <View style={findAccountStyles.resultButtonContainer}>
                     <Button
                       title="로그인하러 가기"
@@ -302,7 +295,7 @@ export default function FindAccountScreen({navigation}) {
                     <Button
                       title="이메일 찾기"
                       variant="gradient"
-                      onPress={handleFindId}
+                      onPress={handleFindEmail}
                       disabled={!idName || !idBirthDate}
                       loading={loading}
                     />

@@ -19,6 +19,8 @@ public interface UserService {
 
     FindEmailResponseDTO findLoginId(FindEmailRequestDTO request);
 
+    boolean isNicknameAvailable(String userNickname);
+
     // 1단계: 비밀번호 재설정 링크 메일 발송
     void sendPasswordResetLink(FindPasswordRequestDTO request);
 

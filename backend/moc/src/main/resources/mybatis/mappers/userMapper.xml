@@ -47,6 +47,13 @@
         FROM tb_user
         WHERE user_email = #{userEmail}
     </select>
+    
+    <!-- 2) 닉네임 중복 체크 -->
+    <select id="countByNickname" resultType="int">
+        SELECT COUNT(1)
+        FROM tb_user
+        WHERE user_nickname = #{userNickname}
+    </select>
 
     <!-- 3) 회원가입 -->
     <insert id="insertUser"

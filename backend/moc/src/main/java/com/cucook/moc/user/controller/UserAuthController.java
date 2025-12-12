@@ -11,7 +11,9 @@ import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
 import com.cucook.moc.user.dto.response.LoginResponseDTO;
 import com.cucook.moc.user.service.UserService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,6 +29,15 @@ public class UserAuthController {
     public ResponseEntity<Boolean> checkEmail(@RequestParam("email") String email) {
         boolean duplicate = userService.isDuplicateEmail(email);
         return ResponseEntity.ok(duplicate);
+    }
+    @PostMapping("/check-nickname")
+    public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestBody CheckNicknameRequestDTO request) {
+
+        boolean available = userService.isNicknameAvailable(request.getUserNickname());
+
+        Map<String, Boolean> body = new HashMap<>();
+        body.put("available", available);
+        return ResponseEntity.ok(body);
     }
 
     @PostMapping("/signup")

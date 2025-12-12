@@ -97,6 +97,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isNicknameAvailable(String userNickname) {
+        int count = userDAO.countByNickname(userNickname);
+        return count == 0; // 0이면 아직 안 쓰는 닉네임 → 사용 가능
+    }
+
+    @Override
     public LoginResponseDTO login(LoginRequestDTO request) {
 
         // 1. 이메일로 유저 조회
@@ -294,7 +300,8 @@ public class UserServiceImpl implements UserService {
         dto.setUserId(user.getUserId());
         dto.setUserEmail(user.getUserEmail());         // 전체 이메일
         dto.setUserNickname(user.getUserNickname());   // 닉네임
-
+        dto.setUserProfileImageUrl(user.getUserProfileImageUrl()); //유저 프로필
+        
         return dto;
     }
 

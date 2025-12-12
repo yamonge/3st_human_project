@@ -1,6 +1,7 @@
 import api from './axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
+import axios from 'axios';
 
 /**
  * FCM 토큰 가져오기
@@ -155,8 +156,6 @@ export const authAPI = {
    */
   logout: async () => {
     try {
-      await api.post('/auth/logout');
-
       // 로컬 저장소에서 사용자 정보 삭제
       await AsyncStorage.removeItem('userEmail');
       await AsyncStorage.removeItem('userNickname');
@@ -250,10 +249,20 @@ export const authAPI = {
    */
   checkNickname: async nickname => {
     try {
-      const response = await api.post('/auth/check-nickname', {nickname});
-      return response; // { available: true/false }
+      const response = await api.post('/auth/check-nickname', {
+        userNickname: nickname,
+      });
+      if (typeof response.available !== 'boolean') {
+        return {available: false};
+      }
+      return response; // { available: true/false } 형태면 그대로
     } catch (error) {
-      console.error('닉네임 중복 체크 에러:', error);
+      console.error(
+        '닉네임 중복 체크 에러:',
+        error.message,
+        error.response?.status,
+        error.response?.data,
+      );
       throw error;
     }
   },
@@ -266,11 +275,13 @@ export const authAPI = {
    */
   findEmail: async (userName, userBirthDate) => {
     try {
+      const timestamp = birthDate.toISOString();
+
       const response = await api.post('/auth/find-email', {
         userName,
-        userBirthDate,
+        userBirthDate: timestamp,
       });
-      return response; // { maskedEmail: 'abc***@example.com', registeredDate: '2024-01-01' }
+      return response.data; // { maskedEmail: 'abc***@example.com', registeredDate: '2024-01-01' }
     } catch (error) {
       console.error('아이디 찾기 에러:', error);
       throw error;

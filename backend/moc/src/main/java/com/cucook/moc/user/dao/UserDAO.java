@@ -19,6 +19,11 @@ public interface UserDAO {
     // 회원가입
     void insertUser(UserVO user);
 
+    /**
+     * 주어진 닉네임과 같은 값이 DB에 몇 개 있는지 카운트합니다.
+     */
+    int countByNickname(@Param("userNickname") String userNickname);
+
     // 이름 + 생년월일로 아이디 찾기
     UserVO findByNameAndBirthDate(@Param("userName") String userName,
                                   @Param("userBirthDate") Timestamp userBirthDate);
