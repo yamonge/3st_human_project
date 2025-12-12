@@ -97,6 +97,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isNicknameAvailable(String userNickname) {
+        int count = userDAO.countByNickname(userNickname);
+        return count == 0; // 0이면 아직 안 쓰는 닉네임 → 사용 가능
+    }
+
+    @Override
     public LoginResponseDTO login(LoginRequestDTO request) {
 
         // 1. 이메일로 유저 조회
