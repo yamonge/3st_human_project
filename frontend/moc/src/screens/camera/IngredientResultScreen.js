@@ -27,14 +27,11 @@ export default function IngredientResultScreen({route, navigation}) {
   // AI 인식 결과 또는 더미 데이터
   const [ingredients, setIngredients] = useState(
     recognizedIngredients.length > 0
-      ? recognizedIngredients
-      : [
-          // 더미 데이터 (백엔드 API 연동 전)
-          {id: 1, name: '소고기'},
-          {id: 2, name: '양파'},
-          {id: 3, name: '당근'},
-          {id: 4, name: '감자'},
-        ],
+      ? recognizedIngredients.map((name, index) => ({
+          id: index + 1,
+          name,
+        }))
+      : [],
   );
 
   // 모달 상태

@@ -1,6 +1,7 @@
 package com.cucook.moc.user.service;
 
 import com.cucook.moc.user.dao.UserIngredientDAO; // DAO 주입
+import com.cucook.moc.user.dto.request.IngredientConsumeRequestDTO;
 import com.cucook.moc.user.dto.request.UserIngredientRequestDTO; // Request DTO 사용
 import com.cucook.moc.user.dto.response.UserIngredientListResponseDTO; // List Response DTO 사용
 import com.cucook.moc.user.dto.response.UserIngredientResponseDTO; // Response DTO 사용
@@ -220,5 +221,20 @@ public class UserIngredientServiceImpl implements UserIngredientService {
             }
         }
         return addedIngredients;
+    }
+
+    @Override
+    @Transactional
+    public void consumeIngredients(Long userId, IngredientConsumeRequestDTO requestDTO) {
+
+        for (IngredientConsumeRequestDTO.ConsumeIngredientDTO item : requestDTO.getIngredients()) {
+
+            if ("ALL".equals(item.getUsageType())) {
+                userIngredientDAO.deleteUserIngredientByUserAndId(
+                        userId,
+                        item.getUserIngredientId()
+                );
+            }
+        }
     }
 }

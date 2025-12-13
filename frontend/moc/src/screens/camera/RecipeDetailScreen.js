@@ -78,68 +78,7 @@ export default function RecipeDetailScreen({route, navigation}) {
   };
 
   /**
-   * 저장 버튼 핸들러
-   */
-  const handleSave = async () => {
-    setIsLoading(true);
-
-    try {
-      console.log('💾 레시피 저장:', {
-        recipeId: recipe?.id,
-        shareToBoard,
-      });
-
-      // TODO: 백엔드 개발 완료 후 주석 해제
-      // const result = await saveRecipe(recipe?.id, shareToBoard);
-      // if (result.success) {
-      //   console.log('✅ 레시피 저장 성공:', result.message);
-      //   setIsSaved(true);
-      //   setShowSaveModal(true);
-      // } else {
-      //   console.error('❌ 레시피 저장 실패:', result.error);
-      //   Alert.alert('오류', result.error);
-      // }
-
-      // 개발 모드: AsyncStorage에 저장
-      console.log('⚠️ 개발 모드: 레시피 저장 시뮬레이션');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // AsyncStorage에 저장된 레시피 목록 업데이트
-      const savedRecipes = await AsyncStorage.getItem('savedRecipes');
-      const savedList = savedRecipes ? JSON.parse(savedRecipes) : [];
-      if (!savedList.includes(recipe?.id)) {
-        savedList.push(recipe?.id);
-        await AsyncStorage.setItem('savedRecipes', JSON.stringify(savedList));
-        console.log('✅ AsyncStorage에 레시피 저장 완료:', recipe?.id);
-      }
-
-      setIsSaved(true); // 저장 상태 업데이트
-      setShowSaveModal(true); // 성공 모달 표시
-    } catch (error) {
-      console.error('❌ 레시피 저장 처리 중 오류:', error);
-      Alert.alert('오류', '레시피 저장 처리 중 문제가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * "바로 시작하러 가기" 버튼 핸들러
-   */
-  const handleNavigateToRecipe = () => {
-    setShowSaveModal(false);
-    setShowConsumeModal(true);
-  };
-
-  /**
-   * 모달 닫기 핸들러 (더 둘러보기)
-   */
-  const handleCloseModal = () => {
-    setShowSaveModal(false);
-  };
-
-  /**
-   * 재료 소비 확인 핸들러
+   * 재료 소비 확인 핸들러 (백엔드 연동)
    */
   const handleConfirmConsume = async () => {
     setShowConsumeModal(false);
@@ -148,36 +87,42 @@ export default function RecipeDetailScreen({route, navigation}) {
     try {
       console.log('🚀 재료 소비 API 호출 시작');
 
-      // TODO: 백엔드 개발 완료 후 주석 해제
-      // const ingredientIds = [1, 2, 3]; // 보유 재료의 ID 목록
-      // const result = await consumeIngredients(recipe?.id, ingredientIds);
-      // if (result.success) {
-      //   console.log('✅ 재료 소비 성공:', result.message);
-      //   Alert.alert('성공', result.message, [
-      //     {
-      //       text: '확인',
-      //       onPress: () => {
-      //         // TODO: 레시피 진행 화면으로 이동
-      //         console.log('📍 레시피 진행 화면으로 이동');
-      //       },
-      //     },
-      //   ]);
-      // } else {
-      //   console.error('❌ 재료 소비 실패:', result.error);
-      //   Alert.alert('오류', result.error, [
-      //     {
-      //       text: '확인',
-      //       onPress: () => setShowConsumeModal(true),
-      //     },
-      //   ]);
-      // }
+      // 1️⃣ 로그인 사용자 ID
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('오류', '로그인 정보가 없습니다.');
+        return;
+      }
 
-      // 개발 모드: 더미 동작 (1초 딜레이 후 성공)
-      console.log('⚠️ 개발 모드: 재료 소비 시뮬레이션');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 2️⃣ 소비할 재료 DTO 구성 (ID + usageType 기준)
+      const consumeIngredientsPayload = ingredients
+        .filter(item => item.checked !== false)
+        .map(item => ({
+          userIngredientId: item.userIngredientId, // ✅ 핵심
+          usageType: item.usageType, // "ALL" | "PARTIAL"
+        }));
 
-      // 조리 모드로 화면 재진입
-      console.log('📍 조리 모드로 전환');
+      if (consumeIngredientsPayload.length === 0) {
+        Alert.alert('안내', '소비할 재료가 없습니다.');
+        return;
+      }
+
+      // 3️⃣ 백엔드 API 호출
+      const result = await consumeIngredients(
+        Number(userId),
+        recipe.id,
+        consumeIngredientsPayload,
+      );
+
+      if (!result.success) {
+        Alert.alert('오류', result.error);
+        setShowConsumeModal(true);
+        return;
+      }
+
+      console.log('✅ 재료 소비 성공');
+
+      // 4️⃣ 조리 모드로 전환
       navigation.navigate('RecipeDetail', {
         recipe,
         ingredients,
@@ -195,7 +140,6 @@ export default function RecipeDetailScreen({route, navigation}) {
       setIsLoading(false);
     }
   };
-
   /**
    * 재료 소비 취소 핸들러
    */
