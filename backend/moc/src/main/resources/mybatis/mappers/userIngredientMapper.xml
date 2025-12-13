@@ -102,7 +102,7 @@
         </set>
         WHERE user_ingredient_id = #{userIngredientId}
     </update>
-
+<!--    마이페이지삭제용-->
     <delete id="deleteUserIngredient" parameterType="long">
         DELETE FROM tb_user_ingredient
         WHERE user_ingredient_id = #{value}
@@ -115,5 +115,11 @@
         AND ingredient_name = #{ingredientName}
         FETCH FIRST 1 ROWS ONLY
     </select>
+<!--    레시피로 소비 삭제용-->
+    <delete id="deleteUserIngredientByUserAndId">
+        DELETE FROM tb_user_ingredient
+        WHERE user_id = #{userId}
+          AND user_ingredient_id = #{userIngredientId}
+    </delete>
 
 </mapper>

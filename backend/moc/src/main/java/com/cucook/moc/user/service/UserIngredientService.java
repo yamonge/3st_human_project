@@ -1,5 +1,6 @@
 package com.cucook.moc.user.service;
 
+import com.cucook.moc.user.dto.request.IngredientConsumeRequestDTO;
 import com.cucook.moc.user.dto.request.UserIngredientRequestDTO;
 import com.cucook.moc.user.dto.response.UserIngredientListResponseDTO;
 import com.cucook.moc.user.dto.response.UserIngredientResponseDTO;
@@ -55,6 +56,27 @@ public interface UserIngredientService {
      * @throws IllegalArgumentException 해당 재료가 없거나 권한이 없을 경우
      */
     boolean deleteUserIngredient(Long userId, Long userIngredientId);
+
+
+    /**
+     * 레시피를 시작할 때 사용된 재료들을 소비 처리합니다.
+     *
+     * 사용 규칙:
+     * - usageType이 "ALL" 인 경우: 해당 재료를 사용자의 재료 목록에서 삭제합니다.
+     * - usageType이 "PARTIAL" 인 경우: 재료를 삭제하지 않고 사용 처리 상태로만 변경합니다.
+     *
+     * 이 메서드는 레시피 실행 시점에 호출되며,
+     * 마이페이지의 재료 관리(삭제)와는 목적이 다른 비즈니스 로직입니다.
+     *
+     * @param userId 요청을 수행하는 사용자 ID (권한 검증용)
+     * @param requestDTO 레시피 ID와 소비할 재료 목록을 포함한 요청 DTO
+     *
+     * @throws IllegalArgumentException
+     *         - 재료가 존재하지 않거나
+     *         - 해당 재료가 사용자 소유가 아니거나
+     *         - 잘못된 usageType 값이 전달된 경우
+     */
+    void consumeIngredients(Long userId, IngredientConsumeRequestDTO requestDTO);
 
     /**
      * 특정 사용자가 보유한 재료의 총 개수를 조회합니다.
