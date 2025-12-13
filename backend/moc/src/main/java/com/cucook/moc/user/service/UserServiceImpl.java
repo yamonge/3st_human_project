@@ -18,6 +18,7 @@ import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import com.cucook.moc.user.vo.UserReviewVO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import com.cucook.moc.user.dto.response.LoginResponseDTO;
 import com.cucook.moc.user.vo.UserVO;
 import com.cucook.moc.common.MailService;
 import com.cucook.moc.shopping.dao.ShoppingPostDAO;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -108,12 +110,12 @@ public class UserServiceImpl implements UserService {
         // 1. 이메일로 유저 조회
         UserVO user = userDAO.findByUserEmail(request.getUserEmail());
         if (user == null) {
-            throw new IllegalArgumentException("가입되지 않은 이메일입니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         // 2. 비밀번호 검증
         if (!passwordEncoder.matches(request.getUserPassword(), user.getUserPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         // 3. 상태 체크
@@ -144,16 +146,14 @@ public class UserServiceImpl implements UserService {
         );
 
         if (user == null) {
-            throw new IllegalArgumentException("일치하는 사용자가 없습니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "일치하는 사용자가 없습니다.");
         }
 
-        // 이메일 마스킹 적용
         String maskedEmail = EmailMaskingUtil.maskEmail(user.getUserEmail());
 
-        return FindEmailResponseDTO.builder()
-                // DTO 필드명이 userEmail이라도, 값은 마스킹된 문자열을 내려주면 됨
-                .userEmail(maskedEmail)
-                .build();
+        FindEmailResponseDTO response = new FindEmailResponseDTO();
+        response.setUserEmail(maskedEmail); // 이메일 마스킹
+        return response;
     }
 
 

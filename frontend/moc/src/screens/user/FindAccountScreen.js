@@ -85,26 +85,23 @@ export default function FindAccountScreen({navigation}) {
 
   // 이메일 찾기 처리
   const handleFindEmail = async () => {
-    try {
-      if (!idName) {
+    if (!idName) {
         Alert.alert('알림', '이름을 입력해주세요.');
         return;
       }
 
-      if (!idBirthDate) {
-        Alert.alert('알림', '생년월일을 선택해주세요.');
-        return;
-      }
+    if (!idBirthDate) {
+      Alert.alert('알림', '생년월일을 선택해주세요.');
+      return;
+    }
 
+    try {
       setLoading(true);
-      setFindIdResult(null);
 
       const timestamp = idBirthDate.toISOString().split('.')[0];
 
       // findEmail API 호출
-      const response = await authAPI.findEmail({
-        userEmail: result.userEmail, // 백엔드 DTO
-      });
+      const response = await authAPI.findEmail(idName, idBirthDate);
       setFindIdResult(response);
     } catch (err) {
       console.error('이메일 찾기 실패:', err);
@@ -114,7 +111,8 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '이메일 찾기 중 오류가 발생했습니다.');
       }
-      setLoading(false);
+    } finally{
+      setLoading(false);  // 성공 실패 상관없이 호출
     }
   };
 
@@ -162,7 +160,8 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '임시 비밀번호 발송 중 오류가 발생했습니다.');
       }
-      setLoading(false);
+    } finally{
+      setLoading(false);  // 성공 실패 상관없이 호출
     }
   };
 
@@ -246,7 +245,7 @@ export default function FindAccountScreen({navigation}) {
                     회원님의 이메일은
                   </Text>
                   <Text style={findAccountStyles.resultId}>
-                    {findIdResult.maskedEmail}
+                    {findIdResult.userEmail}
                   </Text>
                   <View style={findAccountStyles.resultButtonContainer}>
                     <Button
