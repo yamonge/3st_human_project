@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {ArrowLeft, Send} from 'lucide-react-native';
+import {ArrowLeft, Send, Star, Share2} from 'lucide-react-native';
 import RecipeListItem from '../../components/recipeboard/RecipeListItem';
 // import {getSharedRecipes} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/SharedRecipesStyles';
@@ -127,6 +127,26 @@ export default function SharedRecipesScreen({navigation}) {
             angle={175.64}
             style={styles.headerGradient}
           />
+
+          {/* 배경 장식 아이콘들 */}
+          <View style={[styles.decorIcon, styles.decorIcon1]}>
+            <Send size={48} color="rgba(255, 255, 255, 0.3)" strokeWidth={2} />
+          </View>
+          <View style={[styles.decorIcon, styles.decorIcon2]}>
+            <Share2
+              size={28}
+              color="rgba(255, 255, 255, 0.3)"
+              strokeWidth={2}
+            />
+          </View>
+          <View style={[styles.decorIcon, styles.decorIcon3]}>
+            <Star
+              size={42}
+              color="rgba(255, 255, 255, 0.3)"
+              strokeWidth={2}
+              fill="rgba(255, 255, 255, 0.3)"
+            />
+          </View>
 
           {/* 타이틀 영역 */}
           <View style={styles.headerTop}>

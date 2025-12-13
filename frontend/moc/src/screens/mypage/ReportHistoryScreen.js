@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {ArrowLeft, Shield} from 'lucide-react-native';
+import {ArrowLeft, Shield, AlertTriangle, Star} from 'lucide-react-native';
 import ReportCard from '../../components/mypage/ReportCard';
 // import {getReportHistory} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/ReportHistoryStyles';
@@ -95,7 +95,7 @@ export default function ReportHistoryScreen({navigation}) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -109,6 +109,25 @@ export default function ReportHistoryScreen({navigation}) {
             angle={175.64}
             style={styles.headerGradient}
           />
+
+          {/* 배경 장식 아이콘들 */}
+          <View style={[styles.decorIcon, styles.decorIcon1]}>
+            <Shield
+              size={48}
+              color="rgba(255, 255, 255, 0.3)"
+              strokeWidth={2}
+            />
+          </View>
+          <View style={[styles.decorIcon, styles.decorIcon2]}>
+            <AlertTriangle
+              size={28}
+              color="rgba(255, 255, 255, 0.3)"
+              strokeWidth={2}
+            />
+          </View>
+          <View style={[styles.decorIcon, styles.decorIcon3]}>
+            <Star size={42} color="rgba(255, 255, 255, 0.3)" strokeWidth={2} />
+          </View>
 
           {/* 타이틀 영역 */}
           <View style={styles.headerTop}>
@@ -162,6 +181,6 @@ export default function ReportHistoryScreen({navigation}) {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

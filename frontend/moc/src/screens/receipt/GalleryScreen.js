@@ -16,12 +16,13 @@ import {CameraRoll} from '@react-native-camera-roll/camera-roll';
 import LinearGradient from 'react-native-linear-gradient';
 import styles from '../../styles/screens/receipt/GalleryScreenStyles';
 
-const GalleryScreen = ({navigation}) => {
+const GalleryScreen = ({navigation, route}) => {
   const [photos, setPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState(null);
+  const from = route.params?.from; // 'receipt' 또는 'profile'
 
   useEffect(() => {
     loadPhotos();
@@ -68,12 +69,20 @@ const GalleryScreen = ({navigation}) => {
 
     console.log('📷 선택한 사진:', selectedPhoto.uri);
 
-    // 재료 인식 결과 화면으로 이동
-    navigation.navigate('IngredientResult', {
-      photoPath: selectedPhoto.uri,
-      recognizedIngredients: [], // 빈 배열 → 더미 데이터 사용
-      from: 'gallery', // 갤러리에서 왔음을 표시
-    });
+    // from에 따라 분기 처리
+    if (from === 'profile') {
+      // 프로필 수정 화면으로 돌아가면서 이미지 전달
+      navigation.navigate('ProfileEdit', {
+        selectedImage: selectedPhoto.uri,
+      });
+    } else {
+      // 재료 인식 결과 화면으로 이동
+      navigation.navigate('IngredientResult', {
+        photoPath: selectedPhoto.uri,
+        recognizedIngredients: [], // 빈 배열 → 더미 데이터 사용
+        from: 'gallery', // 갤러리에서 왔음을 표시
+      });
+    }
   };
 
   // 그리드 아이템 렌더링
@@ -86,11 +95,6 @@ const GalleryScreen = ({navigation}) => {
         onPress={() => handleSelectPhoto(item)}
         activeOpacity={0.8}>
         <Image source={{uri: item.uri}} style={styles.photoImage} />
-        {!isSelected && (
-          <View style={styles.photoOverlay}>
-            <ImageIcon color="white" size={32} strokeWidth={2} />
-          </View>
-        )}
       </TouchableOpacity>
     );
   };
@@ -107,7 +111,7 @@ const GalleryScreen = ({navigation}) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.navigate('Receipt')}>
+          onPress={() => navigation.goBack()}>
           <X color="white" size={24} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
@@ -158,7 +162,9 @@ const GalleryScreen = ({navigation}) => {
             start={{x: 0, y: 0}}
             end={{x: 1, y: 0}}
             style={styles.uploadButton}>
-            <Text style={styles.uploadButtonText}>선택한 사진 업로드</Text>
+            <Text style={styles.uploadButtonText}>
+              {from === 'profile' ? '선택 완료' : '선택한 사진 업로드'}
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
