@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.util.List;
 
 import com.cucook.moc.chat.dao.ChatParticipantDAO;
@@ -18,6 +19,7 @@ import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import com.cucook.moc.user.vo.UserReviewVO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ import com.cucook.moc.user.dto.response.LoginResponseDTO;
 import com.cucook.moc.user.vo.UserVO;
 import com.cucook.moc.common.MailService;
 import com.cucook.moc.shopping.dao.ShoppingPostDAO;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -108,12 +111,12 @@ public class UserServiceImpl implements UserService {
         // 1. 이메일로 유저 조회
         UserVO user = userDAO.findByUserEmail(request.getUserEmail());
         if (user == null) {
-            throw new IllegalArgumentException("가입되지 않은 이메일입니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         // 2. 비밀번호 검증
         if (!passwordEncoder.matches(request.getUserPassword(), user.getUserPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         // 3. 상태 체크
@@ -144,16 +147,14 @@ public class UserServiceImpl implements UserService {
         );
 
         if (user == null) {
-            throw new IllegalArgumentException("일치하는 사용자가 없습니다.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "일치하는 사용자가 없습니다.");
         }
 
-        // 이메일 마스킹 적용
         String maskedEmail = EmailMaskingUtil.maskEmail(user.getUserEmail());
 
-        return FindEmailResponseDTO.builder()
-                // DTO 필드명이 userEmail이라도, 값은 마스킹된 문자열을 내려주면 됨
-                .userEmail(maskedEmail)
-                .build();
+        FindEmailResponseDTO response = new FindEmailResponseDTO();
+        response.setUserEmail(maskedEmail); // 이메일 마스킹
+        return response;
     }
 
 
@@ -168,7 +169,8 @@ public class UserServiceImpl implements UserService {
         );
 
         if (user == null) {
-            throw new IllegalArgumentException("일치하는 사용자가 없습니다.");
+            // IllegalArgumentException -> 404로 내려야 프론트에서 정상 분기 가능
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "일치하는 사용자가 없습니다.");
         }
 
         // 2) 토큰 생성 (원본 토큰은 이메일로 전달)
@@ -178,12 +180,13 @@ public class UserServiceImpl implements UserService {
         String hashedToken = hashToken(resetToken);
         long now = System.currentTimeMillis();
 
-        PasswordResetTokenVO tokenVO = PasswordResetTokenVO.builder()
-                .userId(user.getUserId())
-                .resetToken(hashedToken)
-                .createdDate(new Timestamp(now))
-                .usedYn("N")
-                .build();
+        PasswordResetTokenVO tokenVO = new PasswordResetTokenVO();
+        tokenVO.setUserId(user.getUserId());
+        tokenVO.setResetToken(hashedToken);
+        long expireMillis = now + Duration.ofHours(1).toMillis();   // 토큰 유효시간 설정
+        tokenVO.setExpireDate(new Timestamp(expireMillis));
+        tokenVO.setCreatedDate(new Timestamp(now));
+        tokenVO.setUsedYn("N");
 
         passwordResetTokenDAO.insertToken(tokenVO);
 
@@ -239,29 +242,42 @@ public class UserServiceImpl implements UserService {
         return frontendBaseUrl + "/reset-password?token=" + resetToken;
     }
 
+    @Transactional
     @Override
     public void resetPasswordByToken(ResetPasswordConfirmRequestDTO request) {
 
-        // 1) 비밀번호 확인 검증
-        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
-            throw new IllegalArgumentException("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        // 0) 필수값 방어
+        if (request.getToken() == null || request.getToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "토큰이 없습니다.");
+        }
+        if (request.getNewPassword() == null || request.getNewPasswordConfirm() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "비밀번호를 입력해주세요.");
         }
 
-        // 2) 토큰 조회
+        // 1) 비밀번호 확인 검증
+        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+        }
+
+        // 2) 토큰 조회(해시로 조회)
         String hashedToken = hashToken(request.getToken());
         PasswordResetTokenVO tokenVO = passwordResetTokenDAO.findByToken(hashedToken);
+
         if (tokenVO == null) {
-            throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+            // 토큰 자체가 없음
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "유효하지 않은 토큰입니다.");
         }
 
         // 3) 토큰 사용 여부 체크
         if ("Y".equalsIgnoreCase(tokenVO.getUsedYn())) {
-            throw new IllegalArgumentException("이미 사용된 토큰입니다.");
+            // 이미 사용된 토큰: 410(Gone) 또는 400 중 택1 (여기선 410 권장)
+            throw new ResponseStatusException(HttpStatus.GONE, "이미 사용된 토큰입니다.");
         }
 
         // 4) 토큰 만료시간 체크
-        if (tokenVO.getExpireDate().before(new Timestamp(System.currentTimeMillis()))) {
-            throw new IllegalArgumentException("만료된 토큰입니다.");
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        if (tokenVO.getExpireDate() == null || tokenVO.getExpireDate().before(now)) {
+            throw new ResponseStatusException(HttpStatus.GONE, "만료된 토큰입니다.");
         }
 
         // 5) 해당 user_id의 비밀번호 변경

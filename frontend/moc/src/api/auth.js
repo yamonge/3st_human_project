@@ -41,28 +41,24 @@ export const authAPI = {
       });
 
       // 사용자 정보 저장 (닉네임, 이메일, 이름)
-      if (response.user) {
-        await AsyncStorage.setItem(
-          'userEmail',
-          response.user.userEmail || user.email || email,
-        );
-        await AsyncStorage.setItem(
-          'userNickname',
-          response.user.userNickname || user.nickname || '',
-        );
-        await AsyncStorage.setItem(
-          'userName',
-          response.user.userName || user.name || '',
-        );
-        await AsyncStorage.setItem(
-          'userId',
-          String(response.user.userId || ''),
-        );
-      }
+      // response == LoginResponseDTO (flat)
+      await AsyncStorage.multiSet([
+        ['userId', response?.userId ? String(response.userId) : ''],
+        ['userEmail', response?.userEmail ?? ''],
+        ['userName', response?.userName ?? ''],
+        ['userNickname', response?.userNickname ?? ''],
+        ['userType', response?.userType ?? ''],
+        ['userStatus', response?.userStatus ?? ''],
+      ]);
 
-      return response;
+      return response; // LoginResponseDTO
     } catch (error) {
-      console.error('로그인 에러:', error);
+      console.error(
+        '로그인 에러:',
+        error?.message,
+        error?.response?.status,
+        error?.response?.data,
+      );
       throw error;
     }
   },
@@ -274,29 +270,37 @@ export const authAPI = {
    * Response: { userEmail }
    */
   findEmail: async (userName, userBirthDate) => {
-    try {
-      const timestamp = birthDate.toISOString();
+  try {
+    // userBirthDate는 Date 객체라고 가정
+    const timestamp = userBirthDate.toISOString();
 
-      const response = await api.post('/auth/find-email', {
-        userName,
-        userBirthDate: timestamp,
-      });
-      return response.data; // { maskedEmail: 'abc***@example.com', registeredDate: '2024-01-01' }
-    } catch (error) {
+    // axiosConfig 인터셉터가 response.data만 반환
+    // 여기서의 response는 이미 FindEmailResponseDTO 형태임
+    const response = await api.post('/auth/find-email', {
+      userName,
+      userBirthDate: timestamp,
+    });
+
+    return response;    // response == { userEmail: "마스킹된 이메일" }
+  } catch (error) {
+    // 404 같은 예상 실패는 console.error로 찍지 않는 편이 좋음
+    const status = error?.response?.status;
+    if (![400, 401, 403, 404].includes(status)) {
       console.error('아이디 찾기 에러:', error);
-      throw error;
     }
-  },
+    throw error;
+  }
+},
 
   /**
    * 임시 비밀번호 발송 (이메일 + 이름 + 생년월일)
    *비밀번호 재설정 링크 발송
-   * POST /api/auth/password/reset-link
+   * POST /api/auth/find-password
    * Request: { userEmail, userName, userBirthDate }
    */
   sendPasswordResetLink: async (email, name, birthDate) => {
     try {
-      const response = await api.post('/auth/password/reset-link', {
+      const response = await api.post('/auth/find-password', {
         userEmail: email,
         userName: name,
         userBirthDate: birthDate, // 'YYYY-MM-DD'
@@ -310,11 +314,11 @@ export const authAPI = {
 
   /**
    * 비밀번호 재설정 (토큰 확인 후 새 비번 저장)
-   * POST /api/auth/password/reset-confirm
+   * POST /api/auth/reset-password
    * Request: { token, newPassword, newPasswordConfirm }
    */
   resetPasswordByToken: ({token, newPassword, newPasswordConfirm}) =>
-    api.post('/auth/password/reset-confirm', {
+    api.post('/auth/reset-password', {
       token,
       newPassword,
       newPasswordConfirm,

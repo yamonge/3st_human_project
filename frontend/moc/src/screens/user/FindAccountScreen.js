@@ -85,26 +85,23 @@ export default function FindAccountScreen({navigation}) {
 
   // 이메일 찾기 처리
   const handleFindEmail = async () => {
-    try {
-      if (!idName) {
+    if (!idName) {
         Alert.alert('알림', '이름을 입력해주세요.');
         return;
       }
 
-      if (!idBirthDate) {
-        Alert.alert('알림', '생년월일을 선택해주세요.');
-        return;
-      }
+    if (!idBirthDate) {
+      Alert.alert('알림', '생년월일을 선택해주세요.');
+      return;
+    }
 
+    try {
       setLoading(true);
-      setFindIdResult(null);
 
       const timestamp = idBirthDate.toISOString().split('.')[0];
 
       // findEmail API 호출
-      const response = await authAPI.findEmail({
-        userEmail: result.userEmail, // 백엔드 DTO
-      });
+      const response = await authAPI.findEmail(idName, idBirthDate);
       setFindIdResult(response);
     } catch (err) {
       console.error('이메일 찾기 실패:', err);
@@ -114,13 +111,18 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '이메일 찾기 중 오류가 발생했습니다.');
       }
-      setLoading(false);
+    } finally{
+      setLoading(false);  // 성공 실패 상관없이 호출
     }
+  };
+
+  // 로그인 화면으로 이동
+  const goToLogin = () => {
+    navigation.replace('Login');
   };
 
   // 임시 비밀번호 발송 처리
   const handleSendPassword = async () => {
-    try {
       if (!pwEmail) {
         Alert.alert('알림', '이메일을 입력해주세요.');
         return;
@@ -136,24 +138,19 @@ export default function FindAccountScreen({navigation}) {
         return;
       }
 
+    try {
       setLoading(true);
 
-      // TODO: 백엔드 연결 시 주석 해제
-      // const response = await authAPI.sendPasswordResetLink(
-      //   pwEmail,
-      //   pwName,
-      //   pwBirthDate
-      // );
-
-      // 임시 데이터 (백엔드 연결 전)
-      setTimeout(() => {
-        setPasswordSent(true);
-        Alert.alert(
-          '발송 완료',
-          '비밀번호 변경용 링크가 이메일로 발송되었습니다.',
-        );
-        setLoading(false);
-      }, 1000);
+      const response = await authAPI.sendPasswordResetLink(
+        pwEmail,
+        pwName,
+        pwBirthDate
+      );
+      Alert.alert(
+    '알림',
+    '비밀번호 변경용 링크 발송이 완료되었습니다. 이메일을 확인해주세요.',
+    [{ text: '확인', onPress: goToLogin }],
+  );
     } catch (err) {
       console.error('비밀번호 변경용 링크 - 이메일 발송 실패:', err);
 
@@ -162,13 +159,9 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '임시 비밀번호 발송 중 오류가 발생했습니다.');
       }
-      setLoading(false);
+    } finally{
+      setLoading(false);  // 성공 실패 상관없이 호출
     }
-  };
-
-  // 로그인 화면으로 이동
-  const goToLogin = () => {
-    navigation.replace('Login');
   };
 
   return (
@@ -246,7 +239,7 @@ export default function FindAccountScreen({navigation}) {
                     회원님의 이메일은
                   </Text>
                   <Text style={findAccountStyles.resultId}>
-                    {findIdResult.maskedEmail}
+                    {findIdResult.userEmail}
                   </Text>
                   <View style={findAccountStyles.resultButtonContainer}>
                     <Button

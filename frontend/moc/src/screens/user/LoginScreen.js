@@ -71,7 +71,15 @@ export default function LoginScreen({navigation}) {
         index: 0,
         routes: [{name: 'MainApp'}],
       });
+      // 251213 추가: 로그인 후 푸시 알림 권한 요청 화면으로 이동
     } catch (err) {
+      console.log('LOGIN ERROR DEBUG', {
+      name: err?.name,
+      message: err?.message,
+      hasResponse: !!err?.response,
+      status: err?.response?.status,
+      data: err?.response?.data,
+    });
       console.error('로그인 실패:', err);
 
       const msg = err.response?.data?.message;
