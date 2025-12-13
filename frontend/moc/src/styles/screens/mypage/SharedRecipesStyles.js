@@ -37,6 +37,29 @@ export default StyleSheet.create({
     bottom: 0,
   },
 
+  // 배경 장식 아이콘
+  decorIcon: {
+    position: 'absolute',
+  },
+
+  decorIcon1: {
+    top: 46,
+    left: 291,
+    transform: [{rotate: '12deg'}],
+  },
+
+  decorIcon2: {
+    top: 76,
+    left: 269,
+    transform: [{rotate: '-6deg'}],
+  },
+
+  decorIcon3: {
+    top: 94,
+    left: -6,
+    transform: [{rotate: '45deg'}],
+  },
+
   // 상단 타이틀 영역
   headerTop: {
     flexDirection: 'row',
