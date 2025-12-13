@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Alert,
@@ -17,6 +16,8 @@ import DatePickerModal from '../../components/common/DatePickerModal';
 import {findAccountStyles} from '../../styles/screens/user/findAccountStyles';
 import {colors} from '../../styles/common';
 import authAPI from '../../api/auth';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {loginStyles} from '../../styles/screens/user/loginStyles';
 
 /**
  * 계정 찾기 화면 (이메일 찾기 + 비밀번호 찾기)
@@ -165,9 +166,12 @@ export default function FindAccountScreen({navigation}) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={findAccountStyles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAwareScrollView
+      contentContainerStyle={loginStyles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      enableOnAndroid={true}
+      extraScrollHeight={100}>
       {/* 헤더 */}
       <View style={findAccountStyles.header}>
         <TouchableOpacity
@@ -399,6 +403,6 @@ export default function FindAccountScreen({navigation}) {
           <ActivityIndicator size="large" color={colors.textWhite} />
         </View>
       )}
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
