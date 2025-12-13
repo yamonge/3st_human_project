@@ -281,8 +281,7 @@ export const authAPI = {
       userBirthDate: timestamp,
     });
 
-    // response == { userEmail: "마스킹된 이메일" }
-    return response;
+    return response;    // response == { userEmail: "마스킹된 이메일" }
   } catch (error) {
     // 404 같은 예상 실패는 console.error로 찍지 않는 편이 좋음
     const status = error?.response?.status;
@@ -296,12 +295,12 @@ export const authAPI = {
   /**
    * 임시 비밀번호 발송 (이메일 + 이름 + 생년월일)
    *비밀번호 재설정 링크 발송
-   * POST /api/auth/password/reset-link
+   * POST /api/auth/find-password
    * Request: { userEmail, userName, userBirthDate }
    */
   sendPasswordResetLink: async (email, name, birthDate) => {
     try {
-      const response = await api.post('/auth/password/reset-link', {
+      const response = await api.post('/auth/find-password', {
         userEmail: email,
         userName: name,
         userBirthDate: birthDate, // 'YYYY-MM-DD'
@@ -315,11 +314,11 @@ export const authAPI = {
 
   /**
    * 비밀번호 재설정 (토큰 확인 후 새 비번 저장)
-   * POST /api/auth/password/reset-confirm
+   * POST /api/auth/reset-password
    * Request: { token, newPassword, newPasswordConfirm }
    */
   resetPasswordByToken: ({token, newPassword, newPasswordConfirm}) =>
-    api.post('/auth/password/reset-confirm', {
+    api.post('/auth/reset-password', {
       token,
       newPassword,
       newPasswordConfirm,

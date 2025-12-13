@@ -116,9 +116,13 @@ export default function FindAccountScreen({navigation}) {
     }
   };
 
+  // 로그인 화면으로 이동
+  const goToLogin = () => {
+    navigation.replace('Login');
+  };
+
   // 임시 비밀번호 발송 처리
   const handleSendPassword = async () => {
-    try {
       if (!pwEmail) {
         Alert.alert('알림', '이메일을 입력해주세요.');
         return;
@@ -134,24 +138,19 @@ export default function FindAccountScreen({navigation}) {
         return;
       }
 
+    try {
       setLoading(true);
 
-      // TODO: 백엔드 연결 시 주석 해제
-      // const response = await authAPI.sendPasswordResetLink(
-      //   pwEmail,
-      //   pwName,
-      //   pwBirthDate
-      // );
-
-      // 임시 데이터 (백엔드 연결 전)
-      setTimeout(() => {
-        setPasswordSent(true);
-        Alert.alert(
-          '발송 완료',
-          '비밀번호 변경용 링크가 이메일로 발송되었습니다.',
-        );
-        setLoading(false);
-      }, 1000);
+      const response = await authAPI.sendPasswordResetLink(
+        pwEmail,
+        pwName,
+        pwBirthDate
+      );
+      Alert.alert(
+    '알림',
+    '비밀번호 변경용 링크 발송이 완료되었습니다. 이메일을 확인해주세요.',
+    [{ text: '확인', onPress: goToLogin }],
+  );
     } catch (err) {
       console.error('비밀번호 변경용 링크 - 이메일 발송 실패:', err);
 
@@ -163,11 +162,6 @@ export default function FindAccountScreen({navigation}) {
     } finally{
       setLoading(false);  // 성공 실패 상관없이 호출
     }
-  };
-
-  // 로그인 화면으로 이동
-  const goToLogin = () => {
-    navigation.replace('Login');
   };
 
   return (
