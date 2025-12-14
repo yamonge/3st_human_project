@@ -158,7 +158,7 @@ export default function FindAccountScreen({navigation}) {
       if (err.response?.status === 404) {
         Alert.alert('알림', '일치하는 사용자 정보를 찾을 수 없습니다.');
       } else {
-        Alert.alert('오류', '임시 비밀번호 발송 중 오류가 발생했습니다.');
+        Alert.alert('오류', '비밀번호 변경용 링크 발송 중 오류가 발생했습니다.');
       }
     } finally{
       setLoading(false);  // 성공 실패 상관없이 호출
@@ -313,7 +313,7 @@ export default function FindAccountScreen({navigation}) {
               <View style={findAccountStyles.titleContainer}>
                 <Text style={findAccountStyles.title}>비밀번호 찾기</Text>
                 <Text style={findAccountStyles.description}>
-                  임시 비밀번호를 이메일로 발송해드립니다
+                  비밀번호 변경용 링크를 이메일로 발송해드립니다
                 </Text>
               </View>
 
@@ -361,7 +361,7 @@ export default function FindAccountScreen({navigation}) {
               {/* 버튼 */}
               <View style={findAccountStyles.submitButtonContainer}>
                 <Button
-                  title="임시 비밀번호 발송"
+                  title="비밀번호 번경용 링크 발송"
                   variant="gradient"
                   onPress={handleSendPassword}
                   disabled={!pwEmail || !pwName || !pwBirthDate}

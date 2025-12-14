@@ -66,6 +66,9 @@ export default function MapMainScreen({navigation}) {
   // 채팅방 목록 모달
   const [showChatRoomList, setShowChatRoomList] = useState(false);
 
+  // 마커 목록 ... 아래 아무 곳 state 구간에 추가
+  const [isLoading, setIsLoading] = useState(false);
+
   // GPS 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
     checkAndRequestPermission();
@@ -91,30 +94,99 @@ export default function MapMainScreen({navigation}) {
     }
   };
 
-  const getCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      async position => {
-        const {latitude, longitude} = position.coords;
-        setCurrentLocation({latitude, longitude});
-        console.log('현재 위치:', latitude, longitude);
+  // 주변 마트 자동 검색 (지역명 + 마트 키워드)
+const searchNearbyMarts = async (location, distanceKm, regionOverride) => {
+  if (!location) return;
 
-        // 역 지오코딩: 좌표 → 지역명 (네이버 Reverse Geocoding API)
-        try {
-          const region = await reverseGeocode(latitude, longitude);
-          setCurrentRegion(region);
-          console.log('현재 지역:', region || '지역 미확인');
-        } catch (error) {
-          console.error('지역명 가져오기 실패:', error);
-          setCurrentRegion('');
-        }
-      },
-      error => {
-        console.error('위치 가져오기 실패:', error);
-        Alert.alert('오류', '현재 위치를 가져올 수 없습니다.');
-      },
-      {enableHighAccuracy: false, timeout: 30000, maximumAge: 60000},
+  try {
+    setIsLoading(true);
+
+    const region = regionOverride ?? currentRegion;
+    const base = region ? `${region} 마트` : '마트';
+
+    const places = await searchPlaces(base, 50);
+
+    // 전체 결과 저장
+    setAllPlaces(places);
+    setIsSearched(true);
+
+    // 거리 + 마트 필터링(현재 위치를 location으로 사용)
+    const filtered = places
+      .filter(p => p?.latitude && p?.longitude && isMartOrSuper(p))
+      .map(p => ({...p, distance: calculateDistance(location, p)}))
+      .filter(p => p.distance <= distanceKm)
+      .sort((a, b) => a.distance - b.distance);
+
+    setMarkers(filtered);
+
+      if (filtered.length === 0) {
+        Alert.alert('알림', '선택한 거리 내에 마트가 없습니다.');
+      }
+    } catch (e) {
+      // 원인 파악용 로그(중요)
+      console.error('[searchNearbyMarts error]', e);
+      console.error('status:', e?.response?.status);
+      console.error('data:', e?.response?.data);
+
+      Alert.alert('오류', '주변 마트 검색 중 문제가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getCurrentLocation = () => {
+  const onSuccess = async position => {
+    const {latitude, longitude} = position.coords;
+
+    const myLoc = {latitude, longitude};
+    setCurrentLocation(myLoc);
+    console.log('현재 위치:', latitude, longitude);
+
+    let region = '';
+    try {
+      region = await reverseGeocode(latitude, longitude);
+      setCurrentRegion(region);
+      console.log('현재 지역:', region || '지역 미확인');
+    } catch (error) {
+      console.error('지역명 가져오기 실패:', error);
+      setCurrentRegion('');
+    }
+
+    // ✅ 여기서 딱 1번만 호출
+    await searchNearbyMarts(myLoc, filterOptions.distance, region);
+  };
+
+
+  const onError = error => {
+    console.error('위치 가져오기 실패:', error);
+
+    Alert.alert(
+      '오류',
+      `현재 위치를 가져올 수 없습니다.\n(code=${error?.code}) ${error?.message}`,
     );
   };
+
+  // 1차: High Accuracy로 시도 (에뮬레이터 위치 주입 시 성공률 높음)
+  Geolocation.getCurrentPosition(
+    onSuccess,
+    err1 => {
+      console.error('1차(HighAccuracy) 실패:', err1);
+
+      // TIMEOUT(3) / POSITION_UNAVAILABLE(2)면 2차 시도
+      if (err1?.code === 3 || err1?.code === 2) {
+        Geolocation.getCurrentPosition(
+          onSuccess,
+          onError,
+          { enableHighAccuracy: false, timeout: 30000, maximumAge: 60000 },
+        );
+        return;
+      }
+
+      onError(err1);
+    },
+    { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 },
+  );
+};
 
   /**
    * 두 지점 간의 거리 계산 (geolib 사용)
@@ -241,20 +313,23 @@ export default function MapMainScreen({navigation}) {
   };
 
   // 필터 적용
-  const handleApplyFilter = filters => {
-    setFilterOptions(filters);
-    console.log('필터 적용:', filters);
+  const handleApplyFilter = async filters => {
+  setFilterOptions(filters);
+  setShowFilterModal(false);
 
-    // 이미 검색된 데이터가 있으면 새로운 필터로 재필터링
-    if (allPlaces.length > 0) {
-      const filtered = applyPlaceFilter(allPlaces, filters);
-      console.log('재필터링 후:', filtered.length, '개');
-      setMarkers(filtered);
+  // 이미 후보(allPlaces)가 있으면 재필터링(빠름)
+  if (allPlaces.length > 0) {
+    const filtered = applyPlaceFilter(allPlaces, filters);
+    setMarkers(filtered);
 
-      if (filtered.length === 0) {
-        Alert.alert('알림', '필터 조건에 맞는 장소가 없습니다.');
-      }
+    if (filtered.length === 0) {
+      Alert.alert('알림', '선택한 거리 내에 마트가 없습니다.');
     }
+    return;
+  }
+
+    // 아직 후보가 없으면(=검색을 안했으면) 자동 검색 실행
+    await searchNearbyMarts(filters.distance);
   };
 
   // 채팅방 목록 모달 열기
@@ -334,6 +409,20 @@ export default function MapMainScreen({navigation}) {
           />
         ))}
       </NaverMapView>
+      {/* 로딩 표시 */}
+      {isLoading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 120,
+            alignSelf: 'center',
+            backgroundColor: 'rgba(255,255,255,0.9)',
+            padding: 10,
+            borderRadius: 10,
+          }}>
+          <ActivityIndicator />
+        </View>
+      )}
 
       {/* 상단 검색바 */}
       <View style={styles.searchContainer}>

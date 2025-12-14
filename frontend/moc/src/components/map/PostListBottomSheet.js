@@ -51,9 +51,9 @@ export default function PostListBottomSheet({
    * 게시물 목록 불러오기
    */
   const loadPosts = async () => {
-    if (!selectedMarker) return;
+    if (!selectedMarker?.latitude || !selectedMarker?.longitude) return;
 
-    /* 백엔드 API 연동 (준비되면 주석 해제)
+    // 백엔드 API 연동 (준비되면 주석 해제)
     try {
       setIsLoading(true);
       const fetchedPosts = await getPostsByLocation(
@@ -66,45 +66,10 @@ export default function PostListBottomSheet({
     } catch (error) {
       console.error('[게시물 조회 실패]', error);
       setPostList([]);
-      Alert.alert('오류', '게시물을 불러오는데 실패했습니다.');
+      // Alert.alert('오류', '게시물을 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
-    */
-
-    // 임시 샘플 데이터 (백엔드 연동 전)
-    console.log('[게시물 로드]', selectedMarker.name);
-    setPostList([
-      {
-        id: 1,
-        storeName: selectedMarker.name,
-        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10분 전
-        distance: selectedMarker.distance
-          ? `${selectedMarker.distance.toFixed(1)}km`
-          : '1.7km',
-        meetTime: '12:35',
-        currentCount: 3,
-        maxCount: 5,
-        items: '육류, 주류 외 3개',
-        author: '둘리',
-        description:
-          '이마트 쌍용점에서 장 보실 분 구해요! 육류와 주류를 함께 구매할 예정이며, 12시 35분에 만나서 같이 가실 수 있습니다. 총 5명이 함께 가면 좋겠습니다.',
-      },
-      {
-        id: 2,
-        storeName: selectedMarker.name,
-        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1시간 전
-        distance: selectedMarker.distance
-          ? `${selectedMarker.distance.toFixed(1)}km`
-          : '2.1km',
-        meetTime: '14:00',
-        currentCount: 2,
-        maxCount: 3,
-        items: '채소, 과일 외 2개',
-        author: '또치',
-        description: '채소와 과일 같이 사실 분! 14시에 만나요~',
-      },
-    ]);
   };
 
   /**
@@ -196,6 +161,27 @@ export default function PostListBottomSheet({
         </TouchableOpacity>
       </View>
 
+      {/* 선택된 장소 정보 */}
+      {selectedMarker && (
+        <View style={{paddingHorizontal: 16, paddingBottom: 10}}>
+          <Text style={{fontSize: 16, fontWeight: '700', color: colors.textBlack}}>
+            {selectedMarker.name || storeName}
+          </Text>
+
+          {!!selectedMarker.address && (
+            <Text style={{marginTop: 4, fontSize: 12, color: colors.textGray}}>
+              {selectedMarker.address}
+            </Text>
+          )}
+
+          {selectedMarker.distance != null && (
+            <Text style={{marginTop: 4, fontSize: 12, color: colors.textGray}}>
+              현재 위치에서 약 {Number(selectedMarker.distance).toFixed(1)}km
+            </Text>
+          )}
+        </View>
+      )}
+
       {/* 필터/글쓰기 버튼 */}
       <View style={styles.actionRow}>
         <TouchableOpacity
@@ -236,7 +222,12 @@ export default function PostListBottomSheet({
       <PostCreateModal
         visible={showPostCreateModal}
         onClose={() => setShowPostCreateModal(false)}
+        selectedMarker={selectedMarker}
         storeName={selectedMarker?.name || storeName}
+        onCreated={() => {
+          setShowPostCreateModal(false);
+          loadPosts(); // 생성 후 목록 갱신
+        }}
       />
     </BottomSheet>
   );

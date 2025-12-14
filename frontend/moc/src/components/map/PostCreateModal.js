@@ -88,7 +88,7 @@ export default function PostCreateModal({visible, onClose, storeName = ''}) {
 
     console.log('[게시물 생성 요청]', postData);
 
-    /* 백엔드 API 연동 (준비되면 주석 해제)
+    // 백엔드 API 연동 (준비되면 주석 해제)
     try {
       const result = await createPost(postData);
       console.log('[게시물 생성 성공]', result);
@@ -100,7 +100,6 @@ export default function PostCreateModal({visible, onClose, storeName = ''}) {
       console.error('[게시물 생성 실패]', error);
       alert('게시물 작성에 실패했습니다. 다시 시도해주세요.');
     }
-    */
 
     // 임시: 성공으로 간주
     onClose();
