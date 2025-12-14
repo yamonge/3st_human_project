@@ -30,14 +30,10 @@
     </resultMap>
 
     <!-- 게시글 INSERT -->
-    <insert id="insertPost"
-            parameterType="ShoppingPostVO">
-        <selectKey keyProperty="shoppingPostId"
-                   resultType="long"
-                   order="BEFORE">
+    <insert id="insertPost" parameterType="com.cucook.moc.shopping.vo.ShoppingPostVO">
+        <selectKey keyProperty="shoppingPostId" resultType="long" order="BEFORE">
             SELECT seq_tb_shopping_post.NEXTVAL FROM dual
         </selectKey>
-
         INSERT INTO tb_shopping_post (
         shopping_post_id,
         writer_user_id,
@@ -51,7 +47,7 @@
         place_address,
         latitude,
         longitude,
-        created_date
+        created_id
         ) VALUES (
         #{shoppingPostId},
         #{writerUserId},
@@ -65,7 +61,7 @@
         #{placeAddress},
         #{latitude},
         #{longitude},
-        SYSTIMESTAMP
+        #{createdId}
         )
     </insert>
 
@@ -75,13 +71,11 @@
         INSERT INTO tb_shopping_post_category (
         shopping_post_category_id,
         shopping_post_id,
-        category_cd,
-        created_date
+        category_cd
         ) VALUES (
         seq_tb_shopping_post_category.NEXTVAL,
         #{shoppingPostId},
-        #{categoryCode},
-        SYSTIMESTAMP
+        #{categoryCode}
         )
     </insert>
 
@@ -100,29 +94,40 @@
     </resultMap>
 
     <!-- 주변 게시글 목록 (맵 기준) -->
-    <select id="selectNearbyPosts"
-            resultMap="ShoppingPostSummaryMap">
+    <select id="selectNearbyPosts" resultType="com.cucook.moc.shopping.dto.ShoppingPostSummaryDTO">
         SELECT
-            p.shopping_post_id,
-            p.place_name,
-            p.place_address,
-            p.latitude,
-            p.longitude,
-            p.meet_datetime,
-            p.min_person_cnt,
-            p.max_person_cnt,
-            p.current_person_cnt,
-            p.status_cd,
-            p.writer_user_id,
-            u.user_nickname AS writer_nickname
-        FROM tb_shopping_post p
-        JOIN tb_user u
-            ON p.writer_user_id = u.user_id
-        WHERE p.latitude  BETWEEN #{latMin} AND #{latMax}
-            AND p.longitude BETWEEN #{lngMin} AND #{lngMax}
-            AND p.status_cd = 'OPEN'
-        ORDER BY p.meet_datetime
+        sp.shopping_post_id            AS shoppingPostId,
+        sp.place_name                  AS placeName,
+        sp.place_address               AS placeAddress,
+        sp.latitude                    AS latitude,
+        sp.longitude                   AS longitude,
+        sp.meet_datetime               AS meetDatetime,
+        sp.max_person_cnt              AS maxPersonCnt,
+        sp.current_person_cnt          AS currentPersonCnt,
+        sp.status_cd                   AS statusCd,
+        sp.writer_user_id              AS writerUserId,
+        u.user_nickname                AS writerNickname,
+        sp.created_date                AS createdDate,
+        sp.description                 AS description,
+        (
+        SELECT LISTAGG(spc.category_cd, ',') WITHIN GROUP (ORDER BY spc.category_cd)
+        FROM tb_shopping_post_category spc
+        WHERE spc.shopping_post_id = sp.shopping_post_id
+        ) AS categoryCodesCsv,
+        (
+        6371000 * ACOS(
+        COS(#{centerLat} * 0.017453292519943295) * COS(sp.latitude * 0.017453292519943295)
+        * COS((sp.longitude - #{centerLng}) * 0.017453292519943295)
+        + SIN(#{centerLat} * 0.017453292519943295) * SIN(sp.latitude * 0.017453292519943295)
+        )
+        ) AS distanceMeters
+        FROM tb_shopping_post sp
+        LEFT JOIN tb_user u ON u.user_id = sp.writer_user_id
+        WHERE sp.latitude BETWEEN #{latMin} AND #{latMax}
+        AND sp.longitude BETWEEN #{lngMin} AND #{lngMax}
+        ORDER BY sp.created_date DESC
     </select>
+
 
     <!-- 게시글 상세 DTO 매핑 -->
     <resultMap id="ShoppingPostDetailMap" type="com.cucook.moc.shopping.dto.ShoppingPostDetailDTO">
@@ -142,58 +147,82 @@
 
     <!-- 특정 마트(좌표) 기준 게시글 목록
          (핀 하나의 좌표를 중심으로 작은 범위로 조회할 때 사용) -->
-    <select id="selectPostsByPlace"
-            resultMap="ShoppingPostSummaryMap">
+    <select id="selectPostsByPlace" resultType="com.cucook.moc.shopping.dto.ShoppingPostSummaryDTO">
         SELECT
-            p.shopping_post_id,
-            p.place_name,
-            p.place_address,
-            p.latitude,
-            p.longitude,
-            p.meet_datetime,
-            p.min_person_cnt,
-            p.max_person_cnt,
-            p.current_person_cnt,
-            p.status_cd,
-            p.writer_user_id,
-            u.user_nickname AS writer_nickname
-        FROM tb_shopping_post p
-        JOIN tb_user u
-        ON p.writer_user_id = u.user_id
-        WHERE p.latitude  BETWEEN #{latMin} AND #{latMax}
-            AND p.longitude BETWEEN #{lngMin} AND #{lngMax}
-            AND p.status_cd = 'OPEN'
-        ORDER BY p.meet_datetime
+        sp.shopping_post_id            AS shoppingPostId,
+        sp.place_name                  AS placeName,
+        sp.place_address               AS placeAddress,
+        sp.latitude                    AS latitude,
+        sp.longitude                   AS longitude,
+        sp.meet_datetime               AS meetDatetime,
+        sp.max_person_cnt              AS maxPersonCnt,
+        sp.current_person_cnt          AS currentPersonCnt,
+        sp.status_cd                   AS statusCd,
+        sp.writer_user_id              AS writerUserId,
+        u.user_nickname                AS writerNickname,
+        sp.created_date                AS createdDate,
+        sp.description                 AS description,
+        (
+        SELECT LISTAGG(spc.category_cd, ',') WITHIN GROUP (ORDER BY spc.category_cd)
+        FROM tb_shopping_post_category spc
+        WHERE spc.shopping_post_id = sp.shopping_post_id
+        ) AS categoryCodesCsv,
+        0 AS distanceMeters
+        FROM tb_shopping_post sp
+        LEFT JOIN tb_user u ON u.user_id = sp.writer_user_id
+        WHERE sp.latitude BETWEEN #{latMin} AND #{latMax}
+        AND sp.longitude BETWEEN #{lngMin} AND #{lngMax}
+        ORDER BY sp.created_date DESC
     </select>
 
     <!-- 게시글 상세 -->
-    <select id="selectPostDetail"
-            resultMap="ShoppingPostDetailMap">
+    <select id="selectPostDetail" resultType="com.cucook.moc.shopping.dto.ShoppingPostDetailDTO">
         SELECT
-            p.shopping_post_id,
-            p.place_name,
-            p.place_address,
-            p.latitude,
-            p.longitude,
-            p.meet_datetime,
-            p.min_person_cnt,
-            p.max_person_cnt,
-            p.current_person_cnt,
-            p.status_cd,
-            p.description,
-            u.user_nickname AS writer_nickname
-        FROM tb_shopping_post p
-        JOIN tb_user u
-        ON p.writer_user_id = u.user_id
-        WHERE p.shopping_post_id = #{postId}
+        sp.shopping_post_id      AS shoppingPostId,
+        sp.writer_user_id        AS writerUserId,
+        u.user_nickname          AS writerNickname,
+        sp.place_name            AS placeName,
+        sp.place_address         AS placeAddress,
+        sp.latitude              AS latitude,
+        sp.longitude             AS longitude,
+        sp.meet_datetime         AS meetDatetime,
+        sp.min_person_cnt        AS minPersonCnt,
+        sp.max_person_cnt        AS maxPersonCnt,
+        sp.current_person_cnt    AS currentPersonCnt,
+        sp.status_cd             AS statusCd,
+        sp.description           AS description
+        FROM tb_shopping_post sp
+        LEFT JOIN tb_user u ON u.user_id = sp.writer_user_id
+        WHERE sp.shopping_post_id = #{shoppingPostId}
+    </select>
+
+    <select id="selectCategoryCodesByPostId" resultType="string">
+        SELECT category_cd
+        FROM tb_shopping_post_category
+        WHERE shopping_post_id = #{shoppingPostId}
+        ORDER BY shopping_post_category_id ASC
     </select>
 
     <!-- VO 한 건 조회 (JOIN 없이) -->
-    <select id="selectById"
-            parameterType="long"
-            resultMap="ShoppingPostResultMap">
-        SELECT *
+    <select id="selectById" resultType="com.cucook.moc.shopping.vo.ShoppingPostVO">
+        SELECT
+        shopping_post_id   AS shoppingPostId,
+        writer_user_id     AS writerUserId,
+        meet_datetime      AS meetDatetime,
+        min_person_cnt     AS minPersonCnt,
+        max_person_cnt     AS maxPersonCnt,
+        current_person_cnt AS currentPersonCnt,
+        description        AS description,
+        status_cd          AS statusCd,
+        place_name         AS placeName,
+        place_address      AS placeAddress,
+        latitude           AS latitude,
+        longitude          AS longitude,
+        created_id         AS createdId,
+        created_date       AS createdDate,
+        updated_id         AS updatedId,
+        updated_date       AS updatedDate
         FROM tb_shopping_post
-        WHERE shopping_post_id = #{postId}
+        WHERE shopping_post_id = #{shoppingPostId}
     </select>
 </mapper>

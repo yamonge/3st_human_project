@@ -8,7 +8,6 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @ToString
 public class ShoppingPostSummaryDTO {
 
@@ -22,12 +21,21 @@ public class ShoppingPostSummaryDTO {
 
     // 시간/인원/상태
     private Timestamp meetDatetime;
-//    private Integer minPersonCnt;
     private Integer maxPersonCnt;
     private Integer currentPersonCnt;
     private String statusCd;
 
-    // 작성자 정보
+    // 작성자
     private Long writerUserId;
     private String writerNickname;
+
+    // 목록(카드)에 유용한 값들
+    private Timestamp createdDate;
+    private String description;
+
+    // ✅ 카테고리 요약(콤마 문자열) - LISTAGG로 내려줌
+    private String categoryCodesCsv;
+
+    // ✅ (nearby에서만 의미있게 사용 가능) 거리(m)
+    private Double distanceMeters;
 }

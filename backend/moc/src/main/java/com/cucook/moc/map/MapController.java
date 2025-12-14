@@ -34,13 +34,13 @@ public class MapController {
     /**
      * 네이버 장소 검색 API 프록시
      * @param query 검색어 (예: "천안 마트")
-     * @param display 검색 결과 개수 (기본 20개)
+     * @param display 검색 결과 개수 (기본 5개)
      * @return 네이버 검색 API 응답
      */
     @GetMapping("/search")
     public ResponseEntity<String> searchPlaces(
             @RequestParam String query,
-            @RequestParam(defaultValue = "20") int display
+            @RequestParam(defaultValue = "5") int display
     ) {
         try {
             String url = String.format(

@@ -2,41 +2,31 @@ package com.cucook.moc.shopping.dto;
 
 import lombok.*;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 /**
  * 같이 장보기 게시글 생성 요청 DTO
- * - 장소 정보 : 네이버(또는 기타 맵)에서 선택한 마트 정보
- * - 모집 정보 : 시간, 인원수, 설명, 카테고리
+ * - meetDateTime: 클라이언트에서 epoch millis(숫자)로 전달 (예: 1765212600000)
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @ToString
 public class ShoppingPostCreateRequestDTO {
 
-    // ===== 장소 정보 (맵 API에서 받아온 값) =====
-    private String placeName;         // 장소명
-    private String placeAddress;      // 주소
-    private Double latitude;          // 위도
-    private Double longitude;         // 경도
+    // 장소 정보
+    private String placeName;
+    private String placeAddress;
+    private Double latitude;
+    private Double longitude;
 
-    // ===== 모집 정보 =====
-    /**
-     * 만나는 일시 (ISO-8601 문자열)
-     * 예) "2025-12-08T20:30:00"
-     */
-    private Timestamp meetDateTime;
-    private Integer minPersonCnt;     // 최소 인원(없으면 기본 2)
-    private Integer maxPersonCnt;     // 최대 인원(2~10)
-    private String description;       // 설명/비고
+    // 모집 정보
+    private Long meetDateTime;        // ✅ epoch millis
+    private Integer minPersonCnt;     // 없으면 기본 2
+    private Integer maxPersonCnt;     // 2~5
+    private String description;
 
-    /**
-     * 택한 재료 카테고리 코드들 (ING_CATEGORY)
-     * 예) ["MART", "DISCOUNT", ...] (필요 없다면 나중에 제거 가능)
-     */
+    // 재료(카테고리) 코드들: 프론트 ingredient id(meat, dairy …) 그대로
     private List<String> categoryCodes;
 }

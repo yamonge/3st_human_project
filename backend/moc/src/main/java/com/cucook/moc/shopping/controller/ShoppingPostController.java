@@ -15,15 +15,23 @@ import java.util.List;
 @RequestMapping("/api/shopping-posts")
 public class ShoppingPostController {
 
-    @Autowired
-    private ShoppingPostService shoppingPostService;
+    private final ShoppingPostService shoppingPostService;
+    private final ShoppingPostJoinService shoppingPostJoinService;
 
-    @Autowired
-    private ShoppingPostJoinService shoppingPostJoinService;
+    public ShoppingPostController(ShoppingPostService shoppingPostService,
+                                  ShoppingPostJoinService shoppingPostJoinService) {
+        this.shoppingPostService = shoppingPostService;
+        this.shoppingPostJoinService = shoppingPostJoinService;
+    }
 
     @PostMapping
-    public ResponseEntity<Long> createPost(@RequestParam("userId") Long userId,
-                                           @RequestBody ShoppingPostCreateRequestDTO dto) {
+    public ResponseEntity<Long> createPost(
+            @RequestParam("userId") Long userId,
+            @RequestBody ShoppingPostCreateRequestDTO dto
+    ) {
+        if (userId == null) {
+            return ResponseEntity.badRequest().build();
+        }
         Long postId = shoppingPostService.createPost(userId, dto);
         return ResponseEntity.ok(postId);
     }
@@ -37,8 +45,7 @@ public class ShoppingPostController {
             @RequestParam("lat") double lat,
             @RequestParam("lng") double lng
     ) {
-        List<ShoppingPostSummaryDTO> list = shoppingPostService.getNearbyPosts(lat, lng);
-        return ResponseEntity.ok(list);
+        return ResponseEntity.ok(shoppingPostService.getNearbyPosts(lat, lng));
     }
 
     /**
@@ -46,19 +53,21 @@ public class ShoppingPostController {
      * GET /api/shopping/posts/{postId}
      */
     @GetMapping("/{postId}")
-    public ResponseEntity<ShoppingPostDetailDTO> getPostDetail(
-            @PathVariable("postId") Long postId
-    ) {
-        ShoppingPostDetailDTO detail = shoppingPostService.getPostDetail(postId);
-        return ResponseEntity.ok(detail);
+    public ResponseEntity<ShoppingPostDetailDTO> getPostDetail(@PathVariable("postId") Long postId) {
+        return ResponseEntity.ok(shoppingPostService.getPostDetail(postId));
     }
     /**
      * 게시글 채팅 참여
      * GET /api/shopping/posts/{postId}/join
      */
     @PostMapping("/{postId}/join")
-    public ResponseEntity<Long> joinPost(@PathVariable Long postId,
-                                         @RequestParam("userId") Long userId) {
+    public ResponseEntity<Long> joinPost(
+            @PathVariable Long postId,
+            @RequestParam("userId") Long userId
+    ) {
+        if (userId == null) {
+            return ResponseEntity.badRequest().build();
+        }
         Long chatRoomId = shoppingPostJoinService.joinPost(postId, userId);
         return ResponseEntity.ok(chatRoomId);
     }

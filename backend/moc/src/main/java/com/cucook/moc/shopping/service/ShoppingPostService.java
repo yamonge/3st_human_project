@@ -28,16 +28,17 @@ public class ShoppingPostService {
      */
     public Long createPost(Long writerUserId, ShoppingPostCreateRequestDTO dto) {
 
+        Integer personCntMax = dto.getMaxPersonCnt();
 
-        if (dto.getMaxPersonCnt() == null || dto.getMaxPersonCnt() < 2) {
-            throw new IllegalArgumentException("최대 인원은 2명 이상이어야 합니다.");
+        if (personCntMax == null) personCntMax = 2;            // ✅ 기본값
+        if (personCntMax < 2) throw new IllegalArgumentException("최대 인원은 2명 이상이어야 합니다.");
+        if (personCntMax > 5) throw new IllegalArgumentException("최대 인원은 5명을 초과할 수 없습니다.");
+        if (dto.getMeetDateTime() == null) {
+            throw new IllegalArgumentException("meetDateTime은 필수입니다. (epoch millis)");
         }
 
-        // 1) meetDateTime
-        Timestamp meetTs = dto.getMeetDateTime();
-        if (meetTs == null) {
-            throw new IllegalArgumentException("meetDateTime은 필수입니다. (Timestamp 타입)");
-        }
+
+        Timestamp meetTs = new Timestamp(dto.getMeetDateTime());
 
 
         // 2) 게시글 VO 구성
@@ -46,7 +47,7 @@ public class ShoppingPostService {
         postVO.setMeetDatetime(meetTs);
         postVO.setMinPersonCnt(dto.getMinPersonCnt() != null ? dto.getMinPersonCnt() : 2);
         postVO.setMaxPersonCnt(dto.getMaxPersonCnt());
-        postVO.setCurrentPersonCnt(1); // 작성자 본인
+        postVO.setCurrentPersonCnt(1);
         postVO.setDescription(dto.getDescription());
         postVO.setStatusCd("OPEN");
 
@@ -54,6 +55,8 @@ public class ShoppingPostService {
         postVO.setPlaceAddress(dto.getPlaceAddress());
         postVO.setLatitude(dto.getLatitude());
         postVO.setLongitude(dto.getLongitude());
+
+        postVO.setCreatedId(writerUserId);
 
         // 게시글 INSERT
         shoppingPostDAO.insertPost(postVO);
@@ -66,7 +69,7 @@ public class ShoppingPostService {
             }
         }
 
-        // 3) 채팅방 생성 + 작성자 참여
+        //  채팅방 생성 + 작성자 참여
         shoppingChatRoomService.createRoomForPost(postId, writerUserId);
 
         return postId;
@@ -79,12 +82,13 @@ public class ShoppingPostService {
     public List<ShoppingPostSummaryDTO> getNearbyPosts(double lat, double lng) {
         double latDiff = 0.03;
         double lngDiff = 0.03;
+
         double latMin = lat - latDiff;
         double latMax = lat + latDiff;
         double lngMin = lng - lngDiff;
         double lngMax = lng + lngDiff;
 
-        return shoppingPostDAO.selectNearbyPosts(latMin, latMax, lngMin, lngMax);
+        return shoppingPostDAO.selectNearbyPosts(lat, lng, latMin, latMax, lngMin, lngMax);
     }
 
     /**
@@ -92,19 +96,25 @@ public class ShoppingPostService {
      */
     @Transactional(readOnly = true)
     public List<ShoppingPostSummaryDTO> getPostsForPlace(double lat, double lng) {
-        double latDiff = 0.001; // 대략 100m 정도 박스
+        double latDiff = 0.001; // 약 100m 박스
         double lngDiff = 0.001;
+
         double latMin = lat - latDiff;
         double latMax = lat + latDiff;
         double lngMin = lng - lngDiff;
         double lngMax = lng + lngDiff;
 
-        return shoppingPostDAO.selectPostsByPlace(latMin, latMax, lngMin, lngMax);
+        return shoppingPostDAO.selectPostsByPlace(lat, lng, latMin, latMax, lngMin, lngMax);
     }
 
+    // 게시물 상세정보
     @Transactional(readOnly = true)
     public ShoppingPostDetailDTO getPostDetail(Long postId) {
-        return shoppingPostDAO.selectPostDetail(postId);
+        ShoppingPostDetailDTO detail = shoppingPostDAO.selectPostDetail(postId);
+        if (detail != null) {
+            detail.setCategoryCodes(shoppingPostDAO.selectCategoryCodesByPostId(postId));
+        }
+        return detail;
     }
 
     @Transactional(readOnly = true)

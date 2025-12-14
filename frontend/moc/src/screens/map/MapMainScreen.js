@@ -409,7 +409,7 @@ const searchNearbyMarts = async (location, distanceKm, regionOverride) => {
           />
         ))}
       </NaverMapView>
-      {/* 로딩 표시 */}
+      {/* 로딩 */}
       {isLoading && (
         <View
           style={{

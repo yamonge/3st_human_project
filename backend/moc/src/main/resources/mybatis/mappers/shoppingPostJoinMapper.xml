@@ -30,42 +30,50 @@
     </resultMap>
 
     <!-- 참여 시, 게시글 락 걸고 조회 -->
-    <!-- DAO: ShoppingPostVO selectPostForUpdate(@Param("postId") Long postId); -->
-    <select id="selectPostForUpdate"
-            parameterType="long"
-            resultMap="ShoppingPostResultMap">
-        SELECT *
+    <select id="selectPostForUpdate" resultType="com.cucook.moc.shopping.vo.ShoppingPostVO">
+        SELECT
+        shopping_post_id   AS shoppingPostId,
+        writer_user_id     AS writerUserId,
+        meet_datetime      AS meetDatetime,
+        min_person_cnt     AS minPersonCnt,
+        max_person_cnt     AS maxPersonCnt,
+        current_person_cnt AS currentPersonCnt,
+        description        AS description,
+        status_cd          AS statusCd,
+        place_name         AS placeName,
+        place_address      AS placeAddress,
+        latitude           AS latitude,
+        longitude          AS longitude
         FROM tb_shopping_post
         WHERE shopping_post_id = #{postId}
         FOR UPDATE
     </select>
 
     <!-- current_person_cnt + 1 -->
-    <!-- DAO: void increaseCurrentPersonCnt(@Param("postId") Long postId); -->
-    <update id="increaseCurrentPersonCnt"
-            parameterType="long">
+    <update id="increaseCurrentPersonCnt">
         UPDATE tb_shopping_post
-        SET current_person_cnt = current_person_cnt + 1,
-            updated_date       = SYSTIMESTAMP
+        SET current_person_cnt = current_person_cnt + 1
         WHERE shopping_post_id = #{postId}
     </update>
 
     <!-- 게시글 ↔ 채팅방 매핑 -->
-    <!-- DAO: Long selectChatRoomIdByPostId(@Param("postId") Long postId); -->
-    <select id="selectChatRoomIdByPostId"
-            parameterType="long"
-            resultType="long">
+    <select id="selectChatRoomIdByPostId" resultType="long">
         SELECT chat_room_id
         FROM tb_shopping_chat_room
         WHERE shopping_post_id = #{postId}
     </select>
 
     <!-- 단건 조회용 (필요시 사용) -->
-    <!-- DAO: ShoppingPostVO selectById(@Param("postId") Long postId); -->
-    <select id="selectById"
-            parameterType="long"
-            resultMap="ShoppingPostResultMap">
-        SELECT *
+    <select id="selectById" resultType="com.cucook.moc.shopping.vo.ShoppingPostVO">
+        SELECT
+        shopping_post_id   AS shoppingPostId,
+        writer_user_id     AS writerUserId,
+        meet_datetime      AS meetDatetime,
+        min_person_cnt     AS minPersonCnt,
+        max_person_cnt     AS maxPersonCnt,
+        current_person_cnt AS currentPersonCnt,
+        description        AS description,
+        status_cd          AS statusCd
         FROM tb_shopping_post
         WHERE shopping_post_id = #{postId}
     </select>
