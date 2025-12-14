@@ -8,9 +8,10 @@ import {
   Alert,
 } from 'react-native';
 import {ChevronLeft, ChevronRight, Check, Sparkles} from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import {styles} from '../../styles/screens/camera/saveOptionStyles';
-import {saveIngredients} from '../../api/camera';
+import {addUserIngredient} from '../../api/camera';
 
 //재료명만 추출
 const extractIngredientNames = ingredients =>
@@ -25,34 +26,27 @@ export default function SaveOptionScreen({route, navigation}) {
     setIsSaving(true);
 
     try {
-      // 1️⃣ 로그인 사용자 ID
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         Alert.alert('오류', '로그인 정보가 없습니다.');
         return;
       }
 
-      // 2️⃣ 재료명 리스트
-      const ingredientNames = extractIngredientNames(ingredients);
-      if (ingredientNames.length === 0) {
+      if (ingredients.length === 0) {
         Alert.alert('안내', '저장할 재료가 없습니다.');
         return;
       }
 
-      // 3️⃣ 저장 API 호출
-      const result = await saveIngredients(Number(userId), ingredientNames);
-
-      if (!result.success) {
-        Alert.alert('저장 실패', result.error);
-        return;
+      for (const ingredient of ingredients) {
+        const result = await addUserIngredient(Number(userId), ingredient);
+        if (!result.success) {
+          Alert.alert('저장 실패', result.error);
+          return;
+        }
       }
 
-      // 4️⃣ 성공 → 홈
       Alert.alert('저장 완료', '재료가 저장되었습니다.', [
-        {
-          text: '확인',
-          onPress: () => navigation.navigate('Home'),
-        },
+        {text: '확인', onPress: () => navigation.navigate('Home')},
       ]);
     } finally {
       setIsSaving(false);
@@ -69,21 +63,21 @@ export default function SaveOptionScreen({route, navigation}) {
         return;
       }
 
-      const ingredientNames = extractIngredientNames(ingredients);
-      if (ingredientNames.length === 0) {
+      if (ingredients.length === 0) {
         Alert.alert('안내', '저장할 재료가 없습니다.');
         return;
       }
 
-      // ✅ 먼저 저장
-      const result = await saveIngredients(Number(userId), ingredientNames);
-
-      if (!result.success) {
-        Alert.alert('저장 실패', result.error);
-        return;
+      // ✅ 직접 입력 재료 하나씩 저장
+      for (const ingredient of ingredients) {
+        const result = await addUserIngredient(Number(userId), ingredient);
+        if (!result.success) {
+          Alert.alert('저장 실패', result.error);
+          return;
+        }
       }
 
-      // ✅ 저장 성공 → 필터 화면 이동
+      // ✅ 저장 성공 → 필터 화면
       navigation.navigate('RecipeFilter', {ingredients});
     } finally {
       setIsSaving(false);

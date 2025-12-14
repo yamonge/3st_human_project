@@ -27,7 +27,7 @@ export const recognizeIngredients = async photoPath => {
     });
 
     const response = await axios.post(
-      '/api/receipt/ocr', // ✅ 정확한 URL
+      '/receipt/ocr', // ✅ 정확한 URL
       formData,
       {
         headers: {
@@ -81,9 +81,9 @@ export const recognizeIngredients = async photoPath => {
  *   console.error(result.error);
  * }
  */
-export const recommendRecipes = async (ingredients, filters) => {
+export const recommendRecipes = async (userId, ingredients, filters) => {
   try {
-    console.log('📤 AI 레시피 추천 API 호출:', {ingredients, filters});
+    console.log('📤 AI 레시피 추천 API 호출:', {userId, ingredients, filters});
 
     // 1️⃣ 프론트 재료 → 백엔드 DTO 구조로 변환
     const selectedIngredients = ingredients.map(item => ({
@@ -94,6 +94,7 @@ export const recommendRecipes = async (ingredients, filters) => {
 
     // 2️⃣ 백엔드가 기대하는 Request DTO 구성
     const requestBody = {
+      userId,
       selectedIngredients,
       filterCuisineCd: filters?.style || null,
       filterDifficultyCd: filters?.difficulty || null,
@@ -102,7 +103,7 @@ export const recommendRecipes = async (ingredients, filters) => {
 
     // 3️⃣ 실제 백엔드 호출
     const response = await axios.post(
-      '/api/recipes/recommend',
+      '/recipes/recommend',
       requestBody,
       {timeout: 60000}, // AI 호출 고려
     );
@@ -147,7 +148,7 @@ export const saveIngredients = async (userId, ingredientNames) => {
     console.log('📤 재료 저장 API 호출:', {userId, ingredientNames});
 
     const response = await axios.post(
-      `/api/v1/users/${userId}/ingredients/from-receipt`,
+      `/v1/users/${userId}/ingredients/from-receipt`,
       ingredientNames, // ✅ List<String>
     );
 
@@ -188,7 +189,7 @@ export const saveRecipe = async (userId, recipe) => {
   try {
     console.log('📤 레시피 저장 API 호출', {userId, recipe});
 
-    const response = await axios.post(`/api/v1/users/${userId}/recipes`, {
+    const response = await axios.post(`/v1/users/${userId}/recipes`, {
       title: recipe.title,
       summary: recipe.summary,
       difficultyCd: recipe.difficultyCd,
@@ -259,7 +260,7 @@ export const consumeIngredients = async (userId, recipeId, ingredients) => {
     };
 
     const response = await axios.post(
-      `/api/v1/users/${userId}/ingredients/consume`,
+      `/v1/users/${userId}/ingredients/consume`,
       requestBody,
     );
 
@@ -268,6 +269,28 @@ export const consumeIngredients = async (userId, recipeId, ingredients) => {
     return {
       success: false,
       error: error.response?.data?.message || '재료 소비 처리에 실패했습니다.',
+    };
+  }
+};
+
+// 재료 직접 입력 저장 API
+
+export const addUserIngredient = async (userId, ingredient) => {
+  try {
+    console.log('📤 직접 입력 재료 저장:', {userId, ingredient});
+
+    const response = await axios.post(`/v1/users/${userId}/ingredients`, {
+      ingredientName: ingredient.name,
+      quantityDesc: ingredient.amount,
+      usedFlag: 'N',
+      memo: '직접 입력',
+    });
+
+    return {success: true, ingredient: response.data};
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || '재료 저장 실패',
     };
   }
 };

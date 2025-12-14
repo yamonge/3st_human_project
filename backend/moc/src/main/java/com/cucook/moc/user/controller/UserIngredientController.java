@@ -40,6 +40,8 @@ public class UserIngredientController {
     public ResponseEntity<UserIngredientResponseDTO> addUserIngredient(
             @PathVariable("userId") Long userId,
             @RequestBody UserIngredientRequestDTO requestDTO) {
+        System.out.println("🔥 addUserIngredient userId=" + userId);
+        System.out.println("🔥 requestDTO=" + requestDTO);
         try {
             UserIngredientResponseDTO response = userIngredientService.addUserIngredient(userId, requestDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED); // 201 Created
