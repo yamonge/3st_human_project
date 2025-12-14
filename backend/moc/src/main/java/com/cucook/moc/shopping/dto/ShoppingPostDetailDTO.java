@@ -10,7 +10,6 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @ToString
 public class ShoppingPostDetailDTO {
 
@@ -36,6 +35,6 @@ public class ShoppingPostDetailDTO {
     // 내용
     private String description;
 
-    // 카테고리 목록 (예: "마트", "이벤트" 등)
+    // 카테고리 목록
     private List<String> categoryCodes;
 }

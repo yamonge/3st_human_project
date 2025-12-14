@@ -17,26 +17,45 @@ const api = axios.create({
   },
 });
 
+// ✅ userId 가져오기 헬퍼
+const getUserIdOrThrow = async () => {
+  const raw = await AsyncStorage.getItem('userId');
+  if (!raw) throw new Error('userId가 없습니다. 로그인 정보를 확인해주세요.');
+  const userId = Number(raw);
+  if (Number.isNaN(userId)) throw new Error('userId 형식이 올바르지 않습니다.');
+  return userId;
+};
+
 // 요청 인터셉터 (Request Interceptor)
 api.interceptors.request.use(
   async config => {
     try {
+      // (선택) 토큰 있으면 헤더에 추가
+      const token = await AsyncStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // ✅ A안: 필요한 요청에만 userId 자동 첨부
+      if (config.meta?.requiresUserId) {
+        const userId = await getUserIdOrThrow();
+        config.params = {...(config.params || {}), userId};
+      }
+
       console.log(
         'API 요청:',
         config.method?.toUpperCase(),
         `${config.baseURL}${config.url}`,
         config.params || config.data,
       );
+
       return config;
     } catch (error) {
       console.error('Request Interceptor 에러:', error);
-      return config;
+      return Promise.reject(error);
     }
   },
-  error => {
-    console.error('Request 에러:', error);
-    return Promise.reject(error);
-  },
+  error => Promise.reject(error),
 );
 
 // 응답 인터셉터 (Response Interceptor)
@@ -49,15 +68,12 @@ api.interceptors.response.use(
       `${response.config.baseURL}${response.config.url}`,
     );
     // 응답 데이터만 반환
-    return response.data;
+    return response.data; // ✅ 주의: 이제 호출부는 res.data가 아니라 res 자체가 data
   },
   async error => {
-    const originalRequest = error.config;
-
     // 응답이 있는 경우 (서버 에러)
     if (error.response) {
       const {status, data} = error.response;
-
       console.error(`API 에러 [${status}]:`, data?.message || error.message);
 
       // 401 에러 (인증 실패)

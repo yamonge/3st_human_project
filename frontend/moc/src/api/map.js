@@ -1,4 +1,6 @@
 import axios from 'axios';
+import api from './axiosConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import Config from 'react-native-config'; // TODO: Config 문제 해결 후 활성화
 
 /**
@@ -160,11 +162,6 @@ export const reverseGeocode = async (latitude, longitude) => {
   }
 };
 
-// ============================================
-// 백엔드 API (프로덕션용)
-// ============================================
-
-const BACKEND_BASE_URL = 'http://localhost:8080/api/map';
 
 /**
  * 백엔드를 통한 네이버 장소 검색 API 호출
@@ -174,7 +171,7 @@ const BACKEND_BASE_URL = 'http://localhost:8080/api/map';
  */
 export const searchPlacesViaBackend = async (query, display = 5) => {
   try {
-    const response = await axios.get(`${BACKEND_BASE_URL}/search`, {
+    const response = await api.get(`${BACKEND_BASE_URL}/search`, {
       params: {
         query: query,
         display: display,
@@ -250,70 +247,48 @@ export const reverseGeocodeViaBackend = async (latitude, longitude) => {
 // 게시물 API
 // ============================================
 
-/**
- * 특정 위치의 게시물 조회
- * @param {string} storeName - 마트명 (예: "이마트 쌍용점")
- * @param {number} latitude - 위도
- * @param {number} longitude - 경도
- * @returns {Promise<Array>} 게시물 목록
- */
-export const getPostsByLocation = async (storeName, latitude, longitude) => {
-  try {
-    const response = await axios.get(`${BACKEND_BASE_URL}/posts`, {
-      params: {
-        storeName: storeName,
-        latitude: latitude,
-        longitude: longitude,
-      },
-    });
+// userId 자동 첨부(A안)
+const getUserIdOrThrow = async () => {
+  const raw = await AsyncStorage.getItem('userId');
+  if (!raw) throw new Error('userId가 없습니다. 로그인 정보를 확인해주세요.');
+  const userId = Number(raw);
+  if (Number.isNaN(userId)) throw new Error('userId 형식이 올바르지 않습니다.');
+  return userId;
+};
 
-    return response.data;
-  } catch (error) {
-    console.error('[게시물 조회 API 호출 실패]', error.message);
-    if (error.response) {
-      console.error('[에러 상태]', error.response.status);
-      console.error('[에러 데이터]', error.response.data);
-    }
-    throw error;
-  }
+/**
+ * 특정 마트(핀) 기준 게시물 조회
+ * 백엔드: GET /api/shopping-posts/place?lat=&lng=
+ */
+// src/api/map.js
+export const getPostsByLocation = async (storeName, latitude, longitude) => {
+  // storeName은 호환용으로만 받음(요청 params에 넣지 않음)
+  return api.get('/shopping-posts/place', {
+    params: {
+      lat: latitude,
+      lng: longitude,
+    },
+  });
 };
 
 /**
  * 게시물 작성
- * @param {object} postData - 게시물 데이터
- * @returns {Promise<object>} 생성된 게시물
+ * 백엔드: POST /api/shopping-posts?userId=
  */
 export const createPost = async postData => {
-  try {
-    const response = await axios.post(`${BACKEND_BASE_URL}/posts`, postData);
-    return response.data;
-  } catch (error) {
-    console.error('[게시물 작성 API 호출 실패]', error.message);
-    if (error.response) {
-      console.error('[에러 상태]', error.response.status);
-      console.error('[에러 데이터]', error.response.data);
-    }
-    throw error;
-  }
+  const userId = await getUserIdOrThrow();
+  return api.post('/shopping-posts', postData, {
+    params: {userId},
+  });
 };
 
 /**
  * 게시물 참여
- * @param {number} postId - 게시물 ID
- * @returns {Promise<object>} 참여 결과
+ * 백엔드: POST /api/shopping-posts/{postId}/join?userId=
  */
 export const joinPost = async postId => {
-  try {
-    const response = await axios.post(
-      `${BACKEND_BASE_URL}/posts/${postId}/join`,
-    );
-    return response.data;
-  } catch (error) {
-    console.error('[게시물 참여 API 호출 실패]', error.message);
-    if (error.response) {
-      console.error('[에러 상태]', error.response.status);
-      console.error('[에러 데이터]', error.response.data);
-    }
-    throw error;
-  }
+  const userId = await getUserIdOrThrow();
+  return api.post(`/shopping-posts/${postId}/join`, null, {
+    params: {userId},
+  });
 };

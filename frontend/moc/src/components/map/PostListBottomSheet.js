@@ -49,63 +49,102 @@ export default function PostListBottomSheet({
 
   /**
    * 게시물 목록 불러오기
+   * DTO → PostCard 모델 매핑 포함
    */
-  const loadPosts = async () => {
-    if (!selectedMarker) return;
+// meetDatetime -> "HH:mm"
+const formatMeetTime = ts => {
+  if (!ts) return '-';
+  const d = new Date(ts); // Timestamp가 ISO로 직렬화되면 정상 파싱됨
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+};
 
-    /* 백엔드 API 연동 (준비되면 주석 해제)
-    try {
-      setIsLoading(true);
-      const fetchedPosts = await getPostsByLocation(
-        selectedMarker.name,
-        selectedMarker.latitude,
-        selectedMarker.longitude,
-      );
-      setPostList(fetchedPosts);
-      console.log('[게시물 조회 성공]', fetchedPosts.length, '개');
-    } catch (error) {
-      console.error('[게시물 조회 실패]', error);
-      setPostList([]);
-      Alert.alert('오류', '게시물을 불러오는데 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-    */
+// categoryCodesCsv -> "meat 외 2개"
+// 재료 코드 → 한글 라벨 매핑
+const INGREDIENT_LABEL_MAP = {
+  meat: '육류',
+  dairy: '유제품',
+  vegetable: '채소',
+  fruit: '과일',
+  snack: '간식',
+  etc: '기타',
+};
 
-    // 임시 샘플 데이터 (백엔드 연동 전)
-    console.log('[게시물 로드]', selectedMarker.name);
-    setPostList([
-      {
-        id: 1,
-        storeName: selectedMarker.name,
-        createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(), // 10분 전
-        distance: selectedMarker.distance
-          ? `${selectedMarker.distance.toFixed(1)}km`
-          : '1.7km',
-        meetTime: '12:35',
-        currentCount: 3,
-        maxCount: 5,
-        items: '육류, 주류 외 3개',
-        author: '둘리',
-        description:
-          '이마트 쌍용점에서 장 보실 분 구해요! 육류와 주류를 함께 구매할 예정이며, 12시 35분에 만나서 같이 가실 수 있습니다. 총 5명이 함께 가면 좋겠습니다.',
-      },
-      {
-        id: 2,
-        storeName: selectedMarker.name,
-        createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1시간 전
-        distance: selectedMarker.distance
-          ? `${selectedMarker.distance.toFixed(1)}km`
-          : '2.1km',
-        meetTime: '14:00',
-        currentCount: 2,
-        maxCount: 3,
-        items: '채소, 과일 외 2개',
-        author: '또치',
-        description: '채소와 과일 같이 사실 분! 14시에 만나요~',
-      },
-    ]);
+const formatItems = csv => {
+  if (!csv) return '재료 미선택';
+
+  const codes = String(csv)
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  if (codes.length === 0) return '재료 미선택';
+
+  const labels = codes.map(code => INGREDIENT_LABEL_MAP[code] || code);
+
+  // 표기 정책: 1개면 그대로, 여러개면 "첫번째 외 n개"
+  return labels.length === 1 ? labels[0] : `${labels[0]} 외 ${labels.length - 1}개`;
+};
+
+// DTO -> PostCard post 모델
+const mapToPostCardModel = (dto, marker) => {
+  const distanceKm =
+    marker?.distance != null
+      ? `${Number(marker.distance).toFixed(1)}km`
+      : dto?.distanceMeters != null
+      ? `${(Number(dto.distanceMeters) / 1000).toFixed(1)}km`
+      : '-';
+
+  return {
+    id: dto.shoppingPostId,
+
+    storeName: dto.placeName || marker?.name || '선택된 장소',
+    distance: distanceKm,
+
+    meetTime: formatMeetTime(dto.meetDatetime),
+
+    currentCount: dto.currentPersonCnt ?? 0,
+    maxCount: dto.maxPersonCnt ?? 0,
+
+    items: formatItems(dto.categoryCodesCsv),
+
+    author: dto.writerNickname || `user#${dto.writerUserId ?? ''}`,
+
+    description: dto.description || '',
+
+    // PostCard에서 new Date(post.createdAt) 하므로 ISO/파싱 가능 형태여야 함
+    createdAt: dto.createdDate || new Date().toISOString(),
   };
+};
+
+/**
+ * 게시물 목록 불러오기
+ */
+const loadPosts = async () => {
+  if (!selectedMarker?.latitude || !selectedMarker?.longitude) return;
+
+  try {
+    setIsLoading(true);
+
+    const fetchedPosts = await getPostsByLocation(
+      selectedMarker.name, // 호환용 (백엔드가 무시해도 OK)
+      selectedMarker.latitude,
+      selectedMarker.longitude,
+    );
+
+    const mapped = (fetchedPosts || []).map(dto =>
+      mapToPostCardModel(dto, selectedMarker),
+    );
+
+    setPostList(mapped);
+    console.log('[게시물 조회 성공]', mapped.length, '개');
+  } catch (error) {
+    console.error('[게시물 조회 실패]', error);
+    setPostList([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   /**
    * 새로고침 핸들러
@@ -196,6 +235,27 @@ export default function PostListBottomSheet({
         </TouchableOpacity>
       </View>
 
+      {/* 선택된 장소 정보 */}
+      {selectedMarker && (
+        <View style={{paddingHorizontal: 16, paddingBottom: 10}}>
+          <Text style={{fontSize: 16, fontWeight: '700', color: colors.textBlack}}>
+            {selectedMarker.name || storeName}
+          </Text>
+
+          {!!selectedMarker.address && (
+            <Text style={{marginTop: 4, fontSize: 12, color: colors.textGray}}>
+              {selectedMarker.address}
+            </Text>
+          )}
+
+          {selectedMarker.distance != null && (
+            <Text style={{marginTop: 4, fontSize: 12, color: colors.textGray}}>
+              현재 위치에서 약 {Number(selectedMarker.distance).toFixed(1)}km
+            </Text>
+          )}
+        </View>
+      )}
+
       {/* 필터/글쓰기 버튼 */}
       <View style={styles.actionRow}>
         <TouchableOpacity
@@ -236,7 +296,12 @@ export default function PostListBottomSheet({
       <PostCreateModal
         visible={showPostCreateModal}
         onClose={() => setShowPostCreateModal(false)}
+        selectedMarker={selectedMarker}
         storeName={selectedMarker?.name || storeName}
+        onCreated={() => {
+          setShowPostCreateModal(false);
+          loadPosts(); // 생성 후 목록 갱신
+        }}
       />
     </BottomSheet>
   );
