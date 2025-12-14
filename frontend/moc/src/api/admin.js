@@ -198,6 +198,21 @@ export const getNoticeList = async params => {
 };
 
 /**
+ * 공지사항 상세 조회
+ * @param {number} noticeId - 공지사항 ID
+ * @returns {Promise<Object>}
+ */
+export const getNoticeDetail = async noticeId => {
+  try {
+    const response = await axiosInstance.get(`/api/admin/notices/${noticeId}`);
+    return response.data;
+  } catch (error) {
+    console.error('공지사항 상세 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
  * 공지사항 작성
  * @param {Object} data - { title, content, important }
  * @returns {Promise<Object>}
@@ -244,6 +259,23 @@ export const deleteNotice = async noticeId => {
     return response.data;
   } catch (error) {
     console.error('공지사항 삭제 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 공지사항 고정 토글
+ * @param {number} noticeId - 공지사항 ID
+ * @returns {Promise<Object>}
+ */
+export const toggleNoticePin = async noticeId => {
+  try {
+    const response = await axiosInstance.patch(
+      `/api/admin/notices/${noticeId}/pin`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('공지사항 고정 토글 실패:', error);
     throw error;
   }
 };

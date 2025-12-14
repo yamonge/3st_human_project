@@ -63,19 +63,12 @@ import AdminSettingsScreen from './src/screens/admin/AdminSettingsScreen';
 import UserManagementScreen from './src/screens/admin/UserManagementScreen';
 import ReportManagementScreen from './src/screens/admin/ReportManagementScreen';
 import PostManagementScreen from './src/screens/admin/PostManagementScreen';
+import NoticeManagementScreen from './src/screens/admin/NoticeManagementScreen';
+import NoticeFormScreen from './src/screens/admin/NoticeFormScreen';
 
-// TODO: 임시 화면들 (추후 실제 화면으로 교체)
-function NotificationScreen() {
-  return null; // 추후 구현
-}
-
-function VoiceFlowScreen() {
-  return null; // 추후 구현
-}
-
-function MapFlowScreen() {
-  return null; // 추후 구현
-}
+// 공지사항 화면
+import NotificationListScreen from './src/screens/notification/NotificationListScreen';
+import NotificationDetailScreen from './src/screens/notification/NotificationDetailScreen';
 
 /**
  * 메인 하단 탭 네비게이터
@@ -91,7 +84,7 @@ function MainTabNavigator() {
       {/* 하단 4개 탭 */}
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="RecipeBoard" component={RecipeBoardScreen} />
-      <Tab.Screen name="Notification" component={NotificationScreen} />
+      <Tab.Screen name="Notification" component={NotificationListScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
 
       {/* FAB 서브메뉴 화면들 */}
@@ -102,7 +95,7 @@ function MainTabNavigator() {
           tabBarButton: () => null, // 탭 바 완전히 숨김
         }}
       />
-      <Tab.Screen name="Voice" component={VoiceFlowScreen} />
+      <Tab.Screen name="Voice" component={''} />
       <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
       <Tab.Screen name="Receipt" component={ReceiptSelectionScreen} />
       <Tab.Screen name="Map" component={MapMainScreen} />
@@ -282,6 +275,29 @@ function MainTabNavigator() {
       <Tab.Screen
         name="PostManagement"
         component={PostManagementScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="NoticeManagement"
+        component={NoticeManagementScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="NoticeForm"
+        component={NoticeFormScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+
+      {/* 공지사항 상세 화면 (탭바 숨김) */}
+      <Tab.Screen
+        name="NotificationDetail"
+        component={NotificationDetailScreen}
         options={{
           tabBarButton: () => null,
         }}

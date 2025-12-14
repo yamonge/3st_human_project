@@ -69,6 +69,7 @@ frontend/moc/src/
    - **컴포넌트 스타일**: `src/styles/components/[컴포넌트명]Styles.js` - 재사용 컴포넌트 스타일
    - **네비게이션 스타일**: `src/styles/navigation/[네비명]Styles.js` - 네비게이션 관련 스타일
    - **화면 컴포넌트 파일 내부에 StyleSheet 작성 절대 금지**
+   - **Text 스타일**: `includeFontPadding: false,` 적용 필수
    - **import 예시**: 
      - 화면: `import styles from '../../../styles/screens/[카테고리]/[화면명]Styles';`
      - 컴포넌트: `import styles from '../../styles/components/[컴포넌트명]Styles';`
@@ -95,3 +96,4 @@ frontend/moc/src/
 12. **개발 중요 인지 사항**
    - 중요!! 일반 react문법도 react native에서 사용가능
    - 중요!! 다른 파일 확인이 필요한 부분은 직접 파일 및 코드를 찾아서 읽고 확인할것
+   - 중요!! 뒤로가기 네비게이션은 navigation.goBack() 사용X, navigation.navigate("이전화면이름") 사용O
