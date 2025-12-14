@@ -60,6 +60,25 @@ const GalleryScreen = ({navigation, route}) => {
     setSelectedPhoto(photo);
   };
 
+  // X 버튼 (뒤로가기) 처리
+  const handleGoBack = () => {
+    // from에 따라 분기 처리
+    if (from === 'profile') {
+      navigation.navigate('ProfileEdit');
+    } else if (from === 'notice') {
+      navigation.navigate('NoticeForm', {
+        mode: route.params?.mode || 'create',
+        noticeId: route.params?.noticeId,
+        currentTitle: route.params?.currentTitle,
+        currentContent: route.params?.currentContent,
+        currentImage: route.params?.currentImage,
+      });
+    } else {
+      // 영수증 선택 화면으로 복귀
+      navigation.navigate('Receipt');
+    }
+  };
+
   // 선택한 사진 업로드
   const handleUpload = () => {
     if (!selectedPhoto) {
@@ -74,6 +93,16 @@ const GalleryScreen = ({navigation, route}) => {
       // 프로필 수정 화면으로 돌아가면서 이미지 전달
       navigation.navigate('ProfileEdit', {
         selectedImage: selectedPhoto.uri,
+      });
+    } else if (from === 'notice') {
+      // 공지사항 작성/수정 화면으로 돌아가면서 이미지 전달
+      navigation.navigate('NoticeForm', {
+        mode: route.params?.mode || 'create',
+        noticeId: route.params?.noticeId,
+        selectedImage: selectedPhoto.uri,
+        currentTitle: route.params?.currentTitle,
+        currentContent: route.params?.currentContent,
+        currentImage: route.params?.currentImage,
       });
     } else {
       // 재료 인식 결과 화면으로 이동
@@ -109,9 +138,7 @@ const GalleryScreen = ({navigation, route}) => {
 
       {/* 상단 헤더 */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <X color="white" size={24} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
