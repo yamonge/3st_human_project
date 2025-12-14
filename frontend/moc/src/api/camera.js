@@ -178,32 +178,41 @@ export const saveIngredients = async (userId, ingredientNames) => {
 
 /**
  * 레시피 저장 API
- * 사용자가 선택한 레시피를 내 레시피에 저장
+ * AI 추천 레시피 또는 사용자가 선택한 레시피를 DB에 저장
  *
- * @param {number} recipeId - 레시피 ID
- * @param {boolean} shareToBoard - 게시판 공개 여부
- * @returns {Promise<Object>} { success: boolean, message?: string, error?: string }
- * @example
- * const result = await saveRecipe(123, true);
- * if (result.success) {
- *   console.log(result.message);
- * } else {
- *   console.error(result.error);
- * }
+ * @param {number} userId - 사용자 ID
+ * @param {Object} recipe - 저장할 레시피 전체 데이터
+ * @returns {Promise<{ success: boolean, recipeId?: number, error?: string }>}
  */
-export const saveRecipe = async (recipeId, shareToBoard = false) => {
+export const saveRecipe = async (userId, recipe) => {
   try {
-    console.log('📤 레시피 저장 API 호출:', {recipeId, shareToBoard});
+    console.log('📤 레시피 저장 API 호출', {userId, recipe});
 
-    const response = await axios.post('/api/recipes/save', {
-      recipeId,
-      shareToBoard,
+    const response = await axios.post(`/api/v1/users/${userId}/recipes`, {
+      title: recipe.title,
+      summary: recipe.summary,
+      difficultyCd: recipe.difficultyCd,
+      cookTimeMin: recipe.cookTimeMin,
+      cuisineStyleCd: recipe.cuisineStyleCd,
+      category: recipe.category,
+      share: recipe.share ?? false,
+
+      ingredients: recipe.ingredients.map(ing => ({
+        ingredientName: ing.ingredientName,
+        quantityDesc: ing.quantityDesc,
+      })),
+
+      steps: recipe.steps.map((step, index) => ({
+        stepNo: step.stepNo ?? index + 1,
+        stepDesc: step.stepDesc,
+      })),
     });
 
     console.log('✅ 레시피 저장 성공:', response.data);
+
     return {
       success: true,
-      message: response.data.message || '레시피가 저장되었습니다.',
+      recipeId: response.data, // Long recipeId
     };
   } catch (error) {
     console.error('❌ 레시피 저장 API 에러:', error);
