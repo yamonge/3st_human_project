@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import {Heart, ChevronLeft, Flag} from 'lucide-react-native';
 import styles from '../../styles/screens/recipeboard/RecipeDetailStyles';
-// import {getRecipeDetail, toggleRecipeLike} from '../../api/recipeBoard';
+import {getRecipeBoardDetail, toggleRecipeLike} from '../../api/recipeBoard';
 // import {reportRecipe} from '../../api/report';
 
 /**
@@ -57,16 +57,16 @@ export default function RecipeDetailScreen({route, navigation}) {
   const loadRecipeDetail = async () => {
     try {
       setLoading(true);
-      // const data = await getRecipeDetail(recipeId);
-      // setRecipe(data.recipe);
-      // setLiked(data.recipe.isLiked);
-      // setLikeCount(data.recipe.likeCount);
 
-      // 더미 데이터 (API 연동 전)
-      console.log('레시피 상세 조회 API 호출:', recipeId);
+      const data = await getRecipeBoardDetail(recipeId);
+      console.log('📦 상세 응답:', data);
+
+      setRecipe(data);
+      setLiked(data.likedByMe);
+      setLikeCount(data.likeCnt);
     } catch (error) {
       console.error('레시피 상세 조회 실패:', error);
-      // Alert.alert('오류', '레시피를 불러올 수 없습니다.');
+      Alert.alert('오류', '레시피를 불러올 수 없습니다.');
     } finally {
       setLoading(false);
     }
@@ -164,10 +164,10 @@ export default function RecipeDetailScreen({route, navigation}) {
                 {recipe.title}
               </Text>
               <View style={styles.headerMetadata}>
-                <Text style={styles.metadataText}>{recipe.difficulty}</Text>
+                <Text style={styles.metadataText}>{recipe.difficultyCd}</Text>
                 <View style={styles.metadataDivider} />
                 <Text
-                  style={styles.metadataText}>{`${recipe.cookingTime}분`}</Text>
+                  style={styles.metadataText}>{`${recipe.cookTimeMin}분`}</Text>
               </View>
             </View>
           </View>

@@ -20,7 +20,7 @@ public class RecipeBoardDetailResponseDTO {
     private Long ownerUserId;
     private String authorNickname;
     private String authorProfileImageUrl;
-    private boolean likedByMe;
+    private Integer likedByMe;
     private List<RecipeIngredientResponseDTO> ingredients;
     private List<RecipeStepResponseDTO> steps;
 }

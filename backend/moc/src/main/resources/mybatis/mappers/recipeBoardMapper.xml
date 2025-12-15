@@ -44,9 +44,9 @@
         u.user_nickname,
         u.user_profile_image_url,
         CASE
-        WHEN #{loginUserId} IS NULL THEN 0
         WHEN EXISTS (
-        SELECT 1 FROM tb_recipe_like l
+        SELECT 1
+        FROM tb_recipe_like l
         WHERE l.recipe_id = r.recipe_id
         AND l.user_id = #{loginUserId}
         ) THEN 1

@@ -1,5 +1,6 @@
 package com.cucook.moc.recipe.dao;
 
+import com.cucook.moc.recipe.dto.response.RecipeBoardDetailResponseDTO;
 import com.cucook.moc.recipe.vo.RecipeBoardListItemVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -29,4 +30,9 @@ public interface RecipeBoardDAO {
     );
 
     RecipeVO selectPublicRecipeById(@Param("recipeId") Long recipeId);
+
+    RecipeBoardDetailResponseDTO selectPublicRecipeDetail(
+            @Param("recipeId") Long recipeId,
+            @Param("loginUserId") Long loginUserId
+    );
 }

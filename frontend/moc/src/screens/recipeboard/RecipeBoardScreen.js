@@ -44,6 +44,7 @@ const TIME_TO_MIN_MAP = {
 };
 
 const RecipeBoardScreen = ({navigation}) => {
+  console.log('🔥 RecipeBoardScreen 렌더 시작');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState(null);
@@ -99,8 +100,8 @@ const RecipeBoardScreen = ({navigation}) => {
         size: 20,
       });
 
-      setPopularRecipes(popularRes.recipes || []);
-      setAllRecipes(latestRes.recipes || []);
+      setPopularRecipes(popularRes.items || []);
+      setAllRecipes(latestRes.items || []);
     } catch (error) {
       console.error('게시판 레시피 조회 실패:', error);
     } finally {

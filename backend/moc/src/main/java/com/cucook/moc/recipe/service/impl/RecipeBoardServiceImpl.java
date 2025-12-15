@@ -33,19 +33,33 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         int safeSize = Math.min(Math.max(size, 1), 50);
         int offset = safePage * safeSize;
 
+        // ✅ 2. loginUserId NULL 방어 (Oracle + MyBatis 핵심 포인트)
+        Long safeLoginUserId = (loginUserId == null ? -1L : loginUserId);
+
+        // ✅ 3. 정렬 기본값 보정
+        String safeSort = (sort == null || sort.isBlank()) ? "LATEST" : sort;
+
+        // ✅ 4. 게시판 목록 조회
         List<RecipeBoardListItemVO> items = recipeBoardDAO.selectPublicRecipes(
-                loginUserId,
+                safeLoginUserId,
                 search,
                 cuisineStyleCd,
                 difficultyCd,
                 maxCookTimeMin,
-                (sort == null || sort.isBlank()) ? "LATEST" : sort,
+                safeSort,
                 offset,
                 safeSize
         );
 
-        int total = recipeBoardDAO.countPublicRecipes(search, cuisineStyleCd, difficultyCd, maxCookTimeMin);
+        // ✅ 5. 전체 개수 조회 (페이징용)
+        int total = recipeBoardDAO.countPublicRecipes(
+                search,
+                cuisineStyleCd,
+                difficultyCd,
+                maxCookTimeMin
+        );
 
+        // ✅ 6. 응답 DTO 반환
         return new RecipeBoardListResponseDTO(items, total, safePage, safeSize);
     }
 

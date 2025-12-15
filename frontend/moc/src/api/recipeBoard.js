@@ -23,43 +23,6 @@ import api from './axiosConfig';
  *
  * @example
  * // 전체 레시피 조회
- export const getRecipeBoardList = async ({
-  search,
-  cuisineStyleCd,
-  difficultyCd,
-  maxCookTimeMin,
-  sort = 'LATEST', // LATEST | POPULAR
-  page = 1,
-  size = 10,
-} = {}) => {
-  try {
-    const response = await api.get('/recipes/board', {
-      params: {
-        search,
-        cuisineStyleCd,
-        difficultyCd,
-        maxCookTimeMin,
-        sort,
-        offset: (page - 1) * size,
-        limit: size,
-      },
-    });
-
-    return response.data; // RecipeBoardListResponseDTO
-  } catch (error) {
-    console.error('게시판 레시피 목록 조회 실패:', error);
-    throw error;
-  }
-};
- *
- * // 검색어로 조회
- * const data = await getRecipes({ search: '김치' });
- *
- * // 검색 + 필터 조합
- * const data = await getRecipes({
- *   search: '볶음밥',
- *   style: '중식'
- * });
  */
 export const getRecipeBoardList = async ({
   search,
@@ -82,8 +45,9 @@ export const getRecipeBoardList = async ({
         size,
       },
     });
+    console.log('📦 게시판 API raw response:', response.data);
 
-    return response.data; // RecipeBoardListResponseDTO
+    return response; // RecipeBoardListResponseDTO
   } catch (error) {
     console.error('게시판 레시피 목록 조회 실패:', error);
     throw error;
@@ -118,7 +82,7 @@ export const getRecipeBoardList = async ({
  */
 export const getRecipeBoardDetail = async recipeId => {
   try {
-    const response = await api.get(`/recipes/board/${recipeId}`);
+    const response = await api.get(`/v1/recipes/board/${recipeId}`);
     return response.data; // RecipeBoardDetailResponseDTO
   } catch (error) {
     console.error('게시판 레시피 상세 조회 실패:', error);
