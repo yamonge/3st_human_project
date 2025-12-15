@@ -18,6 +18,5 @@ public class UserIngredientRequestDTO {
     private String usedFlag;        // 사용 여부 (Y/N, 기본값은 'N'이므로 입력 없을 시 백엔드에서 처리)
 
     @DateTimeFormat(pattern = "yyyy-MM-dd") // 클라이언트에서 "2025-12-31" 형식으로 보낼 때 파싱
-    private Timestamp expiredDate;  // 유통기한 (yyyy-MM-dd 형식 문자열로 받음)
     private String memo;            // 메모
 }

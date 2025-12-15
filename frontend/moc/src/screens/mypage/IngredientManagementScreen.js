@@ -11,7 +11,13 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {ChevronLeft, ShoppingCart, Plus, Sparkles} from 'lucide-react-native';
+import {
+  ChevronLeft,
+  ShoppingCart,
+  Plus,
+  Sparkles,
+  Star,
+} from 'lucide-react-native';
 import IngredientCard from '../../components/mypage/IngredientCard';
 import styles from '../../styles/screens/mypage/IngredientManagementScreenStyles';
 import {
@@ -132,6 +138,21 @@ export default function IngredientManagementScreen({navigation}) {
         start={{x: 0, y: 0}}
         end={{x: 1, y: 0}}
         style={styles.header}>
+        {/* 배경 장식 아이콘들 */}
+        <View style={[styles.decorIcon, styles.decorIcon1]}>
+          <ShoppingCart
+            size={48}
+            color="rgba(255, 255, 255, 0.3)"
+            strokeWidth={2}
+          />
+        </View>
+        <View style={[styles.decorIcon, styles.decorIcon2]}>
+          <Star size={28} color="rgba(255, 255, 255, 0.3)" strokeWidth={2} />
+        </View>
+        <View style={[styles.decorIcon, styles.decorIcon3]}>
+          <Plus size={42} color="rgba(255, 255, 255, 0.3)" strokeWidth={2} />
+        </View>
+
         <View style={styles.headerLeft}>
           <View style={styles.headerName}>
             <TouchableOpacity

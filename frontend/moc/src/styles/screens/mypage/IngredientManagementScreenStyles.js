@@ -15,6 +15,30 @@ export default StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
     height: 136,
+    overflow: 'hidden',
+  },
+
+  // 배경 장식 아이콘
+  decorIcon: {
+    position: 'absolute',
+  },
+
+  decorIcon1: {
+    top: 46,
+    left: 291,
+    transform: [{rotate: '12deg'}],
+  },
+
+  decorIcon2: {
+    top: 76,
+    left: 269,
+    transform: [{rotate: '-6deg'}],
+  },
+
+  decorIcon3: {
+    top: 94,
+    left: -6,
+    transform: [{rotate: '45deg'}],
   },
   headerLeft: {
     flexDirection: 'column',

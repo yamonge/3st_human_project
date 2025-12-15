@@ -158,6 +158,8 @@ export default function ProfileScreen({navigation}) {
       navigation.navigate('SharedRecipes');
     } else if (item.screen === 'ReportHistory') {
       navigation.navigate('ReportHistory');
+    } else if (item.screen === 'Settings') {
+      navigation.navigate('Settings');
     } else {
       // TODO: 다른 화면들 구현 후 연결
       Alert.alert('개발 중', `${item.title} 화면은 개발 중입니다.`);

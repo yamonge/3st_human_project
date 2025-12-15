@@ -19,4 +19,6 @@ public interface UserIngredientDAO {
     int deleteUserIngredient(Long userIngredientId);
 
     Long findIdByUserIdAndIngredientName(Long userId, String ingredientName);
+
+    void deleteUserIngredientByUserAndId(Long userId, Long userIngredientId);
 }

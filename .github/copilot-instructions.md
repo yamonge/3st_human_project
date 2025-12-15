@@ -69,6 +69,7 @@ frontend/moc/src/
    - **컴포넌트 스타일**: `src/styles/components/[컴포넌트명]Styles.js` - 재사용 컴포넌트 스타일
    - **네비게이션 스타일**: `src/styles/navigation/[네비명]Styles.js` - 네비게이션 관련 스타일
    - **화면 컴포넌트 파일 내부에 StyleSheet 작성 절대 금지**
+   - **Text 스타일**: `includeFontPadding: false,` 적용 필수
    - **import 예시**: 
      - 화면: `import styles from '../../../styles/screens/[카테고리]/[화면명]Styles';`
      - 컴포넌트: `import styles from '../../styles/components/[컴포넌트명]Styles';`
@@ -80,15 +81,19 @@ frontend/moc/src/
    - 실제 디바이스에서 자연스럽고 사용하기 편한 간격으로 조정
    - **피그마의 상단 시간/배터리 상태바와 하단 네비게이션 바는 가져오지 말 것** (실제 앱에서 별도 구현됨)
    - **사진 및 아이콘 리소스는 프로젝트 assets 폴더 내에도 없고 라이브러리로 대체할수없는 사진 혹은 아이콘은 추출하여 assets의 알맞은 폴더에 넣어서 사용할것**
-9. **디버깅**
-   - 항상 수정후 수정한 파일 디버깅 진행
+
+9. **작업시 주의사항**
+   - 항상 작업후 #problem 도구를 활용하여 코드 오류 점검할것
+
 10. **안드로이드 키보드 문제 해결**
    - 중요! KeyboardAvoidingView 사용 금지  
 
-11. ** 행동전 주의사항 **
+11. **행동전 주의사항**
    - 행동전 사용자 에게 역질문 필수
    - 역질문 없이 행동 금지
    - 필요한 자료가 있을경우 사용자에게 요청
 
-12. ** 개발 중요 인지 사항**
+12. **개발 중요 인지 사항**
    - 중요!! 일반 react문법도 react native에서 사용가능
+   - 중요!! 다른 파일 확인이 필요한 부분은 직접 파일 및 코드를 찾아서 읽고 확인할것
+   - 중요!! 뒤로가기 네비게이션은 navigation.goBack() 사용X, navigation.navigate("이전화면이름") 사용O

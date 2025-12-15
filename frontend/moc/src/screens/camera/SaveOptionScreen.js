@@ -12,53 +12,82 @@ import LinearGradient from 'react-native-linear-gradient';
 import {styles} from '../../styles/screens/camera/saveOptionStyles';
 import {saveIngredients} from '../../api/camera';
 
+//재료명만 추출
+const extractIngredientNames = ingredients =>
+  ingredients.map(item => item.name);
+
 export default function SaveOptionScreen({route, navigation}) {
   const {ingredients = []} = route.params || {};
   const [isSaving, setIsSaving] = useState(false);
 
-  // 저장만 하기
+  //저장만 하기
   const handleSaveOnly = async () => {
-    // setIsSaving(true);
+    setIsSaving(true);
 
-    // // API 호출 (백엔드 연동 전 주석 처리)
-    // const result = await saveIngredients(ingredients);
+    try {
+      // 1️⃣ 로그인 사용자 ID
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('오류', '로그인 정보가 없습니다.');
+        return;
+      }
 
-    // if (result.success) {
-    //   // 성공: 홈으로 이동
-    //   Alert.alert('저장 완료', result.message, [
-    //     {
-    //       text: '확인',
-    //       onPress: () => navigation.navigate('Home'),
-    //     },
-    //   ]);
-    // } else {
-    //   // 실패: 에러 메시지 표시
-    //   Alert.alert('저장 실패', result.error);
-    // }
+      // 2️⃣ 재료명 리스트
+      const ingredientNames = extractIngredientNames(ingredients);
+      if (ingredientNames.length === 0) {
+        Alert.alert('안내', '저장할 재료가 없습니다.');
+        return;
+      }
 
-    // setIsSaving(false);
+      // 3️⃣ 저장 API 호출
+      const result = await saveIngredients(Number(userId), ingredientNames);
 
-    // 임시: 바로 홈으로 이동
-    console.log('저장만 하기:', ingredients);
-    navigation.navigate('Home');
+      if (!result.success) {
+        Alert.alert('저장 실패', result.error);
+        return;
+      }
+
+      // 4️⃣ 성공 → 홈
+      Alert.alert('저장 완료', '재료가 저장되었습니다.', [
+        {
+          text: '확인',
+          onPress: () => navigation.navigate('Home'),
+        },
+      ]);
+    } finally {
+      setIsSaving(false);
+    }
   };
-
-  // 레시피 추천받기
+  //레시피 추천
   const handleGetRecipe = async () => {
-    // // 재료 저장 API 호출 (백엔드 연동 전 주석 처리)
-    // const result = await saveIngredients(ingredients);
+    setIsSaving(true);
 
-    // if (result.success) {
-    //   // 성공: 레시피 필터 화면으로 이동
-    //   navigation.navigate('RecipeFilter', { ingredients });
-    // } else {
-    //   // 실패: 에러 메시지 표시
-    //   Alert.alert('저장 실패', result.error);
-    // }
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('오류', '로그인 정보가 없습니다.');
+        return;
+      }
 
-    // 임시: 바로 다음 화면으로 이동
-    console.log('레시피 추천받기:', ingredients);
-    navigation.navigate('RecipeFilter', {ingredients});
+      const ingredientNames = extractIngredientNames(ingredients);
+      if (ingredientNames.length === 0) {
+        Alert.alert('안내', '저장할 재료가 없습니다.');
+        return;
+      }
+
+      // ✅ 먼저 저장
+      const result = await saveIngredients(Number(userId), ingredientNames);
+
+      if (!result.success) {
+        Alert.alert('저장 실패', result.error);
+        return;
+      }
+
+      // ✅ 저장 성공 → 필터 화면 이동
+      navigation.navigate('RecipeFilter', {ingredients});
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

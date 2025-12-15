@@ -1,5 +1,6 @@
 package com.cucook.moc.user.controller;
 
+import com.cucook.moc.user.dto.request.IngredientConsumeRequestDTO;
 import com.cucook.moc.user.dto.request.UserIngredientRequestDTO;
 import com.cucook.moc.user.dto.response.UserIngredientListResponseDTO;
 import com.cucook.moc.user.dto.response.UserIngredientResponseDTO;
@@ -198,6 +199,22 @@ public class UserIngredientController {
             return new ResponseEntity<>(responses, HttpStatus.CREATED);
         } catch (Exception e) {
             System.err.println("영수증 인식 재료를 내 재료로 추가 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/consume")
+    public ResponseEntity<Void> consumeIngredients(
+            @PathVariable("userId") Long userId,
+            @RequestBody IngredientConsumeRequestDTO requestDTO
+    ) {
+        try {
+            userIngredientService.consumeIngredients(userId, requestDTO);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
