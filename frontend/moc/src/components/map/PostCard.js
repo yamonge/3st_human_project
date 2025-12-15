@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useMemo} from 'react';
 import {View, Text, TouchableOpacity} from 'react-native';
 import {
   Clock,
@@ -32,11 +32,65 @@ export default function PostCard({post, onJoin}) {
     }
   };
 
-  // createdAt으로 자동 계산
-  const timeAgo = formatDistanceToNow(new Date(post.createdAt), {
-    addSuffix: true,
-    locale: ko,
-  });
+  /**
+   * =========================
+   * ✅ [핵심 수정] createdAt이 어떤 값이 와도 앱이 절대 안 죽게 처리
+   * - formatDistanceToNow는 Invalid Date를 받으면 RangeError로 앱이 죽을 수 있음
+   * - 따라서 "유효한 날짜인지"를 JS 표준 방식으로만 검사
+   * =========================
+   */
+  const timeAgo = useMemo(() => {
+    try {
+      const raw = post?.createdAt;
+      if (!raw) return '-';
+
+      const d = new Date(raw);
+
+      // ✅ Invalid Date 판별(가장 안전)
+      if (Number.isNaN(d.getTime())) return '-';
+
+      return formatDistanceToNow(d, {addSuffix: true, locale: ko});
+    } catch (e) {
+      return '-';
+    }
+  }, [post?.createdAt]);
+
+  const formatMeetDateTime = (meetDatetime, fallbackMeetTime) => {
+    if (!meetDatetime) return fallbackMeetTime ?? '-';
+
+    const d = new Date(meetDatetime);
+    if (Number.isNaN(d.getTime())) return fallbackMeetTime ?? '-';
+
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+
+    // ✅ 요일 고정(ko)
+    const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekday = WEEKDAY_KO[d.getDay()];
+
+    // ✅ 시간 24h 고정 HH:mm
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+
+    return `${mm}/${dd}(${weekday}) ${hh}:${min}`;
+  };
+
+  /**
+   * =========================
+   * ✅ [추가] post 자체가 undefined/null이면 카드 렌더 중 크래시 가능
+   * - 안전하게 placeholder 렌더
+   * =========================
+   */
+  if (!post) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardContent}>
+          <Text style={styles.storeName}>-</Text>
+          <Text style={styles.timeAgo}>-</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -65,7 +119,9 @@ export default function PostCard({post, onJoin}) {
               </View>
               <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>시간</Text>
-                <Text style={styles.infoValue}>{post.meetTime}</Text>
+                <Text style={styles.infoValue}>
+                  {formatMeetDateTime(post.meetDatetime, post.meetTime)}
+                </Text>
               </View>
             </View>
 
