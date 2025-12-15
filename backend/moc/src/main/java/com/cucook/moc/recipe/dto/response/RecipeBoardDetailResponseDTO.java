@@ -10,22 +10,17 @@ public class RecipeBoardDetailResponseDTO {
     private String title;
     private String summary;
     private String thumbnailUrl;
-
     private String difficultyCd;
     private Integer cookTimeMin;
     private String cuisineStyleCd;
     private String category;
-
     private Integer viewCnt;
     private Integer likeCnt;
     private Integer reportCnt;
-
     private Long ownerUserId;
     private String authorNickname;
     private String authorProfileImageUrl;
-
     private boolean likedByMe;
-
     private List<RecipeIngredientResponseDTO> ingredients;
     private List<RecipeStepResponseDTO> steps;
 }

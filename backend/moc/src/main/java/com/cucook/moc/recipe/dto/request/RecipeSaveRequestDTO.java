@@ -13,14 +13,11 @@ public class RecipeSaveRequestDTO {
 
     private String title;
     private String summary;
-
     private String difficultyCd;
     private Integer cookTimeMin;
     private String cuisineStyleCd;
     private String category;
-
     private boolean share; // 🔥 게시글 공개 여부
-
     private List<RecipeIngredientSaveDTO> ingredients;
     private List<RecipeStepSaveDTO> steps;
 }

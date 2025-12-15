@@ -69,30 +69,15 @@ export const recognizeIngredients = async photoPath => {
 /**
  * AI 레시피 추천 API (에러 처리 포함)
  * 선택한 재료와 필터 정보를 기반으로 AI가 레시피를 추천
- *
- * @param {Array} ingredients - 선택한 재료 목록 [{id, name, usage, amount}, ...]
- * @param {Object} filters - 필터 정보 {style, difficulty, time}
- * @returns {Promise<Object>} { success: boolean, recipes?: Array, error?: string }
- * @example
- * const result = await recommendRecipes(ingredients, {style: '퓨전', difficulty: '보통', time: '30분'});
- * if (result.success) {
- *   console.log(result.recipes);
- * } else {
- *   console.error(result.error);
- * }
  */
 export const recommendRecipes = async (userId, ingredients, filters) => {
   try {
-    console.log('📤 AI 레시피 추천 API 호출:', {userId, ingredients, filters});
-
-    // 1️⃣ 프론트 재료 → 백엔드 DTO 구조로 변환
     const selectedIngredients = ingredients.map(item => ({
       ingredientName: item.name,
-      usageType: item.usage, // "ALL" | "PARTIAL"
-      amountHint: item.amount, // "LITTLE" | "MEDIUM" | "MUCH"
+      usageType: item.usage,
+      amountHint: item.amount,
     }));
 
-    // 2️⃣ 백엔드가 기대하는 Request DTO 구성
     const requestBody = {
       userId,
       selectedIngredients,
@@ -101,37 +86,29 @@ export const recommendRecipes = async (userId, ingredients, filters) => {
       filterCookTimeCd: filters?.time || null,
     };
 
-    // 3️⃣ 실제 백엔드 호출
-    const response = await axios.post(
-      '/recipes/recommend',
-      requestBody,
-      {timeout: 60000}, // AI 호출 고려
-    );
+    const response = await axios.post('/recipes/recommend', requestBody, {
+      timeout: 60000,
+    });
 
-    console.log('✅ AI 레시피 추천 성공:', response.data);
+    // ✅ axios interceptor 기준
+    console.log('🌐 response =', response);
+
+    const recipes = Array.isArray(response.recommendedRecipes)
+      ? response.recommendedRecipes
+      : [];
 
     return {
-      success: true,
-      recipes: response.data || [],
+      success: response.status === 'SUCCESS',
+      recipes,
+      message: response.message,
     };
   } catch (error) {
     console.error('❌ 레시피 추천 API 에러:', error);
 
-    let errorMessage = '레시피 추천에 실패했습니다.';
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message || '서버 오류가 발생했습니다.';
-    } else if (error.request) {
-      errorMessage = '서버에 연결할 수 없습니다.\n인터넷 연결을 확인해주세요.';
-    } else if (error.code === 'ECONNABORTED') {
-      errorMessage = '요청 시간이 초과되었습니다.\n다시 시도해주세요.';
-    }
-
     return {
       success: false,
       recipes: [],
-      error: errorMessage,
+      error: '레시피 추천에 실패했습니다.',
     };
   }
 };

@@ -71,15 +71,15 @@ export const getRecipeBoardList = async ({
   size = 10,
 } = {}) => {
   try {
-    const response = await api.get('/recipes/board', {
+    const response = await api.get('/v1/recipes/board', {
       params: {
         search,
         cuisineStyleCd,
         difficultyCd,
         maxCookTimeMin,
         sort,
-        offset: (page - 1) * size,
-        limit: size,
+        page: page - 1,
+        size,
       },
     });
 

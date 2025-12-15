@@ -33,6 +33,8 @@ export default function RecipeDetailScreen({route, navigation}) {
     from = 'camera',
   } = route.params || {};
 
+  console.log('🔥 initialRecipe:', JSON.stringify(initialRecipe, null, 2));
+
   // 레시피->직접입력 플로우인지 확인
   const isRecipeDirectInput = from === 'recipe-direct-input';
 
@@ -197,12 +199,12 @@ export default function RecipeDetailScreen({route, navigation}) {
         category: recipe.category,
         share: shareToBoard,
 
-        ingredients: recipe.ingredients.map(ing => ({
+        ingredients: recipe.requiredIngredients.map(ing => ({
           ingredientName: ing.ingredientName,
           quantityDesc: ing.quantityDesc,
         })),
 
-        steps: recipe.steps.map((step, index) => ({
+        steps: recipe.cookingSteps.map((step, index) => ({
           stepNo: step.stepNo ?? index + 1,
           stepDesc: step.stepDesc,
         })),
@@ -219,6 +221,11 @@ export default function RecipeDetailScreen({route, navigation}) {
       // 프론트 저장 여부 관리 (recipeId 기준)
       const savedRecipes = await AsyncStorage.getItem('savedRecipes');
       const savedList = savedRecipes ? JSON.parse(savedRecipes) : [];
+      console.log('🔥 저장 payload 확인', {
+        title: recipe.title,
+        requiredIngredients: recipe.requiredIngredients,
+        cookingSteps: recipe.cookingSteps,
+      });
       await AsyncStorage.setItem(
         'savedRecipes',
         JSON.stringify([...savedList, result.recipeId]),
@@ -229,6 +236,13 @@ export default function RecipeDetailScreen({route, navigation}) {
     } finally {
       setIsLoading(false);
     }
+  };
+  const handleCloseModal = () => {
+    setShowSaveModal(false);
+  };
+  const handleNavigateToRecipe = () => {
+    setShowSaveModal(false);
+    navigation.navigate('MyRecipes'); // 또는 RecipeBoard 등
   };
 
   return (
@@ -314,8 +328,10 @@ export default function RecipeDetailScreen({route, navigation}) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>필요한 재료</Text>
             <View style={styles.ingredientsList}>
-              {recipe.ingredients.map((ingredient, index) => (
-                <View key={index} style={styles.ingredientItem}>
+              {initialRecipe.requiredIngredients.map(ingredient => (
+                <View
+                  key={`${ingredient.ingredientName}-${ingredient.quantityDesc}`}
+                  style={styles.ingredientItem}>
                   <Text style={styles.ingredientName}>
                     {ingredient.ingredientName}
                   </Text>
@@ -331,7 +347,7 @@ export default function RecipeDetailScreen({route, navigation}) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>조리 순서</Text>
             <View style={styles.stepsList}>
-              {recipe.steps.map((step, index) => (
+              {recipe.cookingSteps.map((step, index) => (
                 <View key={index} style={styles.stepItem}>
                   <LinearGradient
                     colors={['#00B8DB', '#155DFC']}

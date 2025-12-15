@@ -191,7 +191,7 @@ public class UserIngredientController {
     @PostMapping("/from-receipt")
     public ResponseEntity<List<UserIngredientResponseDTO>> addIngredientsFromReceipt(
             @PathVariable("userId") Long userId,
-            @RequestBody List<String> ingredientNames) { // ⭐ List<String>을 직접 받음
+            @RequestBody List<String> ingredientNames) {
         try {
             // createdId는 userId와 동일하게 설정
             List<UserIngredientResponseDTO> responses = userIngredientService.addIngredientsFromRecognizedReceipt(userId, ingredientNames, userId);

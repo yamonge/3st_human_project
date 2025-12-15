@@ -100,7 +100,8 @@ public class RecipeServiceImpl implements RecipeService {
 
         List<RecommendedRecipeDTO> generatedRecipes;
         try {
-            generatedRecipes = parseGeminiRecipeResponse(aiResponseJson, requestDTO);
+            String pureJson = extractPureJson(aiResponseJson);
+            generatedRecipes = parseGeminiRecipeResponse(pureJson, requestDTO);
         } catch (Exception e) {
             System.err.println("Gemini 응답 파싱 실패: " + e.getMessage());
             logAiRecipeGeneration(requestDTO, prompt, "ERROR: " + e.getMessage() + " / Raw response: " + aiResponseJson, 0);
@@ -163,6 +164,16 @@ public class RecipeServiceImpl implements RecipeService {
         return new RecipeRecommendationResponseDTO(finalRecommendedRecipes, "SUCCESS", "AI 레시피 추천이 완료되었습니다.");
     }
 
+    private String extractPureJson(String raw) {
+        int start = raw.indexOf('[');
+        int end = raw.lastIndexOf(']');
+
+        if (start == -1 || end == -1 || end < start) {
+            throw new IllegalStateException("Invalid JSON from Gemini: " + raw);
+        }
+        return raw.substring(start, end + 1);
+    }
+
     /**
      * Gemini에 전달할 최적화된 레시피 생성 프롬프트를 구성합니다.
      */
@@ -220,7 +231,7 @@ public class RecipeServiceImpl implements RecipeService {
                         "    \"cuisineStyleCd\": \"KOR | CHN | JPN | WES | ETC\",\n" +
                         "    \"category\": \"rice_dish | noodle | soup_stew | stir_fry | grill_roast | salad | side_dish | dessert_snack\",\n" +
                         "    \"requiredIngredients\": [ { \"ingredientName\": \"string\", \"quantityDesc\": \"string\" } ],\n" +
-                        "    \"cookingSteps\": [ { \"stepNo\": number, \"stepDesc\": \"string\", \"imageUrl\": \"string\" } ]\n" +
+                        "    \"cookingSteps\": [ { \"stepNo\": number, \"stepDesc\": \"string\"} ]\n" +
                         "  }\n" +
                         "]\n" +
                         "\n" +

@@ -15,7 +15,7 @@ import {addUserIngredient} from '../../api/camera';
 
 //재료명만 추출
 const extractIngredientNames = ingredients =>
-  ingredients.map(item => item.name);
+  response.data.ingredients.map(item => item.name);
 
 export default function SaveOptionScreen({route, navigation}) {
   const {ingredients = []} = route.params || {};
