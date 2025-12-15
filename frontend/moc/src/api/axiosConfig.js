@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // API 기본 URL (백엔드 개발자가 제공하는 주소로 변경 필요)
 const BASE_URL =
   Platform.OS === 'android'
-    ? 'http://192.168.50.117:8090/api'
+    ? 'http://192.168.1.134:8090/api'
     : 'http://localhost:8090/api';
 
 // axios 인스턴스 생성
@@ -30,6 +30,9 @@ const getUserIdOrThrow = async () => {
 api.interceptors.request.use(
   async config => {
     try {
+      // 요청 시작 시간 기록
+      config.metadata = {startTime: new Date()};
+
       // (선택) 토큰 있으면 헤더에 추가
       const token = await AsyncStorage.getItem('accessToken');
       if (token) {
@@ -42,16 +45,33 @@ api.interceptors.request.use(
         config.params = {...(config.params || {}), userId};
       }
 
-      console.log(
-        'API 요청:',
-        config.method?.toUpperCase(),
-        `${config.baseURL}${config.url}`,
-        config.params || config.data,
-      );
+      // 🌐 상세한 요청 로그
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🌐 API 요청');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`📍 Method: ${config.method?.toUpperCase()}`);
+      console.log(`📍 URL: ${config.baseURL}${config.url}`);
+
+      if (config.params && Object.keys(config.params).length > 0) {
+        console.log('📤 Query Params:', JSON.stringify(config.params, null, 2));
+      }
+
+      if (config.data) {
+        console.log('📤 Request Body:', JSON.stringify(config.data, null, 2));
+      }
+
+      if (config.headers) {
+        const headers = {...config.headers};
+        if (headers.Authorization) {
+          headers.Authorization = 'Bearer ***';
+        }
+        console.log('📋 Headers:', JSON.stringify(headers, null, 2));
+      }
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
       return config;
     } catch (error) {
-      console.error('Request Interceptor 에러:', error);
+      console.error('❌ Request Interceptor 에러:', error);
       return Promise.reject(error);
     }
   },
@@ -62,23 +82,57 @@ api.interceptors.request.use(
 // 에러 처리 및 토큰 갱신 등
 api.interceptors.response.use(
   response => {
-    console.log(
-      'API 응답:',
-      response.status,
-      `${response.config.baseURL}${response.config.url}`,
-    );
+    // 응답 시간 계산
+    const duration = response.config.metadata?.startTime
+      ? new Date() - response.config.metadata.startTime
+      : 0;
+
+    // 📥 상세한 응답 로그
+    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('✅ API 응답 성공');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`📍 Method: ${response.config.method?.toUpperCase()}`);
+    console.log(`📍 URL: ${response.config.baseURL}${response.config.url}`);
+    console.log(`📊 Status: ${response.status} ${response.statusText || 'OK'}`);
+    console.log(`⏱️  Duration: ${duration}ms`);
+
+    if (response.headers) {
+      console.log(
+        '📋 Response Headers:',
+        JSON.stringify(response.headers, null, 2),
+      );
+    }
+
+    console.log('📥 Response Data:', JSON.stringify(response.data, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
     // 응답 데이터만 반환
     return response.data; // ✅ 주의: 이제 호출부는 res.data가 아니라 res 자체가 data
   },
   async error => {
+    // 응답 시간 계산
+    const duration = error.config?.metadata?.startTime
+      ? new Date() - error.config.metadata.startTime
+      : 0;
+
     // 응답이 있는 경우 (서버 에러)
     if (error.response) {
       const {status, data} = error.response;
-      console.error(`API 에러 [${status}]:`, data?.message || error.message);
+
+      // ❌ 상세한 에러 로그
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('❌ API 에러 응답');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`📍 Method: ${error.config?.method?.toUpperCase()}`);
+      console.log(`📍 URL: ${error.config?.baseURL}${error.config?.url}`);
+      console.log(`📊 Status: ${status}`);
+      console.log(`⏱️  Duration: ${duration}ms`);
+      console.log('📥 Error Data:', JSON.stringify(data, null, 2));
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
       // 401 에러 (인증 실패)
       if (status === 401) {
-        console.error('인증 실패: 다시 로그인해주세요.');
+        console.error('🔒 인증 실패: 다시 로그인해주세요.');
         // 사용자 정보 삭제
         await AsyncStorage.removeItem('userEmail');
         await AsyncStorage.removeItem('userNickname');
@@ -89,29 +143,41 @@ api.interceptors.response.use(
 
       // 403 에러 (권한 없음)
       if (status === 403) {
-        console.error('접근 권한이 없습니다.');
+        console.error('🚫 접근 권한이 없습니다.');
         // TODO: 권한 없음 알림 표시
       }
 
       // 404 에러 (리소스 없음)
       if (status === 404) {
-        console.error('요청한 리소스를 찾을 수 없습니다.');
+        console.error('🔍 요청한 리소스를 찾을 수 없습니다.');
       }
 
       // 500 에러 (서버 에러)
       if (status === 500) {
-        console.error('서버 에러가 발생했습니다.');
+        console.error('💥 서버 에러가 발생했습니다.');
         // TODO: 서버 에러 알림 표시
       }
     }
     // 응답이 없는 경우 (네트워크 에러)
     else if (error.request) {
-      console.error('네트워크 에러:', error.message);
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('❌ 네트워크 에러');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log(`📍 Method: ${error.config?.method?.toUpperCase()}`);
+      console.log(`📍 URL: ${error.config?.baseURL}${error.config?.url}`);
+      console.log(`⏱️  Duration: ${duration}ms`);
+      console.log('📛 Error:', error.message);
+      console.log('💡 Tip: 서버가 실행 중인지, 네트워크 연결을 확인하세요.');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
       // TODO: 네트워크 에러 알림 표시
     }
     // 기타 에러
     else {
-      console.error('에러:', error.message);
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('❌ 에러');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📛 Error:', error.message);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
     }
 
     return Promise.reject(error);

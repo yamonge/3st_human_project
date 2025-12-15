@@ -204,6 +204,96 @@ const styles = StyleSheet.create({
     color: colors.textWhite,
     fontWeight: 'bold',
   },
+
+  // 참여자 목록 오버레이
+  participantsOverlay: {
+    position: 'absolute',
+    top: 75, // 헤더 높이
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    zIndex: 1000,
+  },
+
+  participantsContainer: {
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 1,
+    maxHeight: '60%', // 화면의 60%까지만 차지
+  },
+
+  participantsHeader: {
+    marginBottom: 12,
+  },
+
+  participantsTitle: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR-Bold',
+    color: '#171717',
+    lineHeight: 21,
+  },
+
+  participantsList: {
+    gap: 8,
+  },
+
+  participantCard: {
+    backgroundColor: colors.bgWhite,
+    borderRadius: 12,
+    height: 64,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+
+  participantInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+
+  participantAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  participantAvatarText: {
+    fontSize: 20,
+    lineHeight: 30,
+  },
+
+  participantNickname: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR-Medium',
+    color: '#171717',
+    lineHeight: 21,
+  },
+
+  participantActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  participantActionButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export default styles;

@@ -98,3 +98,22 @@ export const leaveChatRoom = async (chatRoomId, userId) => {
     throw error;
   }
 };
+
+/**
+ * 사용자 후기 목록 조회
+ * @param {number} userId - 사용자 ID
+ * @param {number} limit - 조회할 후기 수 (기본 전체)
+ * @returns {Promise<Object>} 후기 데이터 { rating, reviewCount, reviews: [] }
+ */
+export const getUserReviews = async (userId, limit = null) => {
+  try {
+    const params = limit ? {limit} : {};
+    const response = await axiosInstance.get(`/users/${userId}/reviews`, {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('사용자 후기 조회 실패:', error);
+    throw error;
+  }
+};
