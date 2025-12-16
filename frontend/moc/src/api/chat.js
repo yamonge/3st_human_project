@@ -14,7 +14,7 @@ export const getMyChatRooms = async userId => {
     const response = await axiosInstance.get('/chat/rooms/me', {
       params: {userId},
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('채팅방 목록 조회 실패:', error);
     throw error;
@@ -46,7 +46,7 @@ export const getChatMessages = async (chatRoomId, limit = 50) => {
     const response = await axiosInstance.get(`/chat/messages/${chatRoomId}`, {
       params: {limit},
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('메시지 조회 실패:', error);
     throw error;
@@ -77,7 +77,7 @@ export const getChatRoomParticipants = async chatRoomId => {
     const response = await axiosInstance.get(
       `/chat/rooms/${chatRoomId}/participants`,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('참여자 목록 조회 실패:', error);
     throw error;
@@ -111,7 +111,7 @@ export const getUserReviews = async (userId, limit = null) => {
     const response = await axiosInstance.get(`/users/${userId}/reviews`, {
       params,
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('사용자 후기 조회 실패:', error);
     throw error;

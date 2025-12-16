@@ -26,11 +26,13 @@
             chat_room_id,
             shopping_post_id,
             status_cd,
-            created_date
+            created_date,
+            updated_date
         ) VALUES (
             #{chatRoomId},
             #{shoppingPostId},
             #{statusCd},
+            SYSTIMESTAMP,
             SYSTIMESTAMP
         )
     </insert>
@@ -61,7 +63,7 @@
         SELECT
             r.chat_room_id,
             r.shopping_post_id,
-            pl.place_name,
+            sp.place_name,
             -- 마지막 메시지 텍스트
             (
               SELECT m.message_text
@@ -75,8 +77,6 @@
         FROM tb_shopping_chat_room r
         JOIN tb_shopping_post sp
           ON r.shopping_post_id = sp.shopping_post_id
-        JOIN tb_place pl
-          ON sp.place_id = pl.place_id
         JOIN tb_shopping_participant p
           ON p.chat_room_id = r.chat_room_id
         WHERE p.user_id = #{userId}
