@@ -1,6 +1,5 @@
 package com.cucook.moc.recipe.dao;
 
-import com.cucook.moc.recipe.dto.response.RecipeBoardDetailResponseDTO;
 import com.cucook.moc.recipe.vo.RecipeBoardListItemVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
 import org.apache.ibatis.annotations.Mapper;
@@ -29,10 +28,19 @@ public interface RecipeBoardDAO {
             @Param("maxCookTimeMin") Integer maxCookTimeMin
     );
 
-    RecipeVO selectPublicRecipeById(@Param("recipeId") Long recipeId);
+    RecipeVO selectPublicRecipeById(
+            @Param("recipeId") Long recipeId
+    );
 
-    RecipeBoardDetailResponseDTO selectPublicRecipeDetail(
-            @Param("recipeId") Long recipeId,
-            @Param("loginUserId") Long loginUserId
+    // ** 신규 추가: LISTAGG 최적화 쿼리 메소드 **
+    List<RecipeBoardListItemVO> selectPublicRecipesOptimized(
+            @Param("loginUserId") Long loginUserId,
+            @Param("search") String search,
+            @Param("cuisineStyleCd") String cuisineStyleCd,
+            @Param("difficultyCd") String difficultyCd,
+            @Param("maxCookTimeMin") Integer maxCookTimeMin,
+            @Param("sort") String sort,
+            @Param("offset") int offset,
+            @Param("limit") int limit
     );
 }

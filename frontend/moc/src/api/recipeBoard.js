@@ -83,7 +83,8 @@ export const getRecipeBoardList = async ({
 export const getRecipeBoardDetail = async recipeId => {
   try {
     const response = await api.get(`/v1/recipes/board/${recipeId}`);
-    return response.data; // RecipeBoardDetailResponseDTO
+    console.log('📦 게시판 상세 API raw response:', response);
+    return response; // RecipeBoardDetailResponseDTO
   } catch (error) {
     console.error('게시판 레시피 상세 조회 실패:', error);
     throw error;

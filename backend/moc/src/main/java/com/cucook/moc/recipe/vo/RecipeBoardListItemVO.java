@@ -27,4 +27,5 @@ public class RecipeBoardListItemVO {
 
     // 0/1
     private Integer likedByMe;
+    private String ingredientsString;
 }

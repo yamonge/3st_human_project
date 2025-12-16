@@ -193,10 +193,16 @@ export default function RecipeDetailScreen({route, navigation}) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>필요한 재료</Text>
           <View style={styles.ingredientsList}>
-            {ingredients.map((ingredient, index) => (
-              <View key={index} style={styles.ingredientItem}>
-                <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>
+            {recipe?.recipeIngredients?.map(ingredient => (
+              <View
+                key={`${ingredient.ingredientName}-${ingredient.quantityDesc}`}
+                style={styles.ingredientItem}>
+                <Text style={styles.ingredientName}>
+                  {ingredient.ingredientName}
+                </Text>
+                <Text style={styles.ingredientAmount}>
+                  {ingredient.quantityDesc}
+                </Text>
               </View>
             ))}
           </View>
@@ -206,7 +212,7 @@ export default function RecipeDetailScreen({route, navigation}) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>조리 순서</Text>
           <View style={styles.stepsList}>
-            {steps.map((step, index) => (
+            {recipe?.recipeSteps?.map((step, index) => (
               <View key={index} style={styles.stepItem}>
                 <LinearGradient
                   colors={stepNumberColors}
@@ -215,7 +221,7 @@ export default function RecipeDetailScreen({route, navigation}) {
                   style={styles.stepNumber}>
                   <Text style={styles.stepNumberText}>{index + 1}</Text>
                 </LinearGradient>
-                <Text style={styles.stepText}>{step}</Text>
+                <Text style={styles.stepText}>{step.stepDesc}</Text>
               </View>
             ))}
           </View>

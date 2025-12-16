@@ -2,6 +2,8 @@ package com.cucook.moc.recipe.dto.response;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class RecipeBoardListItemResponseDTO {
 
@@ -17,6 +19,6 @@ public class RecipeBoardListItemResponseDTO {
     private Long ownerUserId;
     private String authorNickname;
     private String authorProfileImageUrl;
-
-    private boolean likedByMe;
+    private Integer likedByMe;
+    private String ingredientSummary;
 }
