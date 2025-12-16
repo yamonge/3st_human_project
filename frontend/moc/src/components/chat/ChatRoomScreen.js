@@ -21,7 +21,13 @@ import styles from '../../styles/components/chat/ChatRoomScreenStyles';
 import ParticipantProfileBottomSheet from './ParticipantProfileBottomSheet';
 import ReportModal from '../common/ReportModal';
 import {reportUser} from '../../api/report';
-import {getChatMessages} from '../../api/chat';
+import {
+  getChatMessages,
+  getChatRoomParticipants,
+  leaveChatRoom,
+  deleteChatRoom,
+  kickParticipant,
+} from '../../api/chat';
 import StompClient from '../../utils/StompClient';
 import useChatStore from '../../stores/chatStore';
 
@@ -51,11 +57,7 @@ const ChatRoomScreen = ({
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
   const [isRoomOwner, setIsRoomOwner] = useState(true); // 임시: 방장 여부 (실제로는 props나 API에서 받아야 함)
-  const [participants, setParticipants] = useState([
-    {userId: 1, nickname: '둘리', avatar: '👽', isMe: false},
-    {userId: 2, nickname: '나', avatar: '�', isMe: true},
-    {userId: 3, nickname: '또치', avatar: '🦊', isMe: false},
-  ]);
+  const [participants, setParticipants] = useState([]);
   const messageInputRef = useRef(null); // 한글 입력 문제 해결을 위한 ref
   const scrollViewRef = useRef(null);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -97,19 +99,22 @@ const ChatRoomScreen = ({
     setShowParticipants(!showParticipants);
   };
 
-  const handleLeaveChatRoom = () => {
+  const handleLeaveChatRoom = async () => {
     if (isRoomOwner) {
       // 방장인 경우 - 채팅방 폐기
-      // Alert 추가 확인
       if (Platform.OS === 'web') {
         const confirmed = window.confirm(
           '채팅방을 폐기하시겠습니까?\n모든 참여자가 나가게 됩니다.',
         );
         if (confirmed) {
-          // TODO: API 호출 - 채팅방 폐기
-          // await deleteChatRoom(chatRoomId);
-          console.log('채팅방 폐기');
-          onClose();
+          try {
+            await deleteChatRoom(chatRoomId, currentUserId);
+            console.log('✅ 채팅방 폐기 완료');
+            onClose();
+          } catch (error) {
+            console.error('❌ 채팅방 폐기 실패:', error);
+            window.alert('채팅방 폐기에 실패했습니다.');
+          }
         }
       } else {
         const {Alert} = require('react-native');
@@ -121,11 +126,15 @@ const ChatRoomScreen = ({
             {
               text: '폐기',
               style: 'destructive',
-              onPress: () => {
-                // TODO: API 호출 - 채팅방 폐기
-                // await deleteChatRoom(chatRoomId);
-                console.log('채팅방 폐기');
-                onClose();
+              onPress: async () => {
+                try {
+                  await deleteChatRoom(chatRoomId, currentUserId);
+                  console.log('✅ 채팅방 폐기 완료');
+                  onClose();
+                } catch (error) {
+                  console.error('❌ 채팅방 폐기 실패:', error);
+                  Alert.alert('오류', '채팅방 폐기에 실패했습니다.');
+                }
               },
             },
           ],
@@ -136,10 +145,14 @@ const ChatRoomScreen = ({
       if (Platform.OS === 'web') {
         const confirmed = window.confirm('채팅방을 나가시겠습니까?');
         if (confirmed) {
-          // TODO: API 호출 - 채팅방 나가기
-          // await leaveChatRoom(chatRoomId, userId);
-          console.log('채팅방 나가기');
-          onClose();
+          try {
+            await leaveChatRoom(chatRoomId, currentUserId);
+            console.log('✅ 채팅방 나가기 완료');
+            onClose();
+          } catch (error) {
+            console.error('❌ 채팅방 나가기 실패:', error);
+            window.alert('채팅방 나가기에 실패했습니다.');
+          }
         }
       } else {
         const {Alert} = require('react-native');
@@ -148,11 +161,15 @@ const ChatRoomScreen = ({
           {
             text: '나가기',
             style: 'destructive',
-            onPress: () => {
-              // TODO: API 호출 - 채팅방 나가기
-              // await leaveChatRoom(chatRoomId, userId);
-              console.log('채팅방 나가기');
-              onClose();
+            onPress: async () => {
+              try {
+                await leaveChatRoom(chatRoomId, currentUserId);
+                console.log('✅ 채팅방 나가기 완료');
+                onClose();
+              } catch (error) {
+                console.error('❌ 채팅방 나가기 실패:', error);
+                Alert.alert('오류', '채팅방 나가기에 실패했습니다.');
+              }
             },
           },
         ]);
@@ -160,13 +177,31 @@ const ChatRoomScreen = ({
     }
   };
 
-  const handleKickParticipant = participantId => {
+  const handleKickParticipant = async participantId => {
     // 강퇴 기능 (방장만)
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('이 참여자를 강퇴하시겠습니까?');
       if (confirmed) {
-        // TODO: API 호출 - 참여자 강퇴
-        console.log('참여자 강퇴:', participantId);
+        try {
+          await kickParticipant(chatRoomId, participantId, currentUserId);
+          console.log('✅ 참여자 강퇴 완료:', participantId);
+          // 참여자 목록 새로고침
+          const data = await getChatRoomParticipants(chatRoomId);
+          const userId = await AsyncStorage.getItem('userId');
+          const currentUserIdNum = Number(userId);
+          const formattedParticipants = data.map(p => ({
+            userId: p.userId,
+            nickname: p.nickname,
+            ratingScore: p.ratingScore,
+            avatar: '👤',
+            isMe: p.userId === currentUserIdNum,
+          }));
+          setParticipants(formattedParticipants);
+          window.alert('참여자가 강퇴되었습니다.');
+        } catch (error) {
+          console.error('❌ 참여자 강퇴 실패:', error);
+          window.alert('참여자 강퇴에 실패했습니다.');
+        }
       }
     } else {
       const {Alert} = require('react-native');
@@ -175,9 +210,27 @@ const ChatRoomScreen = ({
         {
           text: '강퇴',
           style: 'destructive',
-          onPress: () => {
-            // TODO: API 호출 - 참여자 강퇴
-            console.log('참여자 강퇴:', participantId);
+          onPress: async () => {
+            try {
+              await kickParticipant(chatRoomId, participantId, currentUserId);
+              console.log('✅ 참여자 강퇴 완료:', participantId);
+              // 참여자 목록 새로고침
+              const data = await getChatRoomParticipants(chatRoomId);
+              const userId = await AsyncStorage.getItem('userId');
+              const currentUserIdNum = Number(userId);
+              const formattedParticipants = data.map(p => ({
+                userId: p.userId,
+                nickname: p.nickname,
+                ratingScore: p.ratingScore,
+                avatar: '👤',
+                isMe: p.userId === currentUserIdNum,
+              }));
+              setParticipants(formattedParticipants);
+              Alert.alert('완료', '참여자가 강퇴되었습니다.');
+            } catch (error) {
+              console.error('❌ 참여자 강퇴 실패:', error);
+              Alert.alert('오류', '참여자 강퇴에 실패했습니다.');
+            }
           },
         },
       ]);
@@ -377,20 +430,40 @@ const ChatRoomScreen = ({
     };
   }, [visible, chatRoomId]);
 
-  // 참여자 목록 조회 (향후 구현)
-  // useEffect(() => {
-  //   const fetchParticipants = async () => {
-  //     try {
-  //       const data = await getChatRoomParticipants(chatRoomId);
-  //       setParticipants(data);
-  //     } catch (error) {
-  //       console.error('참여자 목록 조회 실패:', error);
-  //     }
-  //   };
-  //   if (visible && chatRoomId) {
-  //     fetchParticipants();
-  //   }
-  // }, [visible, chatRoomId]);
+  // 참여자 목록 조회
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        console.log('👥 [ChatRoomScreen] 참여자 목록 조회 시작...');
+        const data = await getChatRoomParticipants(chatRoomId);
+
+        // 현재 사용자 표시
+        const userId = await AsyncStorage.getItem('userId');
+        const currentUserIdNum = Number(userId);
+
+        const formattedParticipants = data.map(p => ({
+          userId: p.userId,
+          nickname: p.nickname,
+          ratingScore: p.ratingScore,
+          avatar: '👤', // 기본 아바타 (향후 프로필 이미지로 대체)
+          isMe: p.userId === currentUserIdNum,
+        }));
+
+        setParticipants(formattedParticipants);
+        console.log(
+          '✅ [ChatRoomScreen] 참여자 목록 로드 완료:',
+          formattedParticipants.length,
+          '명',
+        );
+      } catch (error) {
+        console.error('❌ [ChatRoomScreen] 참여자 목록 조회 실패:', error);
+      }
+    };
+
+    if (visible && chatRoomId) {
+      fetchParticipants();
+    }
+  }, [visible, chatRoomId]);
 
   const renderMessage = (msg, index) => {
     const key = msg.messageId || `msg-${index}`;

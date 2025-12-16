@@ -22,20 +22,6 @@ export const getMyChatRooms = async userId => {
 };
 
 /**
- * 채팅방 삭제
- * @param {number} chatRoomId - 채팅방 ID
- * @returns {Promise<void>}
- */
-export const deleteChatRoom = async chatRoomId => {
-  try {
-    await axiosInstance.delete(`/chat/rooms/${chatRoomId}`);
-  } catch (error) {
-    console.error('채팅방 삭제 실패:', error);
-    throw error;
-  }
-};
-
-/**
  * 채팅방 과거 메시지 조회
  * @param {number} chatRoomId - 채팅방 ID
  * @param {number} limit - 조회할 메시지 수 (기본 50)
@@ -92,9 +78,50 @@ export const getChatRoomParticipants = async chatRoomId => {
  */
 export const leaveChatRoom = async (chatRoomId, userId) => {
   try {
-    await axiosInstance.post(`/chat/rooms/${chatRoomId}/leave`, {userId});
+    await axiosInstance.post(`/chat/rooms/${chatRoomId}/leave`, null, {
+      params: {userId},
+    });
   } catch (error) {
     console.error('채팅방 나가기 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 채팅방 삭제 (방장만 가능)
+ * @param {number} chatRoomId - 채팅방 ID
+ * @param {number} userId - 사용자 ID (방장 확인용)
+ * @returns {Promise<void>}
+ */
+export const deleteChatRoom = async (chatRoomId, userId) => {
+  try {
+    await axiosInstance.delete(`/chat/rooms/${chatRoomId}`, {
+      params: {userId},
+    });
+  } catch (error) {
+    console.error('채팅방 삭제 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 참여자 강퇴 (방장만 가능)
+ * @param {number} chatRoomId - 채팅방 ID
+ * @param {number} kickUserId - 강퇴할 사용자 ID
+ * @param {number} requestUserId - 요청자 ID (방장 확인용)
+ * @returns {Promise<void>}
+ */
+export const kickParticipant = async (
+  chatRoomId,
+  kickUserId,
+  requestUserId,
+) => {
+  try {
+    await axiosInstance.post(`/chat/rooms/${chatRoomId}/kick`, null, {
+      params: {kickUserId, requestUserId},
+    });
+  } catch (error) {
+    console.error('참여자 강퇴 실패:', error);
     throw error;
   }
 };
@@ -108,12 +135,27 @@ export const leaveChatRoom = async (chatRoomId, userId) => {
 export const getUserReviews = async (userId, limit = null) => {
   try {
     const params = limit ? {limit} : {};
-    const response = await axiosInstance.get(`/users/${userId}/reviews`, {
+    const response = await axiosInstance.get(`/auth/${userId}/reviews`, {
       params,
     });
     return response;
   } catch (error) {
     console.error('사용자 후기 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 사용자 공개 프로필 조회
+ * @param {number} userId - 사용자 ID
+ * @returns {Promise<Object>} 프로필 데이터 { userId, nickname, profileImage, rating, reviewCount, completedMeetings, attendanceRate, joinDate }
+ */
+export const getPublicProfile = async userId => {
+  try {
+    const response = await axiosInstance.get(`/auth/${userId}/public-profile`);
+    return response;
+  } catch (error) {
+    console.error('공개 프로필 조회 실패:', error);
     throw error;
   }
 };

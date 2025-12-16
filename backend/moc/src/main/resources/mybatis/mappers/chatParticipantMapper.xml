@@ -70,4 +70,12 @@
         AND p.user_id          = #{userId}
     </select>
 
+    <!-- 참여자 나가기 (퇴장 시간 업데이트) -->
+    <update id="updateLeaveDate">
+        UPDATE tb_shopping_participant
+        SET leave_date = SYSTIMESTAMP
+        WHERE chat_room_id = #{chatRoomId}
+          AND user_id = #{userId}
+    </update>
+
 </mapper>

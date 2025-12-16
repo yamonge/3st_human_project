@@ -48,5 +48,8 @@ public interface ShoppingPostDAO {
 
     // 리뷰/DONE 체크용: 게시글 단건 조회
     ShoppingPostVO selectById(@Param("postId") Long postId);
+
+    // 게시글 작성자 조회 (방장 권한 검증용)
+    Long selectOwnerUserId(@Param("postId") Long postId);
 }
 

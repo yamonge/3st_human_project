@@ -160,8 +160,8 @@ export default function MapMainScreen({navigation}) {
         setCurrentRegion('');
       }
 
-      // ✅ 여기서 딱 1번만 호출
-      await searchNearbyMarts(myLoc, filterOptions.distance, region);
+      // ✅ 자동 검색 제거 - 사용자가 검색 버튼을 눌러야 검색 시작
+      console.log('위치 로드 완료. 검색 버튼을 눌러주세요.');
     };
 
     const onError = error => {
@@ -335,8 +335,8 @@ export default function MapMainScreen({navigation}) {
       return;
     }
 
-    // 아직 후보가 없으면(=검색을 안했으면) 자동 검색 실행
-    await searchNearbyMarts(filters.distance);
+    // ✅ 검색을 안했으면 필터만 저장하고 자동 검색 실행하지 않음
+    console.log('필터만 적용됨. 검색 버튼을 눌러주세요.');
   };
 
   // 채팅방 목록 모달 열기

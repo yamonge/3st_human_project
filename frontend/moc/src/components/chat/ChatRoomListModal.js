@@ -65,7 +65,12 @@ const DUMMY_CHAT_ROOMS = [
 /**
  * 채팅방 목록 모달
  */
-export default function ChatRoomListModal({visible, onClose, navigation}) {
+export default function ChatRoomListModal({
+  visible,
+  onClose,
+  navigation,
+  route,
+}) {
   // 🔥 Zustand Store 연동
   const chatRooms = useChatStore(state => state.chatRooms);
   const setChatRooms = useChatStore(state => state.setChatRooms);
@@ -75,6 +80,9 @@ export default function ChatRoomListModal({visible, onClose, navigation}) {
   const [showChatRoom, setShowChatRoom] = useState(false);
   const [selectedChatRoom, setSelectedChatRoom] = useState(null);
   const [userId, setUserId] = useState(null);
+
+  // ✅ 외부에서 특정 채팅방 ID를 받아 자동으로 열기
+  const openChatRoomId = route?.params?.openChatRoomId;
 
   // 🔥 사용자 ID 로드
   useEffect(() => {
@@ -122,6 +130,23 @@ export default function ChatRoomListModal({visible, onClose, navigation}) {
       fetchChatRooms();
     }
   }, [visible, userId, fetchChatRooms]);
+
+  // ✅ 외부에서 특정 채팅방 ID를 받으면 자동으로 열기
+  useEffect(() => {
+    if (openChatRoomId && chatRooms.length > 0) {
+      const room = chatRooms.find(r => r.chatRoomId === openChatRoomId);
+      if (room) {
+        console.log('🚪 [자동 입장] 채팅방 열기:', openChatRoomId);
+        setSelectedChatRoom(room);
+        setShowChatRoom(true);
+
+        // route params 초기화 (중복 실행 방지)
+        if (navigation.setParams) {
+          navigation.setParams({openChatRoomId: null});
+        }
+      }
+    }
+  }, [openChatRoomId, chatRooms, navigation]);
 
   const handleDelete = chatRoomId => {
     Alert.alert('확인', '채팅방을 삭제하시겠습니까?', [

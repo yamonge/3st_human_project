@@ -22,4 +22,8 @@ public interface ChatParticipantDAO {
     // 특정 장보기(shopping_post)에 해당 유저가 참여했는지 여부
     boolean existsByPostAndUser(@Param("shoppingPostId") Long shoppingPostId,
                                 @Param("userId") Long userId);
+
+    // 참여자 나가기 (퇴장 시간 업데이트)
+    void updateLeaveDate(@Param("chatRoomId") Long chatRoomId,
+                        @Param("userId") Long userId);
 }

@@ -174,17 +174,15 @@ export const authAPI = {
    */
   getCurrentUser: async () => {
     try {
-      const response = await api.get('/auth/me');
-
-      // 사용자 정보 저장
-      if (response.user) {
-        await AsyncStorage.setItem('userEmail', response.user.email || '');
-        await AsyncStorage.setItem(
-          'userNickname',
-          response.user.nickname || '',
-        );
-        await AsyncStorage.setItem('userName', response.user.name || '');
+      // AsyncStorage에서 userId 가져오기
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        throw new Error('로그인 정보가 없습니다.');
       }
+
+      const response = await api.get('/auth/me', {
+        params: {userId},
+      });
 
       return response;
     } catch (error) {
@@ -270,27 +268,27 @@ export const authAPI = {
    * Response: { userEmail }
    */
   findEmail: async (userName, userBirthDate) => {
-  try {
-    // userBirthDate는 Date 객체라고 가정
-    const timestamp = userBirthDate.toISOString();
+    try {
+      // userBirthDate는 Date 객체라고 가정
+      const timestamp = userBirthDate.toISOString();
 
-    // axiosConfig 인터셉터가 response.data만 반환
-    // 여기서의 response는 이미 FindEmailResponseDTO 형태임
-    const response = await api.post('/auth/find-email', {
-      userName,
-      userBirthDate: timestamp,
-    });
+      // axiosConfig 인터셉터가 response.data만 반환
+      // 여기서의 response는 이미 FindEmailResponseDTO 형태임
+      const response = await api.post('/auth/find-email', {
+        userName,
+        userBirthDate: timestamp,
+      });
 
-    return response;    // response == { userEmail: "마스킹된 이메일" }
-  } catch (error) {
-    // 404 같은 예상 실패는 console.error로 찍지 않는 편이 좋음
-    const status = error?.response?.status;
-    if (![400, 401, 403, 404].includes(status)) {
-      console.error('아이디 찾기 에러:', error);
+      return response; // response == { userEmail: "마스킹된 이메일" }
+    } catch (error) {
+      // 404 같은 예상 실패는 console.error로 찍지 않는 편이 좋음
+      const status = error?.response?.status;
+      if (![400, 401, 403, 404].includes(status)) {
+        console.error('아이디 찾기 에러:', error);
+      }
+      throw error;
     }
-    throw error;
-  }
-},
+  },
 
   /**
    * 임시 비밀번호 발송 (이메일 + 이름 + 생년월일)

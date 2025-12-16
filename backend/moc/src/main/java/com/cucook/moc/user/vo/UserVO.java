@@ -25,6 +25,7 @@ public class UserVO {
     private String suspendedReason;
     private Integer reportedCnt;
     private Integer shoppingCompletedCnt;
+    private Integer shoppingParticipatedCnt; // 참여 횟수 (참석률 계산용)
     private Double ratingScore;
     private Double trustScore;
     private Timestamp userBirthDate;

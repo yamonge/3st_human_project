@@ -225,4 +225,11 @@
         FROM tb_shopping_post
         WHERE shopping_post_id = #{shoppingPostId}
     </select>
+
+    <!-- 게시글 작성자 조회 (방장 권한 검증용) -->
+    <select id="selectOwnerUserId" resultType="long">
+        SELECT writer_user_id
+        FROM tb_shopping_post
+        WHERE shopping_post_id = #{postId}
+    </select>
 </mapper>

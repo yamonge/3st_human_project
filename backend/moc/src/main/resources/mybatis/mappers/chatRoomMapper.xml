@@ -83,4 +83,26 @@
         ORDER BY updated_at DESC
     </select>
 
+    <!-- 채팅방 ID로 조회 -->
+    <select id="selectById"
+            parameterType="long"
+            resultMap="ChatRoomResultMap">
+        SELECT
+            chat_room_id,
+            shopping_post_id,
+            status_cd,
+            created_date,
+            updated_date
+        FROM tb_shopping_chat_room
+        WHERE chat_room_id = #{chatRoomId}
+    </select>
+
+    <!-- 채팅방 상태 업데이트 -->
+    <update id="updateStatus">
+        UPDATE tb_shopping_chat_room
+        SET status_cd = #{statusCd},
+            updated_date = SYSTIMESTAMP
+        WHERE chat_room_id = #{chatRoomId}
+    </update>
+
 </mapper>

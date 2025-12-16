@@ -187,4 +187,20 @@ export default StyleSheet.create({
     fontFamily: 'NotoSansKR-Bold',
     lineHeight: 22.5,
   },
+
+  // 작성자용 버튼 (채팅방 입장)
+  ownerButton: {
+    backgroundColor: '#10B981', // 초록색
+    borderRadius: 12,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
 });

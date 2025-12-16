@@ -171,6 +171,37 @@ const styles = StyleSheet.create({
     color: '#666',
     lineHeight: 24,
   },
+
+  // 로딩 상태
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    fontFamily: 'NotoSansKR-Regular',
+    color: '#737373',
+    includeFontPadding: false,
+  },
+
+  // 빈 상태
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+
+  emptyText: {
+    fontSize: 14,
+    fontFamily: 'NotoSansKR-Regular',
+    color: '#9CA3AF',
+    includeFontPadding: false,
+  },
 });
 
 export default styles;

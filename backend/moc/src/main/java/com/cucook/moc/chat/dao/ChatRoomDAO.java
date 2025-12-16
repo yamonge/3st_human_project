@@ -15,4 +15,9 @@ public interface ChatRoomDAO {
     Long selectChatRoomIdByPost(@Param("shoppingPostId") Long shoppingPostId);
 
     List<ChatRoomSummaryDTO> selectRoomsByUser(@Param("userId") Long userId);
+
+    ChatRoomVO selectById(@Param("chatRoomId") Long chatRoomId);
+
+    void updateStatus(@Param("chatRoomId") Long chatRoomId,
+                      @Param("statusCd") String statusCd);
 }
