@@ -70,7 +70,6 @@ public class NoticeServiceImpl implements NoticeService {
     @Override
     public Long createNotice(NoticeSaveRequestDTO requestDTO) {
 
-        // ✅ validateBaseFields 없음 (요청대로)
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
         NoticeVO vo = new NoticeVO();
@@ -82,7 +81,6 @@ public class NoticeServiceImpl implements NoticeService {
         vo.setIsPinned(Boolean.TRUE.equals(requestDTO != null ? requestDTO.getPinned() : null) ? "Y" : "N");
         vo.setIsVisible((requestDTO == null || requestDTO.getVisible() == null || requestDTO.getVisible()) ? "Y" : "N");
 
-        // ✅ adminUserId 안 씀(기록도 안 함)
         vo.setCreatedId(null);
         vo.setCreatedDate(now);
 
@@ -127,15 +125,11 @@ public class NoticeServiceImpl implements NoticeService {
 
         noticeDAO.updateNotice(vo);
     }
-
     @Override
-    public void pinNotice(Long noticeId) {
-        noticeDAO.updateNoticePin(noticeId, "Y");
-    }
-
-    @Override
-    public void unpinNotice(Long noticeId) {
-        noticeDAO.updateNoticePin(noticeId, "N");
+    public void togglePin(Long noticeId) {
+        NoticeVO existing = noticeDAO.selectNoticeById(noticeId);
+        String next = "Y".equalsIgnoreCase(existing.getIsPinned()) ? "N" : "Y";
+        noticeDAO.updateNoticePin(noticeId, next);
     }
 
     @Override

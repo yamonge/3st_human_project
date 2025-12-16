@@ -51,15 +51,9 @@ public class AdminNoticeController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{noticeId}/pin")
-    public ResponseEntity<Void> pin(@PathVariable Long noticeId) {
-        noticeService.pinNotice(noticeId);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/{noticeId}/unpin")
-    public ResponseEntity<Void> unpin(@PathVariable Long noticeId) {
-        noticeService.unpinNotice(noticeId);
+    @PatchMapping("/{noticeId}/pin")
+    public ResponseEntity<Void> togglePin(@PathVariable Long noticeId) {
+        noticeService.togglePin(noticeId); // pinned 상태 토글
         return ResponseEntity.ok().build();
     }
 

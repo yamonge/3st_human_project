@@ -21,6 +21,7 @@ import styles from '../../styles/screens/admin/NoticeManagementStyles';
 import {colors} from '../../styles/common';
 import IngredientModal from '../../components/common/IngredientModal';
 import {getNoticeList, toggleNoticePin, deleteNotice} from '../../api/admin';
+import {useFocusEffect} from '@react-navigation/native';
 
 /**
  * 공지사항 관리 화면
@@ -44,9 +45,11 @@ export default function NoticeManagementScreen({navigation}) {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedNoticeId, setSelectedNoticeId] = useState(null);
 
-  useEffect(() => {
-    loadNotices();
-  }, []);
+  useFocusEffect(
+  useCallback(() => {
+    loadNotices(); // ✅ 화면에 돌아올 때마다 최신 목록 로드
+  }, []),
+);
 
   // 검색어 필터링
   useEffect(() => {
@@ -95,14 +98,7 @@ export default function NoticeManagementScreen({navigation}) {
   const handleTogglePin = async noticeId => {
     try {
       await toggleNoticePin(noticeId);
-
-      setNotices(prev =>
-        prev.map(mapped =>
-          mapped.id === mapped
-            ? {...mapped, isPinned: !mapped.isPinned}
-            : mapped,
-        ),
-      );
+      await loadNotices(); // ✅ 다시 가져와서 pinned 정렬까지 반영
       Alert.alert('성공', '고정 상태가 변경되었습니다.');
     } catch (error) {
       console.error('고정 토글 실패:', error);

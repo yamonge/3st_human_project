@@ -18,8 +18,7 @@ public interface NoticeService {
     Long createNotice(NoticeSaveRequestDTO requestDTO);
     void updateNotice(Long noticeId, NoticeSaveRequestDTO requestDTO);
 
-    void pinNotice(Long noticeId);
-    void unpinNotice(Long noticeId);
+    void togglePin(Long noticeId);
 
     void deleteNotice(Long noticeId);
 }

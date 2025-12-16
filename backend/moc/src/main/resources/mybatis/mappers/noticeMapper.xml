@@ -88,7 +88,12 @@
         title = #{title},
         content = #{content},
         image_url = #{imageUrl, jdbcType=VARCHAR},
-        is_pinned = #{isPinned},
+        <if test="isPinned != null">
+        is_pinned = #{isPinned, jdbcType=VARCHAR},
+        </if>
+        <if test="isVisible != null">
+        is_visible = #{isVisible, jdbcType=VARCHAR},
+        </if>
         updated_id = #{updatedId, jdbcType=NUMERIC},
         updated_date = #{updatedDate, jdbcType=TIMESTAMP}
         WHERE notice_id = #{noticeId}

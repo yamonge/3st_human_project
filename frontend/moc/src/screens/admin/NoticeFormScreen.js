@@ -44,7 +44,15 @@ export default function NoticeFormScreen({navigation, route}) {
   const [content, setContent] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [isadmin, setIsadmin] = useState(AsyncStorage.getItem('userType'));
+  const [isadmin, setIsadmin] = useState('N');
+  // 화면 마운트시 관리자 여부 확인
+  useEffect(() => {
+    (async () => {
+      const t = await AsyncStorage.getItem('userType');
+      setIsadmin(t || 'N');
+    })();
+  }, []);
+
 
   // 화면 포커스 시 초기화 및 로드
   useFocusEffect(
@@ -173,10 +181,6 @@ export default function NoticeFormScreen({navigation, route}) {
         title: title.trim(),
         content: content.trim(),
         imageUrl: imageUri ?? null, // ✅ 백엔드 DTO 필드명에 맞춤
-        // NoticeForm에서 핀/노출을 따로 안 다룬다면 굳이 안 보내도 되지만,
-        // 보내는 경우엔 아래처럼 명시 가능
-        pinned: null,
-        visible: null,
       };
 
       if (mode === 'create') {
@@ -184,16 +188,15 @@ export default function NoticeFormScreen({navigation, route}) {
         Alert.alert('성공', '공지사항이 작성되었습니다.', [
           {
             text: '확인',
-            onPress: () => navigation.navigate('NoticeManagement'),
+            onPress: () => navigation.navigate('NoticeManagement', {refresh: Date.now()}),
           },
         ]);
       } else {
         await updateNotice(noticeId, payload);
-        console.log('updateNotice result:', result);
         Alert.alert('성공', '공지사항이 수정되었습니다.', [
           {
             text: '확인',
-            onPress: () => navigation.navigate('NoticeManagement'),
+            onPress: () => navigation.navigate('NoticeManagement', {refresh: Date.now()}),
           },
         ]);
       }
