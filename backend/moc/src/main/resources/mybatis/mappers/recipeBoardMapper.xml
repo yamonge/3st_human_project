@@ -21,6 +21,7 @@
         <result property="viewCnt" column="view_cnt"/>
         <result property="likeCnt" column="like_cnt"/>
         <result property="createdDate" column="created_date"/>
+        <result property="ingredientsString" column="ingredientsString"/>
 
         <result property="ownerUserId" column="owner_user_id"/>
         <result property="authorNickname" column="user_nickname"/>
@@ -182,27 +183,75 @@
         </if>
     </select>
 
-    <select id="selectIngredientsByRecipeIds"
-            parameterType="list"
-            resultType="com.cucook.moc.recipe.vo.RecipeIngredientVO">
+    <select id="selectPublicRecipesOptimized"
+            resultMap="RecipeBoardListItemMap">
 
         SELECT
-        ri.recipe_id            AS recipeId,
-        ri.recipe_ingredient_id AS recipeIngredientId,
-        ri.ingredient_name      AS ingredientName,
-        ri.quantity_desc        AS quantityDesc,
-        ri.is_owned_default     AS isOwnedDefault
-        FROM tb_recipe_ingredient ri
-        WHERE ri.is_deleted = 'N'
-        AND ri.recipe_id IN
-        <foreach item="id"
-                 collection="list"
-                 open="("
-                 separator=","
-                 close=")">
-            #{id}
-        </foreach>
-        ORDER BY ri.recipe_id, ri.recipe_ingredient_id
+            /* ===== Recipe 기본 정보 ===== */
+            R.RECIPE_ID,
+            R.TITLE,
+            R.SUMMARY,
+            R.THUMBNAIL_URL,
+            R.DIFFICULTY_CD,
+            R.COOK_TIME_MIN,
+            R.CUISINE_STYLE_CD,
+            R.CATEGORY,
+            R.VIEW_CNT,
+            R.LIKE_CNT,
+            R.CREATED_DATE,
+            R.OWNER_USER_ID,
+
+            /* ===== 작성자 정보 ===== */
+            U.USER_NICKNAME,
+            U.USER_PROFILE_IMAGE_URL,
+
+            /* ===== 로그인 유저 기준 좋아요 여부 ===== */
+            CASE
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM TB_RECIPE_LIKE L
+                    WHERE L.RECIPE_ID = R.RECIPE_ID
+                      AND L.USER_ID = #{loginUserId}
+                ) THEN 1
+                ELSE 0
+                END AS liked_by_me,
+
+            /* ===== 재료 문자열 집계 ===== */
+            LISTAGG(
+                    I.INGREDIENT_NAME || '::' || NVL(I.QUANTITY_DESC, ''),
+                    '||'
+            ) WITHIN GROUP (ORDER BY I.RECIPE_INGREDIENT_ID) AS ingredientsString
+
+        FROM TB_RECIPE R
+                 JOIN TB_USER U
+                      ON U.USER_ID = R.OWNER_USER_ID
+                 LEFT JOIN TB_RECIPE_INGREDIENT I
+                           ON I.RECIPE_ID = R.RECIPE_ID
+
+        WHERE R.IS_PUBLIC = 'Y'
+          AND R.IS_DELETED = 'N'
+
+        GROUP BY
+            R.RECIPE_ID,
+            R.TITLE,
+            R.SUMMARY,
+            R.THUMBNAIL_URL,
+            R.DIFFICULTY_CD,
+            R.COOK_TIME_MIN,
+            R.CUISINE_STYLE_CD,
+            R.CATEGORY,
+            R.VIEW_CNT,
+            R.LIKE_CNT,
+            R.CREATED_DATE,
+            R.OWNER_USER_ID,
+            U.USER_NICKNAME,
+            U.USER_PROFILE_IMAGE_URL
+
+        ORDER BY R.CREATED_DATE DESC
+
+        OFFSET #{offset} ROWS
+            FETCH NEXT #{limit} ROWS ONLY
+
     </select>
 
     <!-- (C) 게시판 상세 1건 -->

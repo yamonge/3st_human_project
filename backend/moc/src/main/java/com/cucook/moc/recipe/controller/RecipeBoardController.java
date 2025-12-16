@@ -28,7 +28,7 @@ public class RecipeBoardController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return recipeBoardService.getPublicRecipes(
+        return recipeBoardService.getPublicRecipesOptimized(
                 loginUserId, search, cuisineStyleCd, difficultyCd, maxCookTimeMin, sort, page, size
         );
     }

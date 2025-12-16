@@ -28,6 +28,7 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
     // ** 신규 추가: LISTAGG 최적화 로직 **
     // getPublicRecipes의 파라미터를 그대로 받고, 파싱 후 새로운 DTO를 반환
     // ----------------------------------------------------------------------------------
+    @Override
     @Transactional(readOnly = true)
     public RecipeBoardListResponseDTO getPublicRecipesOptimized(
             Long loginUserId,
@@ -50,12 +51,11 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         List<RecipeBoardListItemVO> dtoList = recipeBoardDAO.selectPublicRecipesOptimized(
                 safeLoginUserId, search, cuisineStyleCd, difficultyCd, maxCookTimeMin, safeSort, offset, safeSize
         );
-
+        System.out.println(dtoList.toString());
         // 2. DTO 리스트를 스트림을 이용해 파싱 및 최종 VO 리스트로 변환
         List<RecipeBoardListItemWithIngredientsVO> items = dtoList.stream()
                 .map(this::mapAndParseRecipe) // 파싱 로직 호출
                 .collect(Collectors.toList());
-
         // 3. 전체 개수 조회 (기존 로직과 동일)
         int total = recipeBoardDAO.countPublicRecipes(
                 search, cuisineStyleCd, difficultyCd, maxCookTimeMin
@@ -104,8 +104,17 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         vo.setRecipeId(dto.getRecipeId());
         vo.setTitle(dto.getTitle());
         vo.setSummary(dto.getSummary());
-        // ... (RecipeBoardListItemVO의 모든 필드를 복사해야 합니다.)
         vo.setLikedByMe(dto.getLikedByMe());
+        vo.setAuthorNickname(dto.getAuthorNickname());
+        vo.setAuthorProfileImageUrl(dto.getAuthorProfileImageUrl());
+        vo.setCookTimeMin(dto.getCookTimeMin());
+        vo.setCuisineStyleCd(dto.getCuisineStyleCd());
+        vo.setCategory(dto.getCategory());
+        vo.setViewCnt(Integer.valueOf(dto.getViewCnt()));
+        vo.setLikedByMe(Integer.valueOf(dto.getLikedByMe()));
+        vo.setOwnerUserId(Long.valueOf(dto.getOwnerUserId()));
+        vo.setCreatedDate(dto.getCreatedDate());
+        vo.setDifficultyCd(dto.getDifficultyCd());
 
 
         // 3. 재료 문자열 파싱 로직

@@ -17,4 +17,15 @@ public interface RecipeBoardService {
     );
 
     RecipeVO getPublicRecipeDetail(Long recipeId);
+
+    RecipeBoardListResponseDTO getPublicRecipesOptimized(
+            Long loginUserId,
+            String search,
+            String cuisineStyleCd,
+            String difficultyCd,
+            Integer maxCookTimeMin,
+            String sort,
+            int page,
+            int size
+    );
 }
