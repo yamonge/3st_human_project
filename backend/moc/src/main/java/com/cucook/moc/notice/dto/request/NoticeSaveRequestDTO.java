@@ -14,9 +14,6 @@ import lombok.ToString;
 @ToString
 public class NoticeSaveRequestDTO {
 
-    /** 관리자 user_id (user_type = 'Y') */
-    private Long adminUserId;
-
     /** 제목 */
     private String title;
 
@@ -27,8 +24,8 @@ public class NoticeSaveRequestDTO {
     private String imageUrl;
 
     /** 상단 고정 여부 */
-    private Boolean pinned;
+    private Boolean pinned;   // null이면 create 기본 N, update는 기존 유지
+    /** 소프트 삭제 **/
+    private Boolean visible;  // null이면 create 기본 Y, update는 기존 유지
 
-    /** 노출 여부 (null 이면 기본 true 로 처리) */
-    private Boolean visible;
 }

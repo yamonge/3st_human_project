@@ -1,5 +1,5 @@
 import axiosInstance from './axiosConfig';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * 관리자 API
  * 관리자 전용 기능 API
@@ -13,8 +13,8 @@ import axiosInstance from './axiosConfig';
  */
 export const getAdminStats = async () => {
   try {
-    const response = await axiosInstance.get('/api/admin/stats');
-    return response.data;
+    const response = await axiosInstance.get('/admin/stats');
+    return response;
   } catch (error) {
     console.error('관리자 통계 조회 실패:', error);
     throw error;
@@ -30,8 +30,8 @@ export const getAdminStats = async () => {
  */
 export const getUserList = async params => {
   try {
-    const response = await axiosInstance.get('/api/admin/users', {params});
-    return response.data;
+    const response = await axiosInstance.get('/admin/users', {params});
+    return response;
   } catch (error) {
     console.error('회원 목록 조회 실패:', error);
     throw error;
@@ -47,10 +47,10 @@ export const getUserList = async params => {
 export const suspendUser = async (userId, data) => {
   try {
     const response = await axiosInstance.post(
-      `/api/admin/users/${userId}/suspend`,
+      `/admin/users/${userId}/suspend`,
       data,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('회원 정지 실패:', error);
     throw error;
@@ -65,9 +65,9 @@ export const suspendUser = async (userId, data) => {
 export const unsuspendUser = async userId => {
   try {
     const response = await axiosInstance.post(
-      `/api/admin/users/${userId}/unsuspend`,
+      `/admin/users/${userId}/unsuspend`,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('회원 정지 해제 실패:', error);
     throw error;
@@ -83,8 +83,8 @@ export const unsuspendUser = async userId => {
  */
 export const getReportList = async params => {
   try {
-    const response = await axiosInstance.get('/api/admin/reports', {params});
-    return response.data;
+    const response = await axiosInstance.get('/admin/reports', {params});
+    return response;
   } catch (error) {
     console.error('신고 목록 조회 실패:', error);
     throw error;
@@ -100,10 +100,10 @@ export const getReportList = async params => {
 export const sendWarning = async (reportId, data) => {
   try {
     const response = await axiosInstance.post(
-      `/api/admin/reports/${reportId}/warning`,
+      `/admin/reports/${reportId}/warning`,
       data,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('경고 발송 실패:', error);
     throw error;
@@ -119,10 +119,10 @@ export const sendWarning = async (reportId, data) => {
 export const suspendUserByReport = async (reportId, data) => {
   try {
     const response = await axiosInstance.post(
-      `/api/admin/reports/${reportId}/suspend`,
+      `/admin/reports/${reportId}/suspend`,
       data,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('계정 정지 실패:', error);
     throw error;
@@ -138,8 +138,8 @@ export const suspendUserByReport = async (reportId, data) => {
  */
 export const getPostList = async params => {
   try {
-    const response = await axiosInstance.get('/api/admin/posts', {params});
-    return response.data;
+    const response = await axiosInstance.get('/admin/posts', {params});
+    return response;
   } catch (error) {
     console.error('게시글 목록 조회 실패:', error);
     throw error;
@@ -153,8 +153,8 @@ export const getPostList = async params => {
  */
 export const deletePost = async postId => {
   try {
-    const response = await axiosInstance.delete(`/api/admin/posts/${postId}`);
-    return response.data;
+    const response = await axiosInstance.delete(`/admin/posts/${postId}`);
+    return response;
   } catch (error) {
     console.error('게시글 삭제 실패:', error);
     throw error;
@@ -170,10 +170,10 @@ export const deletePost = async postId => {
 export const togglePostVisibility = async (postId, hidden) => {
   try {
     const response = await axiosInstance.patch(
-      `/api/admin/posts/${postId}/visibility`,
+      `/admin/posts/${postId}/visibility`,
       {hidden},
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('게시글 숨김/복원 실패:', error);
     throw error;
@@ -189,8 +189,8 @@ export const togglePostVisibility = async (postId, hidden) => {
  */
 export const getNoticeList = async params => {
   try {
-    const response = await axiosInstance.get('/api/admin/notices', {params});
-    return response.data;
+    const response = await axiosInstance.get('/admin/notices', {params});
+    return response;
   } catch (error) {
     console.error('공지사항 목록 조회 실패:', error);
     throw error;
@@ -204,8 +204,8 @@ export const getNoticeList = async params => {
  */
 export const getNoticeDetail = async noticeId => {
   try {
-    const response = await axiosInstance.get(`/api/admin/notices/${noticeId}`);
-    return response.data;
+    const response = await axiosInstance.get(`/admin/notices/${noticeId}`);
+    return response;
   } catch (error) {
     console.error('공지사항 상세 조회 실패:', error);
     throw error;
@@ -219,8 +219,8 @@ export const getNoticeDetail = async noticeId => {
  */
 export const createNotice = async data => {
   try {
-    const response = await axiosInstance.post('/api/admin/notices', data);
-    return response.data;
+    const response = await axiosInstance.post('/admin/notices', data);
+    return response;
   } catch (error) {
     console.error('공지사항 작성 실패:', error);
     throw error;
@@ -236,10 +236,10 @@ export const createNotice = async data => {
 export const updateNotice = async (noticeId, data) => {
   try {
     const response = await axiosInstance.put(
-      `/api/admin/notices/${noticeId}`,
+      `/admin/notices/${noticeId}`,
       data,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('공지사항 수정 실패:', error);
     throw error;
@@ -253,10 +253,8 @@ export const updateNotice = async (noticeId, data) => {
  */
 export const deleteNotice = async noticeId => {
   try {
-    const response = await axiosInstance.delete(
-      `/api/admin/notices/${noticeId}`,
-    );
-    return response.data;
+    const response = await axiosInstance.delete(`/admin/notices/${noticeId}`);
+    return response;
   } catch (error) {
     console.error('공지사항 삭제 실패:', error);
     throw error;
@@ -271,9 +269,9 @@ export const deleteNotice = async noticeId => {
 export const toggleNoticePin = async noticeId => {
   try {
     const response = await axiosInstance.patch(
-      `/api/admin/notices/${noticeId}/pin`,
+      `/admin/notices/${noticeId}/pin`,
     );
-    return response.data;
+    return response;
   } catch (error) {
     console.error('공지사항 고정 토글 실패:', error);
     throw error;
@@ -290,10 +288,10 @@ export const toggleNoticePin = async noticeId => {
  */
 export const deleteUser = async (userId, data) => {
   try {
-    const response = await axiosInstance.delete(`/api/admin/users/${userId}`, {
+    const response = await axiosInstance.delete(`/admin/users/${userId}`, {
       data,
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('회원 탈퇴 실패:', error);
     throw error;

@@ -27,12 +27,10 @@ public interface NoticeDAO {
 
     // 상단 고정 / 해제
     void updateNoticePin(@Param("noticeId") Long noticeId,
-                         @Param("isPinned") String isPinned,
-                         @Param("adminUserId") Long adminUserId);
+                         @Param("isPinned") String isPinned);
 
     // 소프트 삭제 (is_visible = 'N')
-    void softDeleteNotice(@Param("noticeId") Long noticeId,
-                          @Param("adminUserId") Long adminUserId);
+    void softDeleteNotice(@Param("noticeId") Long noticeId);
 
     // 조회수 증가
     void increaseViewCount(@Param("noticeId") Long noticeId);

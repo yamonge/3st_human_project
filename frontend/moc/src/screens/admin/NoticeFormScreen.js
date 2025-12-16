@@ -12,7 +12,8 @@ import {useFocusEffect} from '@react-navigation/native';
 import {ArrowLeft, ImageIcon} from 'lucide-react-native';
 import styles from '../../styles/screens/admin/NoticeFormStyles';
 import {colors} from '../../styles/common';
-// import {createNotice, updateNotice, getNoticeDetail} from '../../api/admin';
+import {createNotice, updateNotice, getNoticeDetail} from '../../api/admin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * 공지사항 작성/수정 화면
@@ -43,6 +44,7 @@ export default function NoticeFormScreen({navigation, route}) {
   const [content, setContent] = useState('');
   const [imageUri, setImageUri] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isadmin, setIsadmin] = useState(AsyncStorage.getItem('userType'));
 
   // 화면 포커스 시 초기화 및 로드
   useFocusEffect(
@@ -103,15 +105,10 @@ export default function NoticeFormScreen({navigation, route}) {
   const loadNoticeDetail = async () => {
     try {
       setLoading(true);
-      // const data = await getNoticeDetail(noticeId);
-      // setTitle(data.title);
-      // setContent(data.content);
-      // setImageUri(data.imageUrl);
-
-      // 임시 데이터 (API 연동 전)
-      setTitle('서비스 이용약관 개정 안내');
-      setContent('서비스 이용약관이 개정되었습니다.');
-      setImageUri(null); // 원래 이미지로 초기화 (API 연동 시 data.imageUrl 사용)
+      const data = await getNoticeDetail(noticeId);
+      setTitle(data.title);
+      setContent(data.content);
+      setImageUri(data.imageUrl);
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       Alert.alert('오류', '공지사항을 불러오는데 실패했습니다.');
@@ -164,23 +161,31 @@ export default function NoticeFormScreen({navigation, route}) {
   // 작성/수정 완료
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
+    // 관리자 사용자 ID 확인
+    if (isadmin === 'N') {
+      Alert.alert('오류', '관리자가 아닙니다. 로그인 상태를 확인해주세요.');
+      return;
+    }
     try {
       setLoading(true);
 
-      const formData = {
+      const payload = {
         title: title.trim(),
         content: content.trim(),
-        imageUri: imageUri,
+        imageUrl: imageUri ?? null, // ✅ 백엔드 DTO 필드명에 맞춤
+        // NoticeForm에서 핀/노출을 따로 안 다룬다면 굳이 안 보내도 되지만,
+        // 보내는 경우엔 아래처럼 명시 가능
+        pinned: null,
+        visible: null,
       };
 
       if (mode === 'create') {
-        // await createNotice(formData);
+        await createNotice(payload);
         Alert.alert('성공', '공지사항이 작성되었습니다.', [
           {text: '확인', onPress: () => navigation.goBack()},
         ]);
       } else {
-        // await updateNotice(noticeId, formData);
+        await updateNotice(noticeId, pa);
         Alert.alert('성공', '공지사항이 수정되었습니다.', [
           {text: '확인', onPress: () => navigation.goBack()},
         ]);

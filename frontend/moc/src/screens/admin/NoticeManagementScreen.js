@@ -20,11 +20,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import styles from '../../styles/screens/admin/NoticeManagementStyles';
 import {colors} from '../../styles/common';
 import IngredientModal from '../../components/common/IngredientModal';
-// import {
-//   getNoticeList,
-//   toggleNoticePin,
-//   deleteNotice,
-// } from '../../api/admin';
+import {
+  getAdminUserIdOrThrow,
+  getNoticeList,
+  toggleNoticePin,
+  deleteNotice,
+} from '../../api/admin';
 
 /**
  * 공지사항 관리 화면
@@ -69,27 +70,9 @@ export default function NoticeManagementScreen({navigation}) {
   // 공지사항 목록 로드
   const loadNotices = async () => {
     try {
-      // const data = await getNoticeList();
-      // setNotices(data);
-
-      // 임시 데이터 (API 연동 전)
-      const mockData = [
-        {
-          id: 1,
-          title: '서비스 이용약관 개정 안내',
-          content: '서비스 이용약관이 개정되었습니다.',
-          createdAt: '2024.11.28',
-          isPinned: true,
-        },
-        {
-          id: 2,
-          title: '새로운 기능 업데이트',
-          content: '다양한 새 기능이 추가되었습니다.',
-          createdAt: '2024.11.25',
-          isPinned: false,
-        },
-      ];
-      setNotices(mockData);
+      const data = await getNoticeList();
+      console.log('📢 Loaded notices:', data);
+      setNotices(data);
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       Alert.alert('오류', '공지사항을 불러오는데 실패했습니다.');
@@ -105,7 +88,7 @@ export default function NoticeManagementScreen({navigation}) {
   // 고정 토글
   const handleTogglePin = async noticeId => {
     try {
-      // await toggleNoticePin(noticeId);
+      await toggleNoticePin(noticeId);
 
       // 임시 처리
       setNotices(prev =>
@@ -131,10 +114,10 @@ export default function NoticeManagementScreen({navigation}) {
   // 삭제 실행
   const handleDelete = async () => {
     try {
-      // await deleteNotice(selectedNoticeId);
+      await deleteNotice(selectedNoticeId);
 
-      // 임시 처리
-      setNotices(prev => prev.filter(notice => notice.id !== selectedNoticeId));
+      // // 임시 처리
+      // setNotices(prev => prev.filter(notice => notice.id !== selectedNoticeId));
       setDeleteModalVisible(false);
       Alert.alert('성공', '공지사항이 삭제되었습니다.');
     } catch (error) {
