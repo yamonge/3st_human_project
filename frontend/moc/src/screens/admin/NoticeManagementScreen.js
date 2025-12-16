@@ -20,12 +20,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import styles from '../../styles/screens/admin/NoticeManagementStyles';
 import {colors} from '../../styles/common';
 import IngredientModal from '../../components/common/IngredientModal';
-import {
-  getAdminUserIdOrThrow,
-  getNoticeList,
-  toggleNoticePin,
-  deleteNotice,
-} from '../../api/admin';
+import {getNoticeList, toggleNoticePin, deleteNotice} from '../../api/admin';
 
 /**
  * 공지사항 관리 화면
@@ -70,9 +65,20 @@ export default function NoticeManagementScreen({navigation}) {
   // 공지사항 목록 로드
   const loadNotices = async () => {
     try {
-      const data = await getNoticeList();
-      console.log('📢 Loaded notices:', data);
-      setNotices(data);
+      const response = await getNoticeList();
+      const mapped = (response || []).map(n => ({
+        id: n.noticeId, // ✅ noticeId -> id
+        title: n.title ?? '',
+        content: n.content ?? '', // 목록에 content 없으면 빈값
+        isPinned: !!n.pinned, // ✅ pinned -> isPinned
+        createdAt: n.createdDate // ✅ createdDate -> createdAt
+          ? new Date(n.createdDate)
+              .toISOString()
+              .slice(0, 10)
+              .replaceAll('-', '.')
+          : '',
+      }));
+      setNotices(mapped);
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       Alert.alert('오류', '공지사항을 불러오는데 실패했습니다.');
@@ -90,12 +96,11 @@ export default function NoticeManagementScreen({navigation}) {
     try {
       await toggleNoticePin(noticeId);
 
-      // 임시 처리
       setNotices(prev =>
-        prev.map(notice =>
-          notice.id === noticeId
-            ? {...notice, isPinned: !notice.isPinned}
-            : notice,
+        prev.map(mapped =>
+          mapped.id === mapped
+            ? {...mapped, isPinned: !mapped.isPinned}
+            : mapped,
         ),
       );
       Alert.alert('성공', '고정 상태가 변경되었습니다.');
@@ -115,10 +120,8 @@ export default function NoticeManagementScreen({navigation}) {
   const handleDelete = async () => {
     try {
       await deleteNotice(selectedNoticeId);
-
-      // // 임시 처리
-      // setNotices(prev => prev.filter(notice => notice.id !== selectedNoticeId));
       setDeleteModalVisible(false);
+      loadNotices();
       Alert.alert('성공', '공지사항이 삭제되었습니다.');
     } catch (error) {
       console.error('공지사항 삭제 실패:', error);

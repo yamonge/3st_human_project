@@ -187,7 +187,7 @@ export const togglePostVisibility = async (postId, hidden) => {
  * @param {Object} params - { page, size }
  * @returns {Promise<Object>} 공지사항 목록
  */
-export const getNoticeList = async params => {
+export const getNoticeList = async (params = {}) => {
   try {
     const response = await axiosInstance.get('/admin/notices', {params});
     return response;

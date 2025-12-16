@@ -182,12 +182,19 @@ export default function NoticeFormScreen({navigation, route}) {
       if (mode === 'create') {
         await createNotice(payload);
         Alert.alert('성공', '공지사항이 작성되었습니다.', [
-          {text: '확인', onPress: () => navigation.goBack()},
+          {
+            text: '확인',
+            onPress: () => navigation.navigate('NoticeManagement'),
+          },
         ]);
       } else {
-        await updateNotice(noticeId, pa);
+        await updateNotice(noticeId, payload);
+        console.log('updateNotice result:', result);
         Alert.alert('성공', '공지사항이 수정되었습니다.', [
-          {text: '확인', onPress: () => navigation.goBack()},
+          {
+            text: '확인',
+            onPress: () => navigation.navigate('NoticeManagement'),
+          },
         ]);
       }
     } catch (error) {
