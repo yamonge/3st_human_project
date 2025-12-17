@@ -28,7 +28,7 @@ class StompClient {
   getWebSocketUrl() {
     const BASE_URL =
       Platform.OS === 'android'
-        ? 'http://192.168.50.117:8090' // Android 에뮬레이터 → PC
+        ? 'http://192.168.1.51:8090' // Android 에뮬레이터 → PC
         : 'http://localhost:8090'; // iOS 시뮬레이터 / 웹
 
     return `${BASE_URL}/ws-chat`; // WebSocket 엔드포인트

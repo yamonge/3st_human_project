@@ -43,88 +43,25 @@ export default function UserManagementScreen({navigation}) {
       setLoading(true);
 
       // TODO: 실제 API 연동 (주석 해제)
-      // const params = {
-      //   status: selectedFilter === 'all' ? null : selectedFilter,
-      //   search: searchQuery,
-      // };
-      // const response = await getUserList(params);
-      // setUsers(response.users || []);
+      const params = {
+        status: selectedFilter === 'all' ? null : selectedFilter,
+        search: searchQuery,
+      };
+      const response = await getUserList(params);
+      setUsers(response.users || []);
 
       // 임시 더미 데이터
-      const dummyUsers = [
-        {
-          id: 1,
-          name: '홍길동',
-          nickname: '길동이',
-          email: 'hong@example.com',
-          joinDate: '2024.11.20',
-          reportCount: 0,
-          status: 'active',
-        },
-        {
-          id: 2,
-          name: '김철수',
-          nickname: '철수',
-          email: 'kim@example.com',
-          joinDate: '2024.11.18',
-          reportCount: 2,
-          status: 'active',
-        },
-        {
-          id: 3,
-          name: '이영희',
-          nickname: '영희',
-          email: 'lee@example.com',
-          joinDate: '2024.11.15',
-          reportCount: 5,
-          status: 'suspended',
-        },
-        {
-          id: 4,
-          name: '박민수',
-          nickname: '민수야',
-          email: 'park@example.com',
-          joinDate: '2024.11.10',
-          reportCount: 1,
-          status: 'active',
-        },
-        {
-          id: 5,
-          name: '최지우',
-          nickname: '지우짱',
-          email: 'choi@example.com',
-          joinDate: '2024.11.08',
-          reportCount: 0,
-          status: 'active',
-        },
-        {
-          id: 6,
-          name: '정수민',
-          nickname: '수민',
-          email: 'jung@example.com',
-          joinDate: '2024.11.05',
-          reportCount: 3,
-          status: 'suspended',
-        },
-        {
-          id: 7,
-          name: '강태양',
-          nickname: '태양',
-          email: 'kang@example.com',
-          joinDate: '2024.11.01',
-          reportCount: 0,
-          status: 'active',
-        },
-        {
-          id: 8,
-          name: '윤서연',
-          nickname: '서연이',
-          email: 'yoon@example.com',
-          joinDate: '2024.10.28',
-          reportCount: 1,
-          status: 'active',
-        },
-      ];
+      // const dummyUsers = [
+      //   {
+      //     id: 1,
+      //     name: '홍길동',
+      //     nickname: '길동이',
+      //     email: 'hong@example.com',
+      //     joinDate: '2024.11.20',
+      //     reportCount: 0,
+      //     status: 'active',
+      //   },
+      // ];
 
       // 필터 적용
       let filteredUsers = dummyUsers;
