@@ -18,6 +18,10 @@ public class NoticeListItemResponseDTO {
 
     private Long noticeId;
     private String title;
+
+    // (선택) 목록에서 200자 프리뷰 내려줌
+    private String content;
+
     private boolean pinned;
     private long viewCount;
     private Timestamp createdDate;

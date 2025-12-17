@@ -20,11 +20,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import styles from '../../styles/screens/admin/NoticeManagementStyles';
 import {colors} from '../../styles/common';
 import IngredientModal from '../../components/common/IngredientModal';
-// import {
-//   getNoticeList,
-//   toggleNoticePin,
-//   deleteNotice,
-// } from '../../api/admin';
+import {getNoticeList, toggleNoticePin, deleteNotice} from '../../api/admin';
+import {useFocusEffect} from '@react-navigation/native';
 
 /**
  * 공지사항 관리 화면
@@ -48,9 +45,11 @@ export default function NoticeManagementScreen({navigation}) {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [selectedNoticeId, setSelectedNoticeId] = useState(null);
 
-  useEffect(() => {
-    loadNotices();
-  }, []);
+  useFocusEffect(
+  useCallback(() => {
+    loadNotices(); // ✅ 화면에 돌아올 때마다 최신 목록 로드
+  }, []),
+);
 
   // 검색어 필터링
   useEffect(() => {
@@ -69,27 +68,20 @@ export default function NoticeManagementScreen({navigation}) {
   // 공지사항 목록 로드
   const loadNotices = async () => {
     try {
-      // const data = await getNoticeList();
-      // setNotices(data);
-
-      // 임시 데이터 (API 연동 전)
-      const mockData = [
-        {
-          id: 1,
-          title: '서비스 이용약관 개정 안내',
-          content: '서비스 이용약관이 개정되었습니다.',
-          createdAt: '2024.11.28',
-          isPinned: true,
-        },
-        {
-          id: 2,
-          title: '새로운 기능 업데이트',
-          content: '다양한 새 기능이 추가되었습니다.',
-          createdAt: '2024.11.25',
-          isPinned: false,
-        },
-      ];
-      setNotices(mockData);
+      const response = await getNoticeList();
+      const mapped = (response || []).map(n => ({
+        id: n.noticeId, // ✅ noticeId -> id
+        title: n.title ?? '',
+        content: n.content ?? '', // 목록에 content 없으면 빈값
+        isPinned: !!n.pinned, // ✅ pinned -> isPinned
+        createdAt: n.createdDate // ✅ createdDate -> createdAt
+          ? new Date(n.createdDate)
+              .toISOString()
+              .slice(0, 10)
+              .replaceAll('-', '.')
+          : '',
+      }));
+      setNotices(mapped);
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       Alert.alert('오류', '공지사항을 불러오는데 실패했습니다.');
@@ -105,16 +97,8 @@ export default function NoticeManagementScreen({navigation}) {
   // 고정 토글
   const handleTogglePin = async noticeId => {
     try {
-      // await toggleNoticePin(noticeId);
-
-      // 임시 처리
-      setNotices(prev =>
-        prev.map(notice =>
-          notice.id === noticeId
-            ? {...notice, isPinned: !notice.isPinned}
-            : notice,
-        ),
-      );
+      await toggleNoticePin(noticeId);
+      await loadNotices(); // ✅ 다시 가져와서 pinned 정렬까지 반영
       Alert.alert('성공', '고정 상태가 변경되었습니다.');
     } catch (error) {
       console.error('고정 토글 실패:', error);
@@ -131,11 +115,9 @@ export default function NoticeManagementScreen({navigation}) {
   // 삭제 실행
   const handleDelete = async () => {
     try {
-      // await deleteNotice(selectedNoticeId);
-
-      // 임시 처리
-      setNotices(prev => prev.filter(notice => notice.id !== selectedNoticeId));
+      await deleteNotice(selectedNoticeId);
       setDeleteModalVisible(false);
+      loadNotices();
       Alert.alert('성공', '공지사항이 삭제되었습니다.');
     } catch (error) {
       console.error('공지사항 삭제 실패:', error);

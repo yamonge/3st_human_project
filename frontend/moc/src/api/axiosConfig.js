@@ -119,16 +119,19 @@ api.interceptors.response.use(
     if (error.response) {
       const {status, data} = error.response;
 
-      // ❌ 상세한 에러 로그
+      // 📥 상세한 응답 로그
       console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('❌ API 에러 응답');
+      console.log('✅ API 응답 성공');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`📍 Method: ${error.config?.method?.toUpperCase()}`);
-      console.log(`📍 URL: ${error.config?.baseURL}${error.config?.url}`);
-      console.log(`📊 Status: ${status}`);
+      console.log(`📍 Method: ${response.config.method?.toUpperCase()}`);
+      const fullUrl = response.config.url?.startsWith('http')
+        ? response.config.url
+        : `${response.config.baseURL}${response.config.url}`;
+      console.log(`📍 URL: ${fullUrl}`);
+      console.log(
+        `📊 Status: ${response.status} ${response.statusText || 'OK'}`,
+      );
       console.log(`⏱️  Duration: ${duration}ms`);
-      console.log('📥 Error Data:', JSON.stringify(data, null, 2));
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
       // 401 에러 (인증 실패)
       if (status === 401) {
@@ -183,5 +186,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
+export {getUserIdOrThrow};
 export default api;
