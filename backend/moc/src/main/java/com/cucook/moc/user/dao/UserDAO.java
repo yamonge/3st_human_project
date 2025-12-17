@@ -51,4 +51,22 @@ public interface UserDAO {
     
     // 같이 장보기에 대한 유저 평점 평균
     void updateRatingScoreByAvg(@Param("targetUserId") Long targetUserId);
+
+    // 프로필 수정
+    void updateUserProfile(
+            @Param("userId") Long userId,
+            @Param("userName") String userName,
+            @Param("userNickname") String userNickname,
+            @Param("userProfileImageUrl") String userProfileImageUrl,
+            @Param("updatedId") Long updatedId,
+            @Param("updatedDate") Timestamp updatedDate
+    );
+
+    // 회원 상태 변경(ACTIVE/SUSPENDED/WITHDRAW)
+    void updateUserStatus(
+            @Param("userId") Long userId,
+            @Param("userStatus") String userStatus,
+            @Param("updatedId") Long updatedId,
+            @Param("updatedDate") Timestamp updatedDate
+    );
 }

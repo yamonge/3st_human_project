@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -46,10 +47,10 @@ import {
  */
 export default function SettingsScreen({navigation}) {
   const [userInfo, setUserInfo] = useState({
-    nickname: '둘리',
-    email: '',
+    nickname: AsyncStorage.getItem('userNickname') || '',
+    email: AsyncStorage.getItem('userEmail') || '',
   });
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(AsyncStorage.getItem('userRole'));
   const [appVersion] = useState('1.0.0');
 
   useEffect(() => {

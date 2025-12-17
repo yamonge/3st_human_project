@@ -4,8 +4,7 @@ import com.cucook.moc.user.dto.PublicProfileDTO;
 import com.cucook.moc.user.dto.UserProfileDTO;
 import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
-import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
-import com.cucook.moc.user.dto.response.LoginResponseDTO;
+import com.cucook.moc.user.dto.response.*;
 
 import java.util.List;
 
@@ -41,4 +40,19 @@ public interface UserService {
 
     // 특정 유저에 대한 리뷰 작성 (writerUserId는 컨트롤러에서 전달)
     void writeReview(Long writerUserId, Long targetUserId, UserReviewCreateRequestDTO request);
+
+    // 설정화면 - 유저 정보
+    UserSettingsInfoResponseDTO getSettingsUserInfo(Long userId);
+    
+    // 설정화면 - 유저 프로필 수정
+    UserSettingsInfoResponseDTO updateMyProfile(
+            Long userId,
+            UpdateProfileRequestDTO request
+    );
+    
+    // 설정화면 - 비밀번호 변경
+    void changePassword(Long userId, com.cucook.moc.user.dto.request.ChangePasswordRequestDTO request);
+    
+    // 설정화면 - 회원탈퇴
+    void withdrawUser(Long userId);
 }

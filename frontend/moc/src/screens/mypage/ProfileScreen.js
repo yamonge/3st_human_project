@@ -1,4 +1,5 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   View,
   Text,
@@ -21,8 +22,8 @@ import styles from '../../styles/screens/mypage/ProfileScreenStyles';
  */
 export default function ProfileScreen({navigation}) {
   const [userInfo, setUserInfo] = useState({
-    nickname: '둘리',
-    email: 'dooly@gmail.com',
+    nickname: '',
+    email: '',
     profileImage: null,
   });
 
@@ -34,10 +35,14 @@ export default function ProfileScreen({navigation}) {
     reports: 0,
   });
 
-  useEffect(() => {
-    loadUserInfo();
-    loadMenuCounts();
-  }, []);
+  // ✅ 화면이 다시 보일 때(포커스될 때)마다 최신 값 재로딩
+  useFocusEffect(
+    useCallback(() => {
+      loadUserInfo();
+      // 메뉴카운트도 최신화가 필요하면 같이 호출
+      // loadMenuCounts();
+    }, []),
+  );
 
   // 사용자 정보 로드
   const loadUserInfo = async () => {
@@ -46,13 +51,12 @@ export default function ProfileScreen({navigation}) {
       const email = await AsyncStorage.getItem('userEmail');
       const profileImage = await AsyncStorage.getItem('profileImage');
 
-      if (nickname || email) {
-        setUserInfo({
-          nickname: nickname || '둘리',
-          email: email || 'dooly@gmail.com',
-          profileImage: profileImage,
-        });
-      }
+      // ✅ 조건 걸지 말고 항상 set (이전 값이 남는 문제 방지)
+      setUserInfo({
+        nickname: nickname || '둘리',
+        email: email || 'dooly@gmail.com',
+        profileImage: profileImage,
+      });
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
     }
