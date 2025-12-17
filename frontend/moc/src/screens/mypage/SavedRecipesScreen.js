@@ -25,7 +25,6 @@ import {colors} from '../../styles/common';
  * - 좋아요한 게시물 목록 표시 (좋아요 버튼 표시)
  */
 export default function SavedRecipesScreen({navigation}) {
-
   const [userId, setUserId] = useState(null);
   const [activeTab, setActiveTab] = useState('saved'); // 'saved' | 'liked'
   const [savedRecipes, setSavedRecipes] = useState([]);
@@ -34,40 +33,35 @@ export default function SavedRecipesScreen({navigation}) {
   const [totalCount, setTotalCount] = useState(0);
 
   // 데이터 불러오기
-const loadData = async () => {
-  try {
-    setLoading(true);
+  const loadData = async () => {
+    try {
+      setLoading(true);
 
-    // ⭐ 여기 추가
-    const userId = await AsyncStorage.getItem('userId');
-    console.log('📡 loadData userId:', userId);
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.warn('❌ userId 없음 → API 호출 중단');
+        setSavedRecipes([]);
+        setTotalCount(0);
+        return;
+      }
 
-    if (!userId) {
-      console.warn('❌ userId 없음 → API 호출 중단');
-      setSavedRecipes([]);
-      setTotalCount(0);
-      return;
+      if (activeTab === 'saved') {
+        const response = await getSavedRecipes(userId);
+        setSavedRecipes(response.bookmarkedRecipes ?? []);
+        setTotalCount(response.totalCount ?? 0);
+      } else {
+        setLikedPosts([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('데이터 불러오기 실패:', error);
+    } finally {
+      setLoading(false);
     }
-
-    if (activeTab === 'saved') {
-      const response = await getSavedRecipes(userId);
-      console.log('🧪 response 전체:', response);
-
-      setSavedRecipes(response.bookmarkedRecipes ?? []);
-      setTotalCount(response.totalCount ?? 0);
-    } else {
-      setLikedPosts([]);
-      setTotalCount(0);
-    }
-  } catch (error) {
-    console.error('데이터 불러오기 실패:', error);
-  } finally {
-    setLoading(false);
-  }
-};
-useEffect(() => {
-  loadData(); // ✅ TS가 "아 사용되는구나" 인식
-}, [activeTab]);
+  };
+  useEffect(() => {
+    loadData(); // ✅ TS가 "아 사용되는구나" 인식
+  }, [activeTab]);
 
   // 레시피 카드 클릭 핸들러
   const handleRecipePress = recipe => {
@@ -181,12 +175,16 @@ useEffect(() => {
         ) : (
           <View style={styles.recipeListContainer}>
             {currentList.length > 0 ? (
-              currentList.map(recipe => (
+              currentList.map(item => (
                 <RecipeListItem
-                  key={recipe.id}
-                  recipe={recipe}
-                  onPress={() => handleRecipePress(recipe)}
-                  hideLike={activeTab === 'saved'} // 저장한 레시피 탭에서만 좋아요 숨김
+                  key={
+                    item.bookmarkId
+                      ? `bookmark-${item.bookmarkId}`
+                      : `recipe-${item.recipe.recipeId}`
+                  }
+                  recipe={item.recipe}
+                  onPress={() => handleRecipePress(item)}
+                  hideLike={activeTab === 'saved'}
                 />
               ))
             ) : (

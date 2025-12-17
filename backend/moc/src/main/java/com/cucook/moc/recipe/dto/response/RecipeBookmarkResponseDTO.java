@@ -16,8 +16,8 @@ public class RecipeBookmarkResponseDTO {
     private Long userId;          // 사용자 ID (tb_recipe_bookmark.user_id)
     private Long recipeId;        // 레시피 ID (tb_recipe_bookmark.recipe_id)
     private Timestamp createdDate; // ⭐ DDL의 created_date, VO의 createdDate와 매핑. (DB에서 저장된 일시)
-    private String savedDateFormatted; // ⭐ UI 표시용: "YYYY-MM-DD HH:mm:ss" 포맷
-
+    private String savedDate; // ⭐ UI 표시용: "YYYY-MM-DD HH:mm:ss" 포맷
+    private String authorNickname;
     private BookmarkedRecipeDetailDTO recipe;
 
     public static RecipeBookmarkResponseDTO from(
@@ -32,9 +32,9 @@ public class RecipeBookmarkResponseDTO {
 
         if (bookmarkVO.getCreatedDate() != null) {
             LocalDateTime dateTime = bookmarkVO.getCreatedDate().toLocalDateTime();
-            dto.setSavedDateFormatted(dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            dto.setSavedDate(dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         } else {
-            dto.setSavedDateFormatted(null);
+            dto.setSavedDate(null);
         }
         if (recipeVO != null) {
             BookmarkedRecipeDetailDTO recipeDetail = new BookmarkedRecipeDetailDTO();
@@ -47,6 +47,7 @@ public class RecipeBookmarkResponseDTO {
             recipeDetail.setCuisineStyleCd(recipeVO.getCuisineStyleCd());
             recipeDetail.setViewCnt(recipeVO.getViewCnt());
             recipeDetail.setLikeCnt(recipeVO.getLikeCnt());
+            recipeDetail.setAuthorNickname(recipeVO.getAuthorNickname());
             dto.setRecipe(recipeDetail);
         }
         return dto;

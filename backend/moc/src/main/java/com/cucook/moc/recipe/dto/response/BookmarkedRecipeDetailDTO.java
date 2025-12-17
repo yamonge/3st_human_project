@@ -19,4 +19,5 @@ public class BookmarkedRecipeDetailDTO {
     // private String category;
     private Integer viewCnt;
     private Integer likeCnt;
+    private String authorNickname;
 }
