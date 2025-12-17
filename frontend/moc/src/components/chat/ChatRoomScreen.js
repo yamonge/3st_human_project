@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
 import {
   View,
   Text,
@@ -15,17 +15,41 @@ import {
   AlertTriangle,
   UserX,
 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useKeyboard} from '../../utils/useKeyboard';
 import styles from '../../styles/components/chat/ChatRoomScreenStyles';
 import ParticipantProfileBottomSheet from './ParticipantProfileBottomSheet';
 import ReportModal from '../common/ReportModal';
 import {reportUser} from '../../api/report';
+import {
+  getChatMessages,
+  getChatRoomParticipants,
+  leaveChatRoom,
+  deleteChatRoom,
+  kickParticipant,
+} from '../../api/chat';
+import StompClient from '../../utils/StompClient';
+import useChatStore from '../../stores/chatStore';
 
-const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
+const ChatRoomScreen = ({
+  visible,
+  onClose,
+  placeName,
+  statusCd,
+  chatRoomId,
+}) => {
   const {keyboardHeight} = useKeyboard();
   const roomName = placeName || '이마트 쌍용점';
   const status =
     statusCd === 'OPEN' ? '진행중' : statusCd === 'DONE' ? '완료' : '취소됨';
+
+  // 🔥 Zustand Store 연동 - useMemo로 안정적인 selector 제공
+  const allMessages = useChatStore(state => state.messages);
+  const messages = useMemo(() => {
+    if (!chatRoomId) return [];
+    return allMessages[chatRoomId] || [];
+  }, [allMessages, chatRoomId]);
+
   const [message, setMessage] = useState('');
   const [showParticipants, setShowParticipants] = useState(false);
   const [showProfileBottomSheet, setShowProfileBottomSheet] = useState(false);
@@ -33,55 +57,24 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
   const [isRoomOwner, setIsRoomOwner] = useState(true); // 임시: 방장 여부 (실제로는 props나 API에서 받아야 함)
-  const [participants, setParticipants] = useState([
-    {userId: 1, nickname: '둘리', avatar: '👽', isMe: false},
-    {userId: 2, nickname: '나', avatar: '😊', isMe: true},
-    {userId: 3, nickname: '또치', avatar: '🦊', isMe: false},
-  ]);
+  const [participants, setParticipants] = useState([]);
   const messageInputRef = useRef(null); // 한글 입력 문제 해결을 위한 ref
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: '둘리',
-      text: '안녕하세요! 같이 장보러 가요!',
-      time: '10:30',
-      isMe: false,
-    },
-    {
-      id: 2,
-      sender: 'me',
-      text: '네 좋아요! 몇 시에 만날까요?',
-      time: '10:32',
-      isMe: true,
-    },
-    {
-      id: 3,
-      sender: '둘리',
-      text: '12시 35분에 정문 앞에서 만나요!',
-      time: '10:33',
-      isMe: false,
-    },
-  ]);
   const scrollViewRef = useRef(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserNickname, setCurrentUserNickname] = useState(null);
 
-  const handleSend = () => {
-    // ref에서 직접 텍스트 가져오기 (한글 입력 문제 해결)
-    const messageText =
-      messageInputRef.current?.value || messageInputRef.current?.text || '';
+  const handleSend = text => {
+    // ✅ Semi-controlled: onSubmitEditing에서 전달된 text 또는 message state 사용
+    const messageText = text || message || '';
 
-    if (messageText.trim()) {
-      const newMessage = {
-        id: messages.length + 1,
-        sender: 'me',
-        text: messageText.trim(),
-        time: new Date().toLocaleTimeString('ko-KR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        }),
-        isMe: true,
-      };
-      setMessages([...messages, newMessage]);
+    if (messageText && messageText.trim() && chatRoomId && currentUserId) {
+      // 🔥 WebSocket으로 메시지 전송
+      StompClient.sendMessage({
+        chatRoomId,
+        senderUserId: currentUserId,
+        senderNickname: currentUserNickname,
+        messageText: messageText.trim(),
+      });
 
       // 입력창 초기화
       if (messageInputRef.current) {
@@ -106,19 +99,22 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
     setShowParticipants(!showParticipants);
   };
 
-  const handleLeaveChatRoom = () => {
+  const handleLeaveChatRoom = async () => {
     if (isRoomOwner) {
       // 방장인 경우 - 채팅방 폐기
-      // Alert 추가 확인
       if (Platform.OS === 'web') {
         const confirmed = window.confirm(
           '채팅방을 폐기하시겠습니까?\n모든 참여자가 나가게 됩니다.',
         );
         if (confirmed) {
-          // TODO: API 호출 - 채팅방 폐기
-          // await deleteChatRoom(chatRoomId);
-          console.log('채팅방 폐기');
-          onClose();
+          try {
+            await deleteChatRoom(chatRoomId, currentUserId);
+            console.log('✅ 채팅방 폐기 완료');
+            onClose();
+          } catch (error) {
+            console.error('❌ 채팅방 폐기 실패:', error);
+            window.alert('채팅방 폐기에 실패했습니다.');
+          }
         }
       } else {
         const {Alert} = require('react-native');
@@ -130,11 +126,15 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
             {
               text: '폐기',
               style: 'destructive',
-              onPress: () => {
-                // TODO: API 호출 - 채팅방 폐기
-                // await deleteChatRoom(chatRoomId);
-                console.log('채팅방 폐기');
-                onClose();
+              onPress: async () => {
+                try {
+                  await deleteChatRoom(chatRoomId, currentUserId);
+                  console.log('✅ 채팅방 폐기 완료');
+                  onClose();
+                } catch (error) {
+                  console.error('❌ 채팅방 폐기 실패:', error);
+                  Alert.alert('오류', '채팅방 폐기에 실패했습니다.');
+                }
               },
             },
           ],
@@ -145,10 +145,14 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
       if (Platform.OS === 'web') {
         const confirmed = window.confirm('채팅방을 나가시겠습니까?');
         if (confirmed) {
-          // TODO: API 호출 - 채팅방 나가기
-          // await leaveChatRoom(chatRoomId, userId);
-          console.log('채팅방 나가기');
-          onClose();
+          try {
+            await leaveChatRoom(chatRoomId, currentUserId);
+            console.log('✅ 채팅방 나가기 완료');
+            onClose();
+          } catch (error) {
+            console.error('❌ 채팅방 나가기 실패:', error);
+            window.alert('채팅방 나가기에 실패했습니다.');
+          }
         }
       } else {
         const {Alert} = require('react-native');
@@ -157,11 +161,15 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
           {
             text: '나가기',
             style: 'destructive',
-            onPress: () => {
-              // TODO: API 호출 - 채팅방 나가기
-              // await leaveChatRoom(chatRoomId, userId);
-              console.log('채팅방 나가기');
-              onClose();
+            onPress: async () => {
+              try {
+                await leaveChatRoom(chatRoomId, currentUserId);
+                console.log('✅ 채팅방 나가기 완료');
+                onClose();
+              } catch (error) {
+                console.error('❌ 채팅방 나가기 실패:', error);
+                Alert.alert('오류', '채팅방 나가기에 실패했습니다.');
+              }
             },
           },
         ]);
@@ -169,13 +177,31 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
     }
   };
 
-  const handleKickParticipant = participantId => {
+  const handleKickParticipant = async participantId => {
     // 강퇴 기능 (방장만)
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('이 참여자를 강퇴하시겠습니까?');
       if (confirmed) {
-        // TODO: API 호출 - 참여자 강퇴
-        console.log('참여자 강퇴:', participantId);
+        try {
+          await kickParticipant(chatRoomId, participantId, currentUserId);
+          console.log('✅ 참여자 강퇴 완료:', participantId);
+          // 참여자 목록 새로고침
+          const data = await getChatRoomParticipants(chatRoomId);
+          const userId = await AsyncStorage.getItem('userId');
+          const currentUserIdNum = Number(userId);
+          const formattedParticipants = data.map(p => ({
+            userId: p.userId,
+            nickname: p.nickname,
+            ratingScore: p.ratingScore,
+            avatar: '👤',
+            isMe: p.userId === currentUserIdNum,
+          }));
+          setParticipants(formattedParticipants);
+          window.alert('참여자가 강퇴되었습니다.');
+        } catch (error) {
+          console.error('❌ 참여자 강퇴 실패:', error);
+          window.alert('참여자 강퇴에 실패했습니다.');
+        }
       }
     } else {
       const {Alert} = require('react-native');
@@ -184,9 +210,27 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
         {
           text: '강퇴',
           style: 'destructive',
-          onPress: () => {
-            // TODO: API 호출 - 참여자 강퇴
-            console.log('참여자 강퇴:', participantId);
+          onPress: async () => {
+            try {
+              await kickParticipant(chatRoomId, participantId, currentUserId);
+              console.log('✅ 참여자 강퇴 완료:', participantId);
+              // 참여자 목록 새로고침
+              const data = await getChatRoomParticipants(chatRoomId);
+              const userId = await AsyncStorage.getItem('userId');
+              const currentUserIdNum = Number(userId);
+              const formattedParticipants = data.map(p => ({
+                userId: p.userId,
+                nickname: p.nickname,
+                ratingScore: p.ratingScore,
+                avatar: '👤',
+                isMe: p.userId === currentUserIdNum,
+              }));
+              setParticipants(formattedParticipants);
+              Alert.alert('완료', '참여자가 강퇴되었습니다.');
+            } catch (error) {
+              console.error('❌ 참여자 강퇴 실패:', error);
+              Alert.alert('오류', '참여자 강퇴에 실패했습니다.');
+            }
           },
         },
       ]);
@@ -234,25 +278,208 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
     }
   };
 
-  // 참여자 목록 조회 (실제 API 호출 - 주석처리)
-  // useEffect(() => {
-  //   const fetchParticipants = async () => {
-  //     try {
-  //       const data = await getChatRoomParticipants(chatRoomId);
-  //       setParticipants(data);
-  //     } catch (error) {
-  //       console.error('참여자 목록 조회 실패:', error);
-  //     }
-  //   };
-  //   if (visible) {
-  //     fetchParticipants();
-  //   }
-  // }, [visible]);
+  // 🔥 채팅방 초기화 및 WebSocket 구독
+  useEffect(() => {
+    if (!visible || !chatRoomId) return;
 
-  const renderMessage = msg => {
+    console.log('💬 [ChatRoomScreen] 채팅방 진입:', chatRoomId);
+
+    // Zustand actions를 한 번만 가져오기
+    const store = useChatStore.getState();
+
+    // 1. 활성 채팅방 설정 (미읽은 메시지 초기화)
+    store.setActiveRoom(chatRoomId);
+
+    // 2. 현재 사용자 정보 로드
+    const loadUserInfo = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        const nickname = await AsyncStorage.getItem('userNickname');
+        setCurrentUserId(Number(userId));
+        setCurrentUserNickname(nickname || '사용자');
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+      }
+    };
+
+    // 3. 과거 메시지 로드 (REST API)
+    const loadPastMessages = async () => {
+      try {
+        console.log('📥 [ChatRoomScreen] 과거 메시지 로드 시작...');
+        const data = await getChatMessages(chatRoomId, 50);
+
+        // 현재 사용자 ID 가져오기
+        const userId = await AsyncStorage.getItem('userId');
+        const currentUserIdNum = Number(userId);
+
+        // 메시지 변환 (API 형식 → 화면 표시 형식)
+        const formattedMessages = data.map(msg => ({
+          messageId: msg.messageId,
+          sender: msg.senderNickname,
+          text: msg.messageText,
+          time: new Date(msg.createdAt).toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          }),
+          isMe: msg.senderUserId === currentUserIdNum,
+          createdAt: msg.createdAt,
+        }));
+
+        store.setMessages(chatRoomId, formattedMessages);
+        console.log(
+          '✅ [ChatRoomScreen] 과거 메시지 로드 완료:',
+          formattedMessages.length,
+          '개',
+        );
+      } catch (error) {
+        console.error('❌ [ChatRoomScreen] 과거 메시지 로드 실패:', error);
+        // 에러 시 빈 배열로 초기화
+        store.setMessages(chatRoomId, []);
+      }
+    };
+
+    // 4. WebSocket 구독 (실시간 메시지 수신)
+    const subscription = StompClient.subscribe(chatRoomId, newMessage => {
+      console.log('📨 [ChatRoomScreen] 실시간 메시지 수신:', newMessage);
+
+      // ✅ Zustand store에서 currentUser 가져오기 (최신 값 보장)
+      const currentUser = useChatStore.getState().currentUser;
+      const currentUserIdNum = currentUser?.userId || 0;
+
+      // 메시지 변환
+      const formattedMessage = {
+        messageId: newMessage.messageId,
+        sender: newMessage.senderNickname,
+        text: newMessage.messageText,
+        time: new Date(newMessage.createdAt || Date.now()).toLocaleTimeString(
+          'ko-KR',
+          {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          },
+        ),
+        isMe: newMessage.senderUserId === currentUserIdNum,
+        messageTypeCd: newMessage.messageTypeCd, // 🔥 시스템 메시지 타입 포함
+        isSystem: newMessage.messageTypeCd === 'SYSTEM', // 🔥 시스템 메시지 여부
+        createdAt: newMessage.createdAt || new Date().toISOString(),
+      };
+
+      // Zustand store에 추가 (자동으로 화면 업데이트)
+      useChatStore.getState().addMessage(chatRoomId, formattedMessage);
+
+      // 스크롤 맨 아래로
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({animated: true});
+      }, 100);
+    });
+
+    // 5. 입장 알림 전송 (사용자 정보 로드 후)
+    const sendJoinNotification = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        const nickname = await AsyncStorage.getItem('userNickname');
+
+        if (userId && nickname) {
+          console.log('🚪 [ChatRoomScreen] 입장 알림 전송');
+          StompClient.sendJoinMessage(chatRoomId, Number(userId), nickname);
+        }
+      } catch (error) {
+        console.error('입장 알림 전송 실패:', error);
+      }
+    };
+
+    // 초기화 실행
+    const initialize = async () => {
+      await loadUserInfo();
+      await loadPastMessages();
+      await sendJoinNotification(); // 입장 알림 (마지막에 전송)
+    };
+
+    initialize();
+
+    // 클린업 (화면 나갈 때)
+    return () => {
+      console.log('👋 [ChatRoomScreen] 채팅방 나가기:', chatRoomId);
+
+      // 🚪 퇴장 알림 전송
+      const sendLeaveNotification = async () => {
+        try {
+          const userId = await AsyncStorage.getItem('userId');
+          const nickname = await AsyncStorage.getItem('userNickname');
+
+          if (userId && nickname) {
+            console.log('🚪 [ChatRoomScreen] 퇴장 알림 전송');
+            StompClient.sendLeaveMessage(chatRoomId, Number(userId), nickname);
+          }
+        } catch (error) {
+          console.error('퇴장 알림 전송 실패:', error);
+        }
+      };
+
+      sendLeaveNotification();
+
+      // WebSocket 구독 해제
+      if (subscription) {
+        StompClient.unsubscribe(chatRoomId);
+      }
+
+      // 활성 채팅방 해제
+      useChatStore.getState().setActiveRoom(null);
+    };
+  }, [visible, chatRoomId]);
+
+  // 참여자 목록 조회
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        console.log('👥 [ChatRoomScreen] 참여자 목록 조회 시작...');
+        const data = await getChatRoomParticipants(chatRoomId);
+
+        // 현재 사용자 표시
+        const userId = await AsyncStorage.getItem('userId');
+        const currentUserIdNum = Number(userId);
+
+        const formattedParticipants = data.map(p => ({
+          userId: p.userId,
+          nickname: p.nickname,
+          ratingScore: p.ratingScore,
+          avatar: '👤', // 기본 아바타 (향후 프로필 이미지로 대체)
+          isMe: p.userId === currentUserIdNum,
+        }));
+
+        setParticipants(formattedParticipants);
+        console.log(
+          '✅ [ChatRoomScreen] 참여자 목록 로드 완료:',
+          formattedParticipants.length,
+          '명',
+        );
+      } catch (error) {
+        console.error('❌ [ChatRoomScreen] 참여자 목록 조회 실패:', error);
+      }
+    };
+
+    if (visible && chatRoomId) {
+      fetchParticipants();
+    }
+  }, [visible, chatRoomId]);
+
+  const renderMessage = (msg, index) => {
+    const key = msg.messageId || `msg-${index}`;
+
+    // 🔥 시스템 메시지 (입장/퇴장 알림)
+    if (msg.messageTypeCd === 'SYSTEM' || msg.isSystem) {
+      return (
+        <View key={key} style={styles.systemMessageContainer}>
+          <Text style={styles.systemMessageText}>{msg.text}</Text>
+        </View>
+      );
+    }
+
     if (msg.isMe) {
       return (
-        <View key={msg.id} style={styles.myMessageContainer}>
+        <View key={key} style={styles.myMessageContainer}>
           <View style={styles.myMessageBubble}>
             <Text style={styles.myMessageText}>{msg.text}</Text>
           </View>
@@ -261,7 +488,7 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
       );
     } else {
       return (
-        <View key={msg.id} style={styles.otherMessageContainer}>
+        <View key={key} style={styles.otherMessageContainer}>
           <Text style={styles.senderName}>{msg.sender}</Text>
           <View style={styles.otherMessageBubble}>
             <Text style={styles.otherMessageText}>{msg.text}</Text>
@@ -319,7 +546,7 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
           onContentSizeChange={() =>
             scrollViewRef.current?.scrollToEnd({animated: true})
           }>
-          {messages.map(renderMessage)}
+          {messages.map((msg, index) => renderMessage(msg, index))}
         </ScrollView>
 
         {/* 참여자 목록 뷰 */}
@@ -399,7 +626,7 @@ const ChatRoomScreen = ({visible, onClose, placeName, statusCd}) => {
               onChangeText={setMessage}
               multiline={false}
               returnKeyType="send"
-              onSubmitEditing={handleSend}
+              onSubmitEditing={e => handleSend(e.nativeEvent.text)}
               blurOnSubmit={false}
               autoCorrect={false}
               autoCapitalize="none"

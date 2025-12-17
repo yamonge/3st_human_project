@@ -7,6 +7,7 @@ import {
   Alert,
   InteractionManager,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
 import {homeStyles} from '../../styles/screens/home/homeStyles';
@@ -14,6 +15,8 @@ import {
   initNotification,
   requestNotificationPermission,
 } from '../../utils/notificationService';
+import useChatStore from '../../stores/chatStore';
+import StompClient from '../../utils/StompClient';
 
 /**
  * 메인 홈 화면
@@ -25,6 +28,59 @@ import {
 export default function HomeScreen({navigation}) {
   // 사용자 정보 (임시)
   const [userName, setUserName] = useState('둘리');
+
+  // 🔥 Zustand Store 액션
+  const setConnected = useChatStore(state => state.setConnected);
+  const setCurrentUser = useChatStore(state => state.setCurrentUser);
+
+  // 🔥 WebSocket 연결 초기화 (홈 화면 진입 시)
+  useEffect(() => {
+    const initializeWebSocket = async () => {
+      try {
+        // 사용자 정보 로드
+        const userId = await AsyncStorage.getItem('userId');
+        const nickname = await AsyncStorage.getItem('userNickname');
+
+        if (!userId) {
+          console.log(
+            '⚠️ [HomeScreen] 사용자 정보 없음 - WebSocket 연결 건너뜀',
+          );
+          return;
+        }
+
+        console.log('🔌 [HomeScreen] WebSocket 연결 시작...', {
+          userId,
+          nickname,
+        });
+
+        // Zustand Store에 사용자 정보 저장
+        setCurrentUser({
+          userId: Number(userId),
+          nickname: nickname || '사용자',
+        });
+
+        // WebSocket 연결
+        StompClient.connect(
+          Number(userId),
+          () => {
+            console.log('✅ [HomeScreen] WebSocket 연결 성공!');
+            setConnected(true);
+          },
+          error => {
+            console.error('❌ [HomeScreen] WebSocket 연결 실패:', error);
+            setConnected(false);
+          },
+        );
+      } catch (error) {
+        console.error('💥 [HomeScreen] WebSocket 초기화 에러:', error);
+      }
+    };
+
+    initializeWebSocket();
+
+    // ✅ WebSocket은 앱 전체에서 공유되므로 언마운트 시에도 연결 유지
+    // cleanup 함수 제거 - 연결을 끊지 않음!
+  }, []);
 
   // 알림 초기화 및 권한 요청 (홈 화면 렌더링 완료 후)
   useEffect(() => {

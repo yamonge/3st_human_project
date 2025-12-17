@@ -14,11 +14,11 @@ public class ShoppingChatStompController {
     private ShoppingChatMessageService shoppingChatMessageService;
 
     /**
-     * 클라이언트: /pub/shopping/chat/message 로 SEND
+     * 클라이언트: /app/chat.sendMessage 로 SEND (프론트와 일치)
      * payload: { chatRoomId, senderUserId, messageTypeCd, messageText }
      * senderNickname은 서버에서 UserDAO로 조회해서 세팅
      */
-    @MessageMapping("/shopping/chat/message")
+    @MessageMapping("/chat.sendMessage")
     public void handleChatMessage(ChatMessageDTO dto) {
         shoppingChatMessageService.sendMessage(dto);
     }

@@ -18,6 +18,7 @@
         <result property="suspendedReason"       column="suspended_reason"/>
         <result property="reportedCnt"           column="reported_cnt"/>
         <result property="shoppingCompletedCnt"  column="shopping_completed_cnt"/>
+        <result property="shoppingParticipatedCnt" column="shopping_participated_cnt"/>
         <result property="ratingScore"           column="rating_score"/>
         <result property="trustScore"            column="trust_score"/>
         <result property="lastLoginDate"         column="last_login_date"/>

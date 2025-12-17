@@ -17,9 +17,14 @@ import {colors} from '../../styles/common';
 /**
  * 게시물 카드 컴포넌트
  * - 축소 상태: 기본 정보 + "상세보기" 버튼
- * - 확장 상태: 기본 정보 + "접기" 버튼 + 상세 내용 + "참여하기" 버튼
+ * - 확장 상태: 기본 정보 + "접기" 버튼 + 상세 내용 + "참여하기"/"채팅방 입장" 버튼
  */
-export default function PostCard({post, onJoin}) {
+export default function PostCard({
+  post,
+  onJoin,
+  isOwner = false,
+  isParticipant = false,
+}) {
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpand = () => {
@@ -189,13 +194,17 @@ export default function PostCard({post, onJoin}) {
             </View>
           </View>
 
-          {/* 참여하기 버튼 */}
+          {/* 참여하기/채팅방 입장 버튼 */}
           <TouchableOpacity
-            style={styles.joinButton}
+            style={
+              isOwner || isParticipant ? styles.ownerButton : styles.joinButton
+            }
             onPress={handleJoin}
             activeOpacity={0.8}>
             <Users size={18} color={colors.white} />
-            <Text style={styles.joinButtonText}>참여하기</Text>
+            <Text style={styles.joinButtonText}>
+              {isOwner || isParticipant ? '채팅방 입장' : '참여하기'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}

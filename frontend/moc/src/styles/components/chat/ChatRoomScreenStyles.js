@@ -146,6 +146,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
 
+  // 🔥 시스템 메시지 스타일 (입장/퇴장 알림)
+  systemMessageContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+
+  systemMessageText: {
+    fontSize: 12,
+    fontFamily: 'NotoSansKR-Regular',
+    color: '#A1A1A1',
+    lineHeight: 18,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+  },
+
   // 입력창 스타일
   inputContainer: {
     position: 'absolute',

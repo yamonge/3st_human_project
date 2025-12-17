@@ -1,12 +1,20 @@
-import React, {useRef, useMemo, useCallback, useState} from 'react';
-import {View, Text, TouchableOpacity, ScrollView, Platform} from 'react-native';
+import React, {useRef, useMemo, useCallback, useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {Portal} from '@gorhom/portal';
-import {X, AlertTriangle, Star} from 'lucide-react-native';
+import {X, AlertTriangle, Star, Award, Users} from 'lucide-react-native';
 import styles from '../../styles/components/chat/ParticipantProfileBottomSheetStyles';
 import AllReviewsScreen from './AllReviewsScreen';
 import ReportModal from '../common/ReportModal';
 import {reportUser} from '../../api/report';
+import {getPublicProfile, getUserReviews} from '../../api/chat';
 
 const ParticipantProfileBottomSheet = ({
   visible,
@@ -18,6 +26,8 @@ const ParticipantProfileBottomSheet = ({
   const snapPoints = useMemo(() => ['80%'], []);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [profileData, setProfileData] = useState(null);
   // 바텀시트 열기/닫기
   React.useEffect(() => {
     if (visible) {
@@ -69,42 +79,89 @@ const ParticipantProfileBottomSheet = ({
     setShowAllReviews(true);
   };
 
-  if (!visible || !participant) return null;
+  // 프로필 데이터 로드
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!visible || !participant?.userId) return;
 
-  // 임시 데이터
-  const profileData = {
-    nickname: participant.nickname || '둘리',
-    avatar: participant.avatar || '👽',
-    joinDate: '2024년 8월 가입',
-    rating: 4.5,
-    reviewCount: 23,
-    completedMeetings: 47,
-    attendanceRate: 98,
-    recentReviews: [
-      {
-        id: 1,
-        author: '고길동',
-        rating: 3,
-        date: '2일 전',
-        content:
-          '친절하고 시간 약속도 잘 지키세요! 다음에 또 함께하고 싶어요 😊',
-      },
-      {
-        id: 2,
-        author: '마이콜',
-        rating: 3,
-        date: '1주 전',
-        content: '좋은 재료 고르는 안목이 있으시네요',
-      },
-      {
-        id: 3,
-        author: '도우너',
-        rating: 3,
-        date: '2주 전',
-        content: '같이 장보기 정말 즐거웠습니다!',
-      },
-    ],
-  };
+      setLoading(true);
+      try {
+        console.log('👤 [프로필] 데이터 로드 시작:', participant.userId);
+
+        // 프로필 및 후기 동시 조회
+        const [profile, reviews] = await Promise.all([
+          getPublicProfile(participant.userId),
+          getUserReviews(participant.userId, 5), // 최근 5개
+        ]);
+
+        // ✅ API 응답 전체 확인 (디버깅용)
+        console.log('📦 [프로필] API 응답:', JSON.stringify(profile, null, 2));
+        console.log('📝 [후기] API 응답:', JSON.stringify(reviews, null, 2));
+
+        // 날짜 포맷팅
+        const formatJoinDate = dateString => {
+          if (!dateString) return '가입일 알 수 없음';
+          const date = new Date(dateString);
+          return `${date.getFullYear()}년 ${date.getMonth() + 1}월 가입`;
+        };
+
+        // 후기 날짜 계산
+        const getRelativeTime = dateString => {
+          if (!dateString) return '';
+          const now = new Date();
+          const date = new Date(dateString);
+          const diffMs = now - date;
+          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+          if (diffDays === 0) return '오늘';
+          if (diffDays === 1) return '어제';
+          if (diffDays < 7) return `${diffDays}일 전`;
+          if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전`;
+          return `${Math.floor(diffDays / 30)}개월 전`;
+        };
+
+        setProfileData({
+          nickname: profile.userNickname || participant.nickname || '사용자',
+          avatar: participant.avatar || '👤',
+          joinDate: formatJoinDate(profile.createdDate),
+          rating: profile.ratingScore || 0,
+          reviewCount: profile.reviewCnt || 0,
+          completedMeetings: profile.shoppingCompletedCnt || 0,
+          attendanceRate: profile.attendanceRate || 0, // ✅ 실제 백엔드 데이터 사용
+          recentReviews: Array.isArray(reviews)
+            ? reviews.map((review, index) => ({
+                id: review.userReviewId || index,
+                author: review.writerNickname || '익명',
+                rating: review.rating || 5,
+                date: getRelativeTime(review.createdDate),
+                content: review.comment || review.userReviewComment || '', // ✅ comment 필드 우선 사용
+              }))
+            : [],
+        });
+
+        console.log('✅ [프로필] 데이터 로드 완료');
+      } catch (error) {
+        console.error('❌ [프로필] 데이터 로드 실패:', error);
+        // 에러 시 기본값 설정
+        setProfileData({
+          nickname: participant.nickname || '사용자',
+          avatar: participant.avatar || '👤',
+          joinDate: '가입일 알 수 없음',
+          rating: 0,
+          reviewCount: 0,
+          completedMeetings: 0,
+          attendanceRate: 0,
+          recentReviews: [],
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [visible, participant]);
+
+  if (!visible || !participant) return null;
 
   const renderStars = (rating, size = 16) => {
     const stars = [];
@@ -202,70 +259,87 @@ const ParticipantProfileBottomSheet = ({
               paddingBottom: 100, // 또는 더 큰 값 (60-100)
             }}
             showsVerticalScrollIndicator={false}>
-            {/* 프로필 정보 */}
-            <View style={styles.profileSection}>
-              <View style={styles.avatarContainer}>
-                <Text style={styles.avatarText}>{profileData.avatar}</Text>
-              </View>
-              <Text style={styles.nickname}>{profileData.nickname}</Text>
-              <Text style={styles.joinDate}>{profileData.joinDate}</Text>
-              <View style={styles.ratingContainer}>
-                <View style={styles.starsContainer}>
-                  {renderStars(profileData.rating)}
-                </View>
-                <Text style={styles.ratingText}>
-                  {profileData.rating} ({profileData.reviewCount}개 후기)
+            {/* 로딩 상태 */}
+            {loading && (
+              <View style={{padding: 40, alignItems: 'center'}}>
+                <ActivityIndicator size="large" color="#155DFC" />
+                <Text style={{marginTop: 16, color: '#737373'}}>
+                  프로필 로딩 중...
                 </Text>
               </View>
-            </View>
+            )}
 
-            {/* 통계 */}
-            <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>🎯</Text>
-                <Text style={styles.statValue}>
-                  {profileData.completedMeetings}
-                </Text>
-                <Text style={styles.statLabel}>완료한 모임</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statIcon}>📊</Text>
-                <Text style={styles.statValue}>
-                  {profileData.attendanceRate}%
-                </Text>
-                <Text style={styles.statLabel}>참석률</Text>
-              </View>
-            </View>
-
-            {/* 최근 받은 후기 */}
-            <View style={styles.reviewsSection}>
-              <View style={styles.reviewsHeader}>
-                <Text style={styles.reviewsTitle}>최근 받은 후기</Text>
-                <TouchableOpacity
-                  onPress={handleViewAllReviews}
-                  activeOpacity={0.7}>
-                  <Text style={styles.viewAllButton}>전체보기</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.reviewsList}>
-                {profileData.recentReviews.map(review => (
-                  <View key={review.id} style={styles.reviewCard}>
-                    <View style={styles.reviewHeader}>
-                      <View style={styles.reviewAuthor}>
-                        <Text style={styles.reviewAuthorName}>
-                          {review.author}
-                        </Text>
-                        <View style={styles.reviewStarsContainer}>
-                          {renderReviewStars(review.rating)}
-                        </View>
-                      </View>
-                      <Text style={styles.reviewDate}>{review.date}</Text>
-                    </View>
-                    <Text style={styles.reviewContent}>{review.content}</Text>
+            {/* 프로필 데이터 */}
+            {!loading && profileData && (
+              <>
+                {/* 프로필 정보 */}
+                <View style={styles.profileSection}>
+                  <View style={styles.avatarContainer}>
+                    <Text style={styles.avatarText}>{profileData.avatar}</Text>
                   </View>
-                ))}
-              </View>
-            </View>
+                  <Text style={styles.nickname}>{profileData.nickname}</Text>
+                  <Text style={styles.joinDate}>{profileData.joinDate}</Text>
+                  <View style={styles.ratingContainer}>
+                    <View style={styles.starsContainer}>
+                      {renderStars(profileData.rating)}
+                    </View>
+                    <Text style={styles.ratingText}>
+                      {profileData.rating} ({profileData.reviewCount}개 후기)
+                    </Text>
+                  </View>
+                </View>
+
+                {/* 통계 */}
+                <View style={styles.statsContainer}>
+                  <View style={styles.statCard}>
+                    <Award size={28} color="#155DFC" strokeWidth={2} />
+                    <Text style={styles.statValue}>
+                      {profileData.completedMeetings}
+                    </Text>
+                    <Text style={styles.statLabel}>완료한 모임</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Users size={28} color="#A855F7" strokeWidth={2} />
+                    <Text style={styles.statValue}>
+                      {profileData.attendanceRate}%
+                    </Text>
+                    <Text style={styles.statLabel}>참석률</Text>
+                  </View>
+                </View>
+
+                {/* 최근 받은 후기 */}
+                <View style={styles.reviewsSection}>
+                  <View style={styles.reviewsHeader}>
+                    <Text style={styles.reviewsTitle}>최근 받은 후기</Text>
+                    <TouchableOpacity
+                      onPress={handleViewAllReviews}
+                      activeOpacity={0.7}>
+                      <Text style={styles.viewAllButton}>전체보기</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.reviewsList}>
+                    {profileData.recentReviews.map(review => (
+                      <View key={review.id} style={styles.reviewCard}>
+                        <View style={styles.reviewHeader}>
+                          <View style={styles.reviewAuthor}>
+                            <Text style={styles.reviewAuthorName}>
+                              {review.author}
+                            </Text>
+                            <View style={styles.reviewStarsContainer}>
+                              {renderReviewStars(review.rating)}
+                            </View>
+                          </View>
+                          <Text style={styles.reviewDate}>{review.date}</Text>
+                        </View>
+                        <Text style={styles.reviewContent}>
+                          {review.content}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
           </BottomSheetScrollView>
         </View>
       </BottomSheet>

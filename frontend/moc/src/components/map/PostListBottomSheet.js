@@ -5,7 +5,9 @@ import {RefreshCw, Filter, AlertCircle, X} from 'lucide-react-native';
 import PostCard from './PostCard';
 import PostFilterModal from './PostFilterModal';
 import PostCreateModal from './PostCreateModal';
-import {getPostsByLocation} from '../../api/map';
+import ChatRoomScreen from '../chat/ChatRoomScreen';
+import {getPostsByLocation, joinPost} from '../../api/map';
+import authAPI from '../../api/auth';
 import styles from '../../styles/components/map/PostListBottomSheetStyles';
 import {colors} from '../../styles/common';
 
@@ -30,6 +32,8 @@ export default function PostListBottomSheet({
   const [postList, setPostList] = useState([]); // 필터 적용된 리스트(렌더링용)
 
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null); // 현재 로그인한 사용자 ID
+  const [participatedPostIds, setParticipatedPostIds] = useState([]); // ✅ 참여한 게시물 ID 배열
 
   // 게시물 필터 모달 (내부 관리)
   const [showPostFilterModal, setShowPostFilterModal] = useState(false);
@@ -43,6 +47,24 @@ export default function PostListBottomSheet({
 
   // 게시물 작성 모달
   const [showPostCreateModal, setShowPostCreateModal] = useState(false);
+
+  // 채팅방 모달
+  const [showChatRoom, setShowChatRoom] = useState(false);
+  const [selectedChatRoomId, setSelectedChatRoomId] = useState(null);
+  const [selectedStoreName, setSelectedStoreName] = useState(null);
+
+  // 현재 사용자 정보 로드
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const response = await authAPI.getCurrentUser();
+        setCurrentUserId(response.user?.userId || response.userId);
+      } catch (error) {
+        console.error('[현재 사용자 로드 실패]', error);
+      }
+    };
+    loadCurrentUser();
+  }, []);
 
   // visible 변경 시 바텀시트 열기/닫기
   useEffect(() => {
@@ -158,6 +180,7 @@ export default function PostListBottomSheet({
       categoryCodes: parseCategoryCodes(dto.categoryCodesCsv),
 
       author: dto.writerNickname || `user#${dto.writerUserId ?? ''}`,
+      creatorUserId: dto.writerUserId, // ✅ 작성자 ID 추가
       description: dto.description || '',
       createdAt: toIso(dto.createdDate) || new Date().toISOString(),
     };
@@ -330,19 +353,127 @@ export default function PostListBottomSheet({
   };
 
   /**
-   * 참여하기 핸들러
+   * 참여하기/채팅방 입장 핸들러
    */
-  const handleJoinPost = post => {
-    console.log('[참여하기]', post.id, post.storeName);
-    // TODO: 백엔드 API 호출 → 채팅방 입장
-    // navigation.navigate('ChatRoom', {postId: post.id, ...});
+  const handleJoinPost = async post => {
+    const isOwner = currentUserId === post.creatorUserId;
+    const isParticipant = participatedPostIds.includes(post.id); // ✅ 참여 여부 체크
+
+    console.log('[참여하기/채팅방 입장] 시작', {
+      postId: post.id,
+      storeName: post.storeName,
+      isOwner,
+      isParticipant,
+      currentCount: post.currentCount,
+      maxCount: post.maxCount,
+    });
+
+    // ✅ 작성자 또는 이미 참여한 경우: API 호출 없이 채팅방 열기
+    if (isOwner || isParticipant) {
+      console.log(isOwner ? '[작성자]' : '[참여자]', '채팅방 바로 열기');
+      onClose();
+      setSelectedChatRoomId(post.id);
+      setSelectedStoreName(post.storeName);
+      setShowChatRoom(true);
+      return;
+    }
+
+    // ✅ 인원수 마감 체크 (새로운 참여자만)
+    if (post.currentCount >= post.maxCount) {
+      Alert.alert('알림', '모집 인원이 마감되었습니다.');
+      return;
+    }
+
+    try {
+      let chatRoomId;
+
+      // ✅ 일반 사용자: joinPost API 호출하여 참여
+      console.log('[일반 사용자] joinPost API 호출 시작...');
+      const response = await joinPost(post.id);
+      console.log('[일반 사용자] joinPost API 응답:', response);
+
+      // ✅ 응답이 숫자 자체인 경우 처리
+      if (typeof response === 'number') {
+        chatRoomId = response;
+      } else {
+        chatRoomId = response?.chatRoomId || response?.id || response;
+      }
+
+      console.log('[일반 사용자] 참여 완료, chatRoomId:', chatRoomId);
+
+      // ✅ 참여 성공 후 배열에 추가
+      setParticipatedPostIds(prev => [...prev, post.id]);
+
+      // ✅ 참여 성공 후 게시물 목록 새로고침 (인원수 업데이트)
+      await loadPosts();
+
+      // 바텀시트 닫기
+      console.log('[바텀시트] 닫기 시작');
+      onClose();
+
+      // ✅ 채팅방 모달 열기
+      console.log('[채팅방 모달] 열기 시작', {
+        chatRoomId,
+        storeName: post.storeName,
+        showChatRoom: true,
+      });
+
+      setSelectedChatRoomId(chatRoomId);
+      setSelectedStoreName(post.storeName);
+      setShowChatRoom(true);
+
+      console.log('[채팅방 모달] state 설정 완료');
+    } catch (error) {
+      console.error('[참여하기/채팅방 입장] 실패:', error);
+      console.error('[에러 상세]', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+
+      // ✅ 에러 메시지 구분
+      const errorMessage = error.response?.data?.message || error.message;
+
+      if (errorMessage?.includes('인원') || errorMessage?.includes('마감')) {
+        Alert.alert('알림', '모집 인원이 마감되었습니다.');
+      } else if (
+        errorMessage?.includes('이미') ||
+        errorMessage?.includes('참여')
+      ) {
+        // ✅ 이미 참여한 경우 채팅방 바로 열기
+        console.log('[중복 참여] 채팅방 바로 열기');
+        onClose();
+        setSelectedChatRoomId(post.id);
+        setSelectedStoreName(post.storeName);
+        setShowChatRoom(true);
+      } else {
+        Alert.alert('오류', '채팅방 입장에 실패했습니다.\n' + errorMessage);
+      }
+    }
   };
 
   // 게시물 카드 렌더링
-  const renderPostCard = ({item}) => (
-    <PostCard post={item} onJoin={handleJoinPost} />
-  );
+  const renderPostCard = ({item}) => {
+    const isOwner = currentUserId === item.creatorUserId;
+    const isParticipant = participatedPostIds.includes(item.id); // ✅ 참여 여부
 
+    console.log('[PostCard 렌더링]', {
+      currentUserId,
+      creatorUserId: item.creatorUserId,
+      isOwner,
+      isParticipant,
+      storeName: item.storeName,
+    });
+
+    return (
+      <PostCard
+        post={item}
+        onJoin={handleJoinPost}
+        isOwner={isOwner}
+        isParticipant={isParticipant}
+      />
+    );
+  };
   // 빈 상태
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -449,6 +580,20 @@ export default function PostListBottomSheet({
           loadPosts(); // 생성 후 목록 갱신
         }}
       />
+
+      {/* ✅ 채팅방 모달 */}
+      {showChatRoom && selectedChatRoomId && (
+        <ChatRoomScreen
+          visible={showChatRoom}
+          chatRoomId={selectedChatRoomId}
+          storeName={selectedStoreName}
+          onClose={() => {
+            setShowChatRoom(false);
+            setSelectedChatRoomId(null);
+            setSelectedStoreName(null);
+          }}
+        />
+      )}
     </BottomSheet>
   );
 }

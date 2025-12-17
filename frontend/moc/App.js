@@ -7,6 +7,8 @@ import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {PortalProvider} from '@gorhom/portal';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
+import StompClient from './src/utils/StompClient';
+import useChatStore from './src/stores/chatStore';
 
 // 온보딩 & 인증 화면
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
@@ -326,11 +328,12 @@ function App() {
   // 최초 실행 여부 및 로그인 상태 체크
   const checkFirstLaunch = async () => {
     try {
-      const token = await AsyncStorage.getItem('accessToken');
+      // ✅ userId로 로그인 상태 확인 (accessToken 사용 안 함)
+      const userId = await AsyncStorage.getItem('userId');
 
       // 온보딩 항상 표시 (개발용)
       setIsFirstLaunch(true);
-      setIsLoggedIn(token !== null);
+      setIsLoggedIn(userId !== null); // ✅ userId 기준으로 변경
     } catch (error) {
       console.error('앱 초기화 에러:', error);
       setIsFirstLaunch(true);

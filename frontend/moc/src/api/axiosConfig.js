@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // API 기본 URL (백엔드 개발자가 제공하는 주소로 변경 필요)
 const BASE_URL =
   Platform.OS === 'android'
-    ? 'http://192.168.35.21:8090/api'
+    ? 'http://192.168.50.117:8090/api'
     : 'http://localhost:8090/api';
 
 // axios 인스턴스 생성
@@ -92,7 +92,10 @@ api.interceptors.response.use(
     console.log('✅ API 응답 성공');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`📍 Method: ${response.config.method?.toUpperCase()}`);
-    console.log(`📍 URL: ${response.config.baseURL}${response.config.url}`);
+    const fullUrl = response.config.url?.startsWith('http')
+      ? response.config.url
+      : `${response.config.baseURL}${response.config.url}`;
+    console.log(`📍 URL: ${fullUrl}`);
     console.log(`📊 Status: ${response.status} ${response.statusText || 'OK'}`);
     console.log(`⏱️  Duration: ${duration}ms`);
 
@@ -124,7 +127,10 @@ api.interceptors.response.use(
       console.log('❌ API 에러 응답');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log(`📍 Method: ${error.config?.method?.toUpperCase()}`);
-      console.log(`📍 URL: ${error.config?.baseURL}${error.config?.url}`);
+      const fullUrl = error.config?.url?.startsWith('http')
+        ? error.config.url
+        : `${error.config?.baseURL}${error.config?.url}`;
+      console.log(`📍 URL: ${fullUrl}`);
       console.log(`📊 Status: ${status}`);
       console.log(`⏱️  Duration: ${duration}ms`);
       console.log('📥 Error Data:', JSON.stringify(data, null, 2));
@@ -164,7 +170,10 @@ api.interceptors.response.use(
       console.log('❌ 네트워크 에러');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log(`📍 Method: ${error.config?.method?.toUpperCase()}`);
-      console.log(`📍 URL: ${error.config?.baseURL}${error.config?.url}`);
+      const fullUrl = error.config?.url?.startsWith('http')
+        ? error.config.url
+        : `${error.config?.baseURL}${error.config?.url}`;
+      console.log(`📍 URL: ${fullUrl}`);
       console.log(`⏱️  Duration: ${duration}ms`);
       console.log('📛 Error:', error.message);
       console.log('💡 Tip: 서버가 실행 중인지, 네트워크 연결을 확인하세요.');

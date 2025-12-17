@@ -331,12 +331,26 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
 
-        // 2) 공개용 프로필 DTO 구성 (닉네임 + 평점 + 장보기 완료 횟수)
+        // 2) 참석률 계산 (완료 / 참여 * 100)
+        Integer attendanceRate = 0;
+        Integer participated = user.getShoppingParticipatedCnt();
+        Integer completed = user.getShoppingCompletedCnt();
+        if (participated != null && participated > 0) {
+            attendanceRate = (int) Math.round((completed.doubleValue() / participated.doubleValue()) * 100);
+        }
+
+        // 3) 후기 개수 조회
+        int reviewCount = userReviewDAO.countReceivedUserReviewsByUserId(targetUserId);
+
+        // 4) 공개용 프로필 DTO 구성
         return PublicProfileDTO.builder()
                 .userId(user.getUserId())
                 .userNickname(user.getUserNickname())
                 .ratingScore(user.getRatingScore())
                 .shoppingCompletedCnt(user.getShoppingCompletedCnt())
+                .attendanceRate(attendanceRate)
+                .createdDate(user.getCreatedDate())
+                .reviewCnt(reviewCount)
                 .build();
     }
 

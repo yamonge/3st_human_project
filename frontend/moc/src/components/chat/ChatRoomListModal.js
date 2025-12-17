@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,12 @@ import {
   Star,
   Trash2,
 } from 'lucide-react-native';
-// import {getMyChatRooms, deleteChatRoom} from '../../api/chat';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {getMyChatRooms, deleteChatRoom} from '../../api/chat';
 import {colors} from '../../styles/common';
 import styles from '../../styles/components/chat/ChatRoomListModalStyles';
 import ChatRoomScreen from './ChatRoomScreen';
+import useChatStore from '../../stores/chatStore';
 
 // 더미 데이터
 const DUMMY_CHAT_ROOMS = [
@@ -63,33 +65,88 @@ const DUMMY_CHAT_ROOMS = [
 /**
  * 채팅방 목록 모달
  */
-export default function ChatRoomListModal({visible, onClose, navigation}) {
-  const [chatRooms, setChatRooms] = useState(DUMMY_CHAT_ROOMS);
+export default function ChatRoomListModal({
+  visible,
+  onClose,
+  navigation,
+  route,
+}) {
+  // 🔥 Zustand Store 연동
+  const chatRooms = useChatStore(state => state.chatRooms);
+  const setChatRooms = useChatStore(state => state.setChatRooms);
+  const removeChatRoom = useChatStore(state => state.removeChatRoom);
+
   const [loading, setLoading] = useState(false);
   const [showChatRoom, setShowChatRoom] = useState(false);
   const [selectedChatRoom, setSelectedChatRoom] = useState(null);
-  const userId = 1;
+  const [userId, setUserId] = useState(null);
 
+  // ✅ 외부에서 특정 채팅방 ID를 받아 자동으로 열기
+  const openChatRoomId = route?.params?.openChatRoomId;
+
+  // 🔥 사용자 ID 로드
   useEffect(() => {
-    if (visible) {
-      fetchChatRooms();
-    }
-  }, [visible]);
+    const loadUserId = async () => {
+      try {
+        const id = await AsyncStorage.getItem('userId');
+        setUserId(Number(id));
+      } catch (error) {
+        console.error('userId 로드 실패:', error);
+      }
+    };
+    loadUserId();
+  }, []);
 
-  const fetchChatRooms = async () => {
+  // 🔥 채팅방 목록 로드 (무한 루프 방지)
+  const fetchChatRooms = useCallback(async () => {
+    if (!userId) return;
+
     setLoading(true);
     try {
-      // const data = await getMyChatRooms(userId);
-      // setChatRooms(data);
-      setTimeout(() => {
-        setChatRooms(DUMMY_CHAT_ROOMS);
-        setLoading(false);
-      }, 500);
+      console.log('📋 [ChatRoomListModal] 채팅방 목록 로드 시작...');
+      const data = await getMyChatRooms(userId);
+      setChatRooms(data);
+      console.log(
+        '✅ [ChatRoomListModal] 채팅방 목록 로드 완료:',
+        data.length,
+        '개',
+      );
     } catch (error) {
-      Alert.alert('오류', '채팅방 목록을 불러오는데 실패했습니다.');
+      console.error('❌ [ChatRoomListModal] 채팅방 목록 로드 실패:', error);
+      // 에러 시 더미 데이터 사용 (개발 중)
+      setChatRooms(DUMMY_CHAT_ROOMS);
+      Alert.alert(
+        '알림',
+        '채팅방 목록을 불러오는데 실패했습니다.\n더미 데이터를 사용합니다.',
+      );
+    } finally {
       setLoading(false);
     }
-  };
+  }, [userId, setChatRooms]);
+
+  // 채팅방 목록 로드 트리거
+  useEffect(() => {
+    if (visible && userId) {
+      fetchChatRooms();
+    }
+  }, [visible, userId, fetchChatRooms]);
+
+  // ✅ 외부에서 특정 채팅방 ID를 받으면 자동으로 열기
+  useEffect(() => {
+    if (openChatRoomId && chatRooms.length > 0) {
+      const room = chatRooms.find(r => r.chatRoomId === openChatRoomId);
+      if (room) {
+        console.log('🚪 [자동 입장] 채팅방 열기:', openChatRoomId);
+        setSelectedChatRoom(room);
+        setShowChatRoom(true);
+
+        // route params 초기화 (중복 실행 방지)
+        if (navigation.setParams) {
+          navigation.setParams({openChatRoomId: null});
+        }
+      }
+    }
+  }, [openChatRoomId, chatRooms, navigation]);
 
   const handleDelete = chatRoomId => {
     Alert.alert('확인', '채팅방을 삭제하시겠습니까?', [
@@ -99,12 +156,13 @@ export default function ChatRoomListModal({visible, onClose, navigation}) {
         style: 'destructive',
         onPress: async () => {
           try {
-            // await deleteChatRoom(chatRoomId);
-            setChatRooms(prev =>
-              prev.filter(room => room.chatRoomId !== chatRoomId),
-            );
+            console.log('🗑️ [ChatRoomListModal] 채팅방 삭제:', chatRoomId);
+            await deleteChatRoom(chatRoomId);
+            // 🔥 Zustand store에서 제거
+            removeChatRoom(chatRoomId);
             Alert.alert('완료', '채팅방이 삭제되었습니다.');
           } catch (error) {
+            console.error('❌ [ChatRoomListModal] 채팅방 삭제 실패:', error);
             Alert.alert('오류', '채팅방 삭제에 실패했습니다.');
           }
         },
@@ -286,6 +344,7 @@ export default function ChatRoomListModal({visible, onClose, navigation}) {
       <ChatRoomScreen
         visible={showChatRoom}
         onClose={handleCloseChatRoom}
+        chatRoomId={selectedChatRoom?.chatRoomId}
         placeName={selectedChatRoom?.placeName}
         statusCd={selectedChatRoom?.statusCd}
       />

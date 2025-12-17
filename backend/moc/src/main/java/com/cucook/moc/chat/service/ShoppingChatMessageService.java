@@ -61,11 +61,14 @@ public class ShoppingChatMessageService {
         UserVO sender = userDAO.selectById(dto.getSenderUserId());
         String senderNickname = sender != null ? sender.getUserNickname() : "알수없음";
 
+        // 4) DTO에 필드 설정 (프론트 요구사항)
+        dto.setMessageId(messageVO.getChatMessageId());  // ✅ DB에서 생성된 ID
         dto.setSenderNickname(senderNickname);
         dto.setSentDate(messageVO.getSentDate());
+        dto.setCreatedAt(messageVO.getSentDate());       // ✅ 프론트 호환성
 
-        // /sub/shopping/chat/room/{chatRoomId} 로 브로드캐스트
-        String destination = "/sub/shopping/chat/room/" + dto.getChatRoomId();
+        // /topic/room/{chatRoomId} 로 브로드캐스트 (프론트와 일치)
+        String destination = "/topic/room/" + dto.getChatRoomId();
         messagingTemplate.convertAndSend(destination, dto);
     }
     

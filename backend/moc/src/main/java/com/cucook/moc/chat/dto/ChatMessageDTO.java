@@ -13,10 +13,12 @@ import java.time.LocalDateTime;
 @ToString
 public class ChatMessageDTO {
 
+    private Long messageId;          // ✅ 프론트 요구: 메시지 고유 ID
     private Long chatRoomId;
     private Long senderUserId;      // 내부 식별용
     private String senderNickname;   // 프론트에 보여줄 닉네임
     private String messageTypeCd;    // TEXT / SYSTEM 등
     private String messageText;
-    private Timestamp sentDate;  // 서버에서 세팅
+    private Timestamp sentDate;      // 서버에서 세팅
+    private Timestamp createdAt;     // ✅ 프론트 요구: ISO 8601 형식
 }
