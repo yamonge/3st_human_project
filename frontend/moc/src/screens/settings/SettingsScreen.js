@@ -46,24 +46,27 @@ import {
  * - 하단: 회원탈퇴 버튼, 버전 정보
  */
 export default function SettingsScreen({navigation}) {
-  const [userInfo, setUserInfo] = useState({
-    nickname: AsyncStorage.getItem('userNickname') || '',
-    email: AsyncStorage.getItem('userEmail') || '',
-  });
-  const [isAdmin, setIsAdmin] = useState(AsyncStorage.getItem('userRole'));
+  const [userInfo, setUserInfo] = useState({nickname: '', email: ''});
+  const [isAdmin, setIsAdmin] = useState(false);
   const [appVersion] = useState('1.0.0');
 
   useEffect(() => {
     loadUserInfo();
-    loadAdminStatus();
+    loadUserRole(); // ✅ 최초 1회
 
-    // 화면 포커스 시 정보 새로고침
     const unsubscribe = navigation.addListener('focus', () => {
       loadUserInfo();
+      loadUserRole(); // ✅ 돌아올 때마다 즉시 반영
     });
 
     return unsubscribe;
   }, [navigation]);
+
+  // AsyncStorage에서 사용자 역할 로드
+  const loadUserRole = async () => {
+    const role = await AsyncStorage.getItem('userRole'); // 'admin' | 'user' | null
+    setIsAdmin(role === 'admin'); // ✅ admin만 true, user/null은 false
+  };
 
   // 사용자 정보 로드
   const loadUserInfo = async () => {
@@ -77,6 +80,8 @@ export default function SettingsScreen({navigation}) {
       if (data.role === 'admin') {
         setIsAdmin(true);
       }
+      // ✅ (권장) 저장도 같이 해두면 다른 화면에서도 일관되게 사용 가능
+      await AsyncStorage.setItem('userRole', data.role);
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
       Alert.alert('오류', '사용자 정보를 불러오는데 실패했습니다.');
@@ -84,14 +89,14 @@ export default function SettingsScreen({navigation}) {
   };
 
   // 관리자 권한 확인
-  const loadAdminStatus = async () => {
-    try {
-      const adminStatus = await checkAdmin();
-      setIsAdmin(true);
-    } catch (error) {
-      console.error('관리자 권한 확인 실패:', error);
-    }
-  };
+  // const loadAdminStatus = async () => {
+  //   try {
+  //     const adminStatus = await checkAdmin();
+  //     setIsAdmin(!!adminStatus);
+  //   } catch (error) {
+  //     console.error('관리자 권한 확인 실패:', error);
+  //   }
+  // };
 
   // 회원탈퇴 처리
   const handleWithdraw = () => {

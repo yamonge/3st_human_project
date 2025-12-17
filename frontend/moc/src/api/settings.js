@@ -56,16 +56,6 @@ export const updateProfile = async profileData => {
       meta: {requiresUserId: true},
     });
 
-    // ✅ [유지] 즉시 UI 반영/캐시 목적 - 서버가 원본이므로, 최소한만 저장
-    if (response?.name) await AsyncStorage.setItem('userName', response.name);
-    if (response?.nickname)
-      await AsyncStorage.setItem('userNickname', response.nickname);
-    if (response?.email)
-      await AsyncStorage.setItem('userEmail', response.email);
-    if (response?.role) await AsyncStorage.setItem('userRole', response.role);
-    if (response?.profileImage)
-      await AsyncStorage.setItem('profileImage', response.profileImage);
-
     return response;
   } catch (error) {
     console.error('프로필 수정 실패:', error);
