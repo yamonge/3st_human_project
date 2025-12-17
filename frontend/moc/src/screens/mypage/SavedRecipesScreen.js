@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {ArrowLeft, Bookmark, Heart, Star} from 'lucide-react-native';
 import RecipeListItem from '../../components/recipeboard/RecipeListItem';
-// import {getSavedRecipes, getLikedPosts} from '../../api/mypage';
+import {getSavedRecipes, getLikedPosts} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/SavedRecipesStyles';
 import {colors} from '../../styles/common';
 
@@ -24,118 +25,49 @@ import {colors} from '../../styles/common';
  * - 좋아요한 게시물 목록 표시 (좋아요 버튼 표시)
  */
 export default function SavedRecipesScreen({navigation}) {
-  const [activeTab, setActiveTab] = useState('saved'); // 'saved' or 'liked'
+
+  const [userId, setUserId] = useState(null);
+  const [activeTab, setActiveTab] = useState('saved'); // 'saved' | 'liked'
   const [savedRecipes, setSavedRecipes] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
-
   // 데이터 불러오기
-  const loadData = async () => {
-    try {
-      setLoading(true);
+const loadData = async () => {
+  try {
+    setLoading(true);
 
-      if (activeTab === 'saved') {
-        // TODO: 실제 API 연동 (주석 해제)
-        // const response = await getSavedRecipes();
-        // setSavedRecipes(response.recipes);
-        // setTotalCount(response.totalCount);
+    // ⭐ 여기 추가
+    const userId = await AsyncStorage.getItem('userId');
+    console.log('📡 loadData userId:', userId);
 
-        // 임시 더미 데이터
-        const dummyData = {
-          recipes: [
-            {
-              id: 1,
-              title: '팬케이크',
-              author: '베이킹마스터',
-              cookingTime: '15',
-              difficulty: '하',
-              image: null,
-              ingredients: [
-                {name: '밀가루'},
-                {name: '계란'},
-                {name: '우유'},
-                {name: '설탕'},
-              ],
-              isLiked: false,
-              likeCount: 0,
-            },
-            {
-              id: 2,
-              title: '김치찌개',
-              author: '요리왕',
-              cookingTime: '30',
-              difficulty: '중',
-              image: null,
-              ingredients: [{name: '김치'}, {name: '돼지고기'}, {name: '두부'}],
-              isLiked: false,
-              likeCount: 0,
-            },
-            {
-              id: 3,
-              title: '된장찌개',
-              author: '집밥요리사',
-              cookingTime: '25',
-              difficulty: '하',
-              image: null,
-              ingredients: [{name: '된장'}, {name: '두부'}, {name: '감자'}],
-              isLiked: false,
-              likeCount: 0,
-            },
-          ],
-          totalCount: 3,
-        };
-
-        setSavedRecipes(dummyData.recipes);
-        setTotalCount(dummyData.totalCount);
-      } else {
-        // TODO: 실제 API 연동 (주석 해제)
-        // const response = await getLikedPosts();
-        // setLikedPosts(response.posts);
-        // setTotalCount(response.totalCount);
-
-        // 임시 더미 데이터
-        const dummyData = {
-          posts: [
-            {
-              id: 4,
-              title: '스테이크 굽는 법',
-              author: '육식주의자',
-              cookingTime: '20',
-              difficulty: '상',
-              image: null,
-              ingredients: [{name: '소고기'}, {name: '마늘'}, {name: '버터'}],
-              isLiked: true,
-              likeCount: 42,
-            },
-            {
-              id: 5,
-              title: '카레라이스',
-              author: '카레마스터',
-              cookingTime: '40',
-              difficulty: '중',
-              image: null,
-              ingredients: [{name: '카레가루'}, {name: '감자'}, {name: '당근'}],
-              isLiked: true,
-              likeCount: 28,
-            },
-          ],
-          totalCount: 2,
-        };
-
-        setLikedPosts(dummyData.posts);
-        setTotalCount(dummyData.totalCount);
-      }
-    } catch (error) {
-      console.error('데이터 불러오기 실패:', error);
-    } finally {
-      setLoading(false);
+    if (!userId) {
+      console.warn('❌ userId 없음 → API 호출 중단');
+      setSavedRecipes([]);
+      setTotalCount(0);
+      return;
     }
-  };
+
+    if (activeTab === 'saved') {
+      const response = await getSavedRecipes(userId);
+      console.log('🧪 response 전체:', response);
+
+      setSavedRecipes(response.bookmarkedRecipes ?? []);
+      setTotalCount(response.totalCount ?? 0);
+    } else {
+      setLikedPosts([]);
+      setTotalCount(0);
+    }
+  } catch (error) {
+    console.error('데이터 불러오기 실패:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+useEffect(() => {
+  loadData(); // ✅ TS가 "아 사용되는구나" 인식
+}, [activeTab]);
 
   // 레시피 카드 클릭 핸들러
   const handleRecipePress = recipe => {

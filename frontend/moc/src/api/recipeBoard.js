@@ -45,7 +45,7 @@ export const getRecipeBoardList = async ({
         size,
       },
     });
-    console.log('📦 게시판 API raw response:', response.data);
+    console.log('📦 게시판 API raw response:', response);
 
     return response; // RecipeBoardListResponseDTO
   } catch (error) {

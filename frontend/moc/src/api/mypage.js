@@ -1,5 +1,4 @@
 import api from './axiosConfig';
-
 /**
  * 마이페이지 관련 API
  */
@@ -10,10 +9,11 @@ import api from './axiosConfig';
  * 저장된 재료 목록 조회
  * @returns {Promise} 재료 목록
  */
-export const getIngredients = async () => {
+export const getIngredients = async userId => {
   try {
-    const response = await api.get('/mypage/ingredients');
-    return response.data;
+    const response = await api.get(`/v1/users/${userId}/ingredients`);
+    console.log('저장된 재료 목록 조회 결과:', response);
+    return response;
   } catch (error) {
     console.error('재료 목록 조회 실패:', error);
     throw error;
@@ -26,11 +26,19 @@ export const getIngredients = async () => {
  * @param {string} category - 카테고리 (meat, dairy, vegetable, fruit)
  * @returns {Promise} 추가된 재료 정보
  */
-export const addIngredient = async (name, category = 'meat') => {
+export const addIngredient = async (
+  userId,
+  ingredientName,
+  categoryCd = 'MEAT',
+  quantityDesc = '1개',
+) => {
   try {
-    const response = await api.post('/mypage/ingredients', {
-      name,
-      category,
+    const response = await api.post(`/v1/users/${userId}/ingredients`, {
+      ingredientName,
+      categoryCd,
+      quantityDesc,
+      usedFlag: 'N',
+      memo: null,
     });
     return response.data;
   } catch (error) {
@@ -41,13 +49,24 @@ export const addIngredient = async (name, category = 'meat') => {
 
 /**
  * 재료 삭제
- * @param {number} ingredientId - 재료 ID
- * @returns {Promise}
+ * @param {number|string} userId - 사용자 ID
+ * @param {number} userIngredientId - 사용자 재료 ID
+ * @returns {Promise<void>}
  */
-export const deleteIngredient = async ingredientId => {
+export const deleteIngredient = async (userId, userIngredientId) => {
   try {
-    const response = await api.delete(`/mypage/ingredients/${ingredientId}`);
-    return response.data;
+    if (!userId || !userIngredientId) {
+      throw new Error('userId 또는 userIngredientId 없음');
+    }
+
+    console.log('🗑️ 재료 삭제 요청', {
+      userId,
+      userIngredientId,
+    });
+
+    await api.delete(`/v1/users/${userId}/ingredients/${userIngredientId}`);
+
+    return;
   } catch (error) {
     console.error('재료 삭제 실패:', error);
     throw error;
@@ -107,16 +126,31 @@ export const getReceivedReviews = async () => {
 
 /**
  * 저장한 레시피 목록 조회
- * @returns {Promise} 레시피 목록 및 총 개수
- * @returns {Object} response.recipes - 레시피 목록
- * @returns {number} response.totalCount - 전체 개수
+ * @param {number} userId - 사용자 ID
+ * @returns {Promise}
  */
-export const getSavedRecipes = async () => {
+/**
+ * 저장한 레시피 목록 조회
+ * @param {number} userId - 사용자 ID
+ * @returns {Promise}
+ */
+export const getSavedRecipes = async userId => {
   try {
-    const response = await api.get('/mypage/recipes/saved');
-    return response.data;
+    if (!userId) {
+      throw new Error('userId 없음');
+    }
+
+    console.log('📡 getSavedRecipes 호출, userId:', userId);
+
+    const data = await api.get(
+      `/v1/users/${userId}/bookmarks`
+    );
+
+    console.log('✅ 저장된 레시피 응답:', data);
+
+    return data;
   } catch (error) {
-    console.error('저장된 레시피 조회 실패:', error);
+    console.error('❌ 저장된 레시피 조회 실패:', error);
     throw error;
   }
 };

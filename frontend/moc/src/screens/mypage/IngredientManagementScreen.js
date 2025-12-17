@@ -20,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import IngredientCard from '../../components/mypage/IngredientCard';
 import styles from '../../styles/screens/mypage/IngredientManagementScreenStyles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getIngredients,
   addIngredient,
@@ -36,13 +37,7 @@ import {
  * - AI 레시피 추천
  */
 export default function IngredientManagementScreen({navigation}) {
-  const [ingredients, setIngredients] = useState([
-    {id: 1, name: '고향 만두', category: 'meat', icon: 'meat'},
-    {id: 2, name: '소고기', category: 'meat', icon: 'meat'},
-    {id: 3, name: '우유', category: 'dairy', icon: 'milk'},
-    {id: 4, name: '치즈', category: 'dairy', icon: 'cheese'},
-  ]);
-
+  const [ingredients, setIngredients] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newIngredientName, setNewIngredientName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,9 +50,12 @@ export default function IngredientManagementScreen({navigation}) {
   const loadIngredients = async () => {
     try {
       setLoading(true);
-      // TODO: API 연동 후 주석 해제
-      // const data = await getIngredients();
-      // setIngredients(data);
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        throw new Error('userId 없음');
+      }
+      const data = await getIngredients(userId);
+      setIngredients(data?.userIngredients ?? []);
       console.log('재료 목록 불러오기 (API 주석 처리됨)');
     } catch (error) {
       Alert.alert('오류', '재료 목록을 불러오는데 실패했습니다.');
@@ -68,7 +66,12 @@ export default function IngredientManagementScreen({navigation}) {
   };
 
   // 재료 삭제
-  const handleDelete = id => {
+  const handleDelete = async userIngredientId => {
+    if (!userIngredientId) {
+      console.error('❌ 삭제 ID 없음');
+      return;
+    }
+
     Alert.alert('재료 삭제', '정말 이 재료를 삭제하시겠습니까?', [
       {text: '취소', style: 'cancel'},
       {
@@ -76,15 +79,16 @@ export default function IngredientManagementScreen({navigation}) {
         style: 'destructive',
         onPress: async () => {
           try {
-            // TODO: API 연동 후 주석 해제
-            // await deleteIngredient(id);
-            console.log('재료 삭제 API 호출 (주석 처리됨):', id);
+            const userId = await AsyncStorage.getItem('userId'); // ❌ 제거 가능하면 제거
+            // ⬇️ 이미 Context나 props에 userId 있으면 그걸 쓰면 됨
+            await deleteIngredient(userId, userIngredientId);
 
-            // 로컬 상태 업데이트
-            setIngredients(ingredients.filter(item => item.id !== id));
-          } catch (error) {
-            Alert.alert('오류', '재료 삭제에 실패했습니다.');
-            console.error(error);
+            setIngredients(prev =>
+              prev.filter(item => item.userIngredientId !== userIngredientId),
+            );
+          } catch (e) {
+            console.error(e);
+            Alert.alert('오류', '재료 삭제 실패');
           }
         },
       },
@@ -99,31 +103,20 @@ export default function IngredientManagementScreen({navigation}) {
     }
 
     try {
-      // TODO: API 연동 후 주석 해제
-      // const addedIngredient = await addIngredient(newIngredientName.trim(), 'meat');
-      // setIngredients([...ingredients, addedIngredient]);
-      console.log(
-        '재료 추가 API 호출 (주석 처리됨):',
-        newIngredientName.trim(),
-      );
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('userId 없음');
 
-      // 로컬 상태 업데이트 (임시)
-      const newIngredient = {
-        id: Date.now(),
-        name: newIngredientName.trim(),
-        category: 'meat', // 기본값
-        icon: 'meat',
-      };
-      setIngredients([...ingredients, newIngredient]);
+      await addIngredient(userId, newIngredientName.trim(), 'MEAT');
 
       setNewIngredientName('');
       setShowAddModal(false);
+
+      await loadIngredients(); // 🔥 여기 중요
     } catch (error) {
       Alert.alert('오류', '재료 추가에 실패했습니다.');
       console.error(error);
     }
   };
-
   // AI 레시피 추천
   const handleAIRecommend = () => {
     // TODO: RecipeFilterScreen으로 이동
@@ -191,11 +184,11 @@ export default function IngredientManagementScreen({navigation}) {
         ) : (
           ingredients.map(item => (
             <IngredientCard
-              key={item.id}
-              name={item.name}
-              category={item.category}
+              key={item.userIngredientId}
+              name={item.ingredientName}
+              category={item.categoryCd}
               icon={item.icon}
-              onDelete={() => handleDelete(item.id)}
+              onDelete={() => handleDelete(item.userIngredientId)}
             />
           ))
         )}

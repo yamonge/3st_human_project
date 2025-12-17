@@ -27,18 +27,22 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
       ? ThirdBadge
       : null;
 
-  // 난이도 색상
   const getDifficultyColor = () => {
-    switch (recipe.difficulty) {
-      case '하':
+    switch (recipe.difficultyCd) {
+      case 'EASY':
         return '#00A63E';
-      case '중':
+      case 'NORMAL':
         return '#FF9500';
-      case '상':
+      case 'HARD':
         return '#FF3B30';
       default:
         return colors.textLight;
     }
+  };
+  const DIFFICULTY_LABEL_MAP = {
+    EASY: '하',
+    NORMAL: '중',
+    HARD: '상',
   };
 
   // 표시할 재료 (최대 3개)
@@ -55,9 +59,9 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
       activeOpacity={0.8}>
       {/* 레시피 이미지 */}
       <View style={homeStyles.recipeImage}>
-        {recipe.imageUrl ? (
+        {recipe.thumbnailUrl ? (
           <Image
-            source={{uri: recipe.imageUrl}}
+            source={{uri: recipe.thumbnailUrl}}
             style={{width: '100%', height: '100%', borderRadius: 12}}
             resizeMode="cover"
           />
@@ -91,7 +95,7 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
         {/* 작성자 */}
         <View style={homeStyles.recipeAuthor}>
           <Text style={homeStyles.recipeAuthorText} numberOfLines={1}>
-            👨‍🍳 {recipe.author}
+            👨‍🍳 {recipe.authorNickname}
           </Text>
         </View>
 
@@ -100,7 +104,7 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
           <View style={homeStyles.recipeTime}>
             <Clock size={12} color="#4A5565" />
             <Text style={homeStyles.recipeMetadataText}>
-              {recipe.cookingTime}분
+              {recipe.cookTimeMin}분
             </Text>
           </View>
 
@@ -111,16 +115,18 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
                 homeStyles.difficultyText,
                 {color: getDifficultyColor()},
               ]}>
-              {recipe.difficulty}
+              {DIFFICULTY_LABEL_MAP[recipe.difficultyCd] ?? '-'}
             </Text>
           </View>
         </View>
 
         {/* 재료 태그 */}
         <View style={homeStyles.ingredientTags}>
-          {displayIngredients.map((ingredient, index) => (
+          {displayIngredients.map((item, index) => (
             <View key={index} style={homeStyles.ingredientTag}>
-              <Text style={homeStyles.ingredientTagText}>{ingredient}</Text>
+              <Text style={homeStyles.ingredientTagText}>
+                {item.ingredientName}
+              </Text>
             </View>
           ))}
           {moreIngredientsCount > 0 && (
@@ -139,12 +145,12 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
         <View style={homeStyles.likeButton}>
           <Heart
             size={20}
-            color={recipe.isLiked ? '#FF3B8E' : colors.textLight}
-            fill={recipe.isLiked ? '#FF3B8E' : 'none'}
+            color={recipe.likedByMe ? '#FF3B8E' : colors.textLight}
+            fill={recipe.likedByMe ? '#FF3B8E' : 'none'}
           />
         </View>
         <Text style={homeStyles.likeCount}>
-          {recipe.likeCount >= 1000 ? '999+' : recipe.likeCount}
+          {recipe.likeCnt ? recipe.likeCnt : 0}
         </Text>
       </View>
     </TouchableOpacity>
