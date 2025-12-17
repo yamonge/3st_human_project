@@ -27,7 +27,7 @@ public class NoticeVO {
     // 상태 관련
     private Long viewCnt;         // view_cnt (조회수)
     private String isPinned;      // is_pinned (상단 고정 여부 Y/N)
-    private String isVisible;     // is_visible (노출 여부 Y/N)
+    private String isVisible;     // is_visible (삭제 여부 Y/N -> Y는 삭제, N은 현재 노출되어있는 상태(DEFAULT))
 
     // 이력 정보
     private Long createdId;       // created_id (작성자: 관리자 user_id)

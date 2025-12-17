@@ -27,7 +27,7 @@ export const recognizeIngredients = async photoPath => {
     });
 
     const response = await axios.post(
-      '/api/receipt/ocr', // ✅ 정확한 URL
+      '/receipt/ocr', // ✅ 정확한 URL
       formData,
       {
         headers: {
@@ -69,68 +69,46 @@ export const recognizeIngredients = async photoPath => {
 /**
  * AI 레시피 추천 API (에러 처리 포함)
  * 선택한 재료와 필터 정보를 기반으로 AI가 레시피를 추천
- *
- * @param {Array} ingredients - 선택한 재료 목록 [{id, name, usage, amount}, ...]
- * @param {Object} filters - 필터 정보 {style, difficulty, time}
- * @returns {Promise<Object>} { success: boolean, recipes?: Array, error?: string }
- * @example
- * const result = await recommendRecipes(ingredients, {style: '퓨전', difficulty: '보통', time: '30분'});
- * if (result.success) {
- *   console.log(result.recipes);
- * } else {
- *   console.error(result.error);
- * }
  */
-export const recommendRecipes = async (ingredients, filters) => {
+export const recommendRecipes = async (userId, ingredients, filters) => {
   try {
-    console.log('📤 AI 레시피 추천 API 호출:', {ingredients, filters});
-
-    // 1️⃣ 프론트 재료 → 백엔드 DTO 구조로 변환
     const selectedIngredients = ingredients.map(item => ({
       ingredientName: item.name,
-      usageType: item.usage, // "ALL" | "PARTIAL"
-      amountHint: item.amount, // "LITTLE" | "MEDIUM" | "MUCH"
+      usageType: item.usage,
+      amountHint: item.amount,
     }));
 
-    // 2️⃣ 백엔드가 기대하는 Request DTO 구성
     const requestBody = {
+      userId,
       selectedIngredients,
       filterCuisineCd: filters?.style || null,
       filterDifficultyCd: filters?.difficulty || null,
       filterCookTimeCd: filters?.time || null,
     };
 
-    // 3️⃣ 실제 백엔드 호출
-    const response = await axios.post(
-      '/api/recipes/recommend',
-      requestBody,
-      {timeout: 60000}, // AI 호출 고려
-    );
+    const response = await axios.post('/recipes/recommend', requestBody, {
+      timeout: 60000,
+    });
 
-    console.log('✅ AI 레시피 추천 성공:', response.data);
+    // ✅ axios interceptor 기준
+    console.log('🌐 response =', response);
+
+    const recipes = Array.isArray(response.recommendedRecipes)
+      ? response.recommendedRecipes
+      : [];
 
     return {
-      success: true,
-      recipes: response.data || [],
+      success: response.status === 'SUCCESS',
+      recipes,
+      message: response.message,
     };
   } catch (error) {
     console.error('❌ 레시피 추천 API 에러:', error);
 
-    let errorMessage = '레시피 추천에 실패했습니다.';
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message || '서버 오류가 발생했습니다.';
-    } else if (error.request) {
-      errorMessage = '서버에 연결할 수 없습니다.\n인터넷 연결을 확인해주세요.';
-    } else if (error.code === 'ECONNABORTED') {
-      errorMessage = '요청 시간이 초과되었습니다.\n다시 시도해주세요.';
-    }
-
     return {
       success: false,
       recipes: [],
-      error: errorMessage,
+      error: '레시피 추천에 실패했습니다.',
     };
   }
 };
@@ -147,7 +125,7 @@ export const saveIngredients = async (userId, ingredientNames) => {
     console.log('📤 재료 저장 API 호출:', {userId, ingredientNames});
 
     const response = await axios.post(
-      `/api/v1/users/${userId}/ingredients/from-receipt`,
+      `/v1/users/${userId}/ingredients/from-receipt`,
       ingredientNames, // ✅ List<String>
     );
 
@@ -178,32 +156,41 @@ export const saveIngredients = async (userId, ingredientNames) => {
 
 /**
  * 레시피 저장 API
- * 사용자가 선택한 레시피를 내 레시피에 저장
+ * AI 추천 레시피 또는 사용자가 선택한 레시피를 DB에 저장
  *
- * @param {number} recipeId - 레시피 ID
- * @param {boolean} shareToBoard - 게시판 공개 여부
- * @returns {Promise<Object>} { success: boolean, message?: string, error?: string }
- * @example
- * const result = await saveRecipe(123, true);
- * if (result.success) {
- *   console.log(result.message);
- * } else {
- *   console.error(result.error);
- * }
+ * @param {number} userId - 사용자 ID
+ * @param {Object} recipe - 저장할 레시피 전체 데이터
+ * @returns {Promise<{ success: boolean, recipeId?: number, error?: string }>}
  */
-export const saveRecipe = async (recipeId, shareToBoard = false) => {
+export const saveRecipe = async (userId, recipe) => {
   try {
-    console.log('📤 레시피 저장 API 호출:', {recipeId, shareToBoard});
+    console.log('📤 레시피 저장 API 호출', {userId, recipe});
 
-    const response = await axios.post('/api/recipes/save', {
-      recipeId,
-      shareToBoard,
+    const response = await axios.post(`/v1/users/${userId}/recipes`, {
+      title: recipe.title,
+      summary: recipe.summary,
+      difficultyCd: recipe.difficultyCd,
+      cookTimeMin: recipe.cookTimeMin,
+      cuisineStyleCd: recipe.cuisineStyleCd,
+      category: recipe.category,
+      share: recipe.share ?? false,
+
+      ingredients: recipe.ingredients.map(ing => ({
+        ingredientName: ing.ingredientName,
+        quantityDesc: ing.quantityDesc,
+      })),
+
+      steps: recipe.steps.map((step, index) => ({
+        stepNo: step.stepNo ?? index + 1,
+        stepDesc: step.stepDesc,
+      })),
     });
 
     console.log('✅ 레시피 저장 성공:', response.data);
+
     return {
       success: true,
-      message: response.data.message || '레시피가 저장되었습니다.',
+      recipeId: response.data, // Long recipeId
     };
   } catch (error) {
     console.error('❌ 레시피 저장 API 에러:', error);
@@ -250,7 +237,7 @@ export const consumeIngredients = async (userId, recipeId, ingredients) => {
     };
 
     const response = await axios.post(
-      `/api/v1/users/${userId}/ingredients/consume`,
+      `/v1/users/${userId}/ingredients/consume`,
       requestBody,
     );
 
@@ -259,6 +246,28 @@ export const consumeIngredients = async (userId, recipeId, ingredients) => {
     return {
       success: false,
       error: error.response?.data?.message || '재료 소비 처리에 실패했습니다.',
+    };
+  }
+};
+
+// 재료 직접 입력 저장 API
+
+export const addUserIngredient = async (userId, ingredient) => {
+  try {
+    console.log('📤 직접 입력 재료 저장:', {userId, ingredient});
+
+    const response = await axios.post(`/v1/users/${userId}/ingredients`, {
+      ingredientName: ingredient.name,
+      quantityDesc: ingredient.amount,
+      usedFlag: 'N',
+      memo: '직접 입력',
+    });
+
+    return {success: true, ingredient: response.data};
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || '재료 저장 실패',
     };
   }
 };

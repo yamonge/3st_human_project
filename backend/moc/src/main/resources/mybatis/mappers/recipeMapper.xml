@@ -18,6 +18,11 @@
         cook_time_min,
         cuisine_style_cd,
         category,
+        is_public,
+        is_deleted,
+        view_cnt,
+        like_cnt,
+        report_cnt,
         created_id
         ) VALUES (
         #{recipeId},
@@ -30,6 +35,11 @@
         #{cookTimeMin},
         #{cuisineStyleCd},
         #{category},
+        #{isPublic},
+        #{isDeleted},
+        #{viewCnt},
+        #{likeCnt},
+        #{reportCnt},
         #{createdId}
         )
     </insert>

@@ -40,6 +40,8 @@ public class UserIngredientController {
     public ResponseEntity<UserIngredientResponseDTO> addUserIngredient(
             @PathVariable("userId") Long userId,
             @RequestBody UserIngredientRequestDTO requestDTO) {
+        System.out.println("🔥 addUserIngredient userId=" + userId);
+        System.out.println("🔥 requestDTO=" + requestDTO);
         try {
             UserIngredientResponseDTO response = userIngredientService.addUserIngredient(userId, requestDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED); // 201 Created
@@ -189,7 +191,7 @@ public class UserIngredientController {
     @PostMapping("/from-receipt")
     public ResponseEntity<List<UserIngredientResponseDTO>> addIngredientsFromReceipt(
             @PathVariable("userId") Long userId,
-            @RequestBody List<String> ingredientNames) { // ⭐ List<String>을 직접 받음
+            @RequestBody List<String> ingredientNames) {
         try {
             // createdId는 userId와 동일하게 설정
             List<UserIngredientResponseDTO> responses = userIngredientService.addIngredientsFromRecognizedReceipt(userId, ingredientNames, userId);

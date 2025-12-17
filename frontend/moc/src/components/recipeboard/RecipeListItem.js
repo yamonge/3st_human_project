@@ -16,6 +16,11 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
         return styles.difficultyMedium;
     }
   };
+  const DIFFICULTY_LABEL_MAP = {
+    EASY: '하',
+    NORMAL: '중',
+    HARD: '상',
+  };
 
   return (
     <TouchableOpacity
@@ -45,7 +50,7 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
         <View style={styles.authorContainer}>
           <User size={12} color="#6A7282" />
           <Text style={styles.authorText} numberOfLines={1}>
-            {recipe.author}
+            {recipe.authorNickname}
           </Text>
         </View>
 
@@ -53,7 +58,7 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
         <View style={styles.detailsContainer}>
           <View style={styles.detailItem}>
             <Clock size={12} color="#4A5565" />
-            <Text style={styles.detailText}>{recipe.cookingTime}분</Text>
+            <Text style={styles.detailText}>{recipe.cookTimeMin}분</Text>
           </View>
 
           <View style={styles.detailItem}>
@@ -61,9 +66,9 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
             <Text
               style={[
                 styles.detailValue,
-                getDifficultyStyle(recipe.difficulty),
+                getDifficultyStyle(DIFFICULTY_LABEL_MAP[recipe.difficultyCd]),
               ]}>
-              {recipe.difficulty}
+              {DIFFICULTY_LABEL_MAP[recipe.difficultyCd]}
             </Text>
           </View>
         </View>
@@ -92,8 +97,8 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
           <View style={styles.likeButton}>
             <Heart
               size={20}
-              color={recipe.isLiked ? '#FF2056' : '#D1D5DB'}
-              fill={recipe.isLiked ? '#FF2056' : 'none'}
+              color={recipe.likedByMe ? '#FF2056' : '#D1D5DB'}
+              fill={recipe.likedByMe ? '#FF2056' : 'none'}
             />
           </View>
           <Text style={styles.likeCount}>{recipe.likeCount || 0}</Text>
