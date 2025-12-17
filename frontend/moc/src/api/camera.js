@@ -37,11 +37,11 @@ export const recognizeIngredients = async photoPath => {
       },
     );
 
-    console.log('✅ OCR 성공:', response.data);
+    console.log('✅ OCR 성공:', response);
 
     return {
       success: true,
-      ingredients: response.data.ingredients ?? [],
+      ingredients: response.ingredients ?? [],
     };
   } catch (error) {
     console.error('❌ OCR API 에러:', error);
@@ -49,8 +49,7 @@ export const recognizeIngredients = async photoPath => {
     let errorMessage = '재료 인식에 실패했습니다.';
 
     if (error.response) {
-      errorMessage =
-        error.response.data?.message || '서버 오류가 발생했습니다.';
+      errorMessage = error.response?.message || '서버 오류가 발생했습니다.';
     } else if (error.request) {
       errorMessage =
         '서버에 연결할 수 없습니다.\n네트워크 상태를 확인해주세요.';
@@ -250,24 +249,61 @@ export const consumeIngredients = async (userId, recipeId, ingredients) => {
   }
 };
 
-// 재료 직접 입력 저장 API
-
+// 재료 저장 API
 export const addUserIngredient = async (userId, ingredient) => {
   try {
-    console.log('📤 직접 입력 재료 저장:', {userId, ingredient});
+    console.log('📤 재료 저장:', {userId, ingredient});
 
     const response = await axios.post(`/v1/users/${userId}/ingredients`, {
       ingredientName: ingredient.name,
       quantityDesc: ingredient.amount,
       usedFlag: 'N',
-      memo: '직접 입력',
+      memo: '',
     });
 
-    return {success: true, ingredient: response.data};
+    return {success: true, ingredient: response};
   } catch (error) {
     return {
       success: false,
-      error: error.response?.data?.message || '재료 저장 실패',
+      error: error.response?.message || '재료 저장 실패',
+    };
+  }
+};
+
+/**
+ * 사용자 재료 목록 조회 API
+ * 사용자가 DB에 저장한 모든 재료를 조회
+ *
+ * @param {number} userId - 사용자 ID
+ * @returns {Promise<Object>} { success: boolean, ingredients: Array, error?: string }
+ */
+export const getUserIngredients = async userId => {
+  try {
+    console.log('📤 사용자 재료 목록 조회:', userId);
+
+    const response = await axios.get(`/v1/users/${userId}/ingredients`);
+
+    console.log('✅ 재료 목록 조회 성공:', response);
+
+    return {
+      success: true,
+      ingredients: response.userIngredients || [],
+    };
+  } catch (error) {
+    console.error('❌ 재료 목록 조회 에러:', error);
+
+    // 204 No Content는 빈 배열 반환 (에러 아님)
+    if (error.response?.status === 204) {
+      return {
+        success: true,
+        ingredients: [],
+      };
+    }
+
+    return {
+      success: false,
+      ingredients: [],
+      error: '재료 목록을 불러올 수 없습니다.',
     };
   }
 };

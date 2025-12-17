@@ -12,11 +12,19 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     maxWidth: 327,
+    maxHeight: '85%',
     backgroundColor: colors.bgWhite,
     borderRadius: 24,
     paddingTop: 18,
     paddingBottom: 32,
     paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  scrollContent: {
+    width: '100%',
+    flexGrow: 1,
+  },
+  scrollInner: {
     alignItems: 'center',
   },
   iconContainer: {

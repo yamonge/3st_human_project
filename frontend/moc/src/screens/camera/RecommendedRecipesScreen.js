@@ -87,12 +87,40 @@ export default function RecommendedRecipesScreen({route, navigation}) {
   const handleSelectRecipe = recipe => {
     console.log('🍳 레시피 선택:', recipe);
 
-    // 레시피 상세 화면으로 이동 (전체 데이터 전달)
+    // 이 레시피에 필요한 재료 이름 목록
+    const recipeIngredientNames = recipe.requiredIngredients.map(ing =>
+      ing.ingredientName.toLowerCase(),
+    );
+
+    // 사용자 재료 중 이 레시피에 필요한 것만 필터링
+    const recipeIngredients = ingredients.filter(item =>
+      recipeIngredientNames.includes(item.name.toLowerCase()),
+    );
+
+    console.log('🔍 recipeIngredients:', recipeIngredients);
+
+    // 레시피 상세 화면으로 이동 (레시피에 필요한 재료만 전달)
     navigation.navigate('RecipeDetail', {
       recipe, // 전체 레시피 데이터 전달 (API 재호출 불필요)
-      ingredients: ingredients.filter(item => item.checked),
+      ingredients: recipeIngredients, // ✅ 이 레시피에 필요한 재료만 (id, usage 포함)
       from, // from prop 전달
     });
+  };
+
+  /**
+   * 난이도 한글 변환
+   */
+  const getDifficultyText = code => {
+    switch (code) {
+      case 'EASY':
+        return '쉬움';
+      case 'NORMAL':
+        return '보통';
+      case 'HARD':
+        return '어려움';
+      default:
+        return code;
+    }
   };
 
   /**
@@ -214,10 +242,10 @@ export default function RecommendedRecipesScreen({route, navigation}) {
 
                 <View style={styles.recipeMetadata}>
                   <Text style={styles.recipeDifficulty}>
-                    {recipe.difficultyCd}
+                    {getDifficultyText(recipe.difficultyCd)}
                   </Text>
                   <View style={styles.recipeDivider} />
-                  <Text style={styles.recipeTime}>{recipe.cookTimeMin}</Text>
+                  <Text style={styles.recipeTime}>{recipe.cookTimeMin}분</Text>
                 </View>
 
                 {/* 선택하기 버튼 */}

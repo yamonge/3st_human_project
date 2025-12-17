@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -25,14 +25,12 @@ export default function IngredientResultScreen({route, navigation}) {
   const {photoPath, recognizedIngredients = [], from} = route.params || {};
 
   // AI 인식 결과 또는 더미 데이터
-  const [ingredients, setIngredients] = useState(
-    recognizedIngredients.length > 0
-      ? recognizedIngredients.map((name, index) => ({
-          id: index + 1,
-          name,
-        }))
-      : [],
-  );
+  const [ingredients, setIngredients] = useState(recognizedIngredients);
+
+  // route.params 변경 시 재료 목록 업데이트
+  useEffect(() => {
+    setIngredients(recognizedIngredients);
+  }, [recognizedIngredients]);
 
   // 모달 상태
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -108,7 +106,12 @@ export default function IngredientResultScreen({route, navigation}) {
   // 다음 단계
   const handleNext = () => {
     console.log('다음 단계:', ingredients);
-    navigation.navigate('SaveOption', {ingredients});
+    navigation.navigate('SaveOption', {
+      ingredients,
+      photoPath,
+      recognizedIngredients,
+      from,
+    });
   };
 
   return (

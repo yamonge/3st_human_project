@@ -34,10 +34,10 @@
         #{userIngredientId},
         #{userId},
         #{ingredientName},
-        #{quantityDesc},
-        #{categoryCd},
-        NVL(#{usedFlag}, 'N'),
-        #{memo},
+        #{quantityDesc, jdbcType=VARCHAR},
+        #{categoryCd, jdbcType=VARCHAR},
+        NVL(#{usedFlag, jdbcType=VARCHAR}, 'N'),
+        #{memo, jdbcType=VARCHAR},
         #{createdId}
         )
     </insert>
