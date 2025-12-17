@@ -117,7 +117,7 @@ export default function RecipeDetailScreen({route, navigation}) {
       // 2️⃣ 소비할 재료 DTO 구성 (ID + usageType 기준)
       console.log('🔍 ingredients:', ingredients);
       const consumeIngredientsPayload = ingredients.map(item => ({
-        userIngredientId: item.id,
+        userIngredientId: item.id, // DB의 user_ingredient_id
         usageType: item.usage === '전부 사용' ? 'ALL' : 'PARTIAL',
       }));
       console.log('🔍 consumeIngredientsPayload:', consumeIngredientsPayload);

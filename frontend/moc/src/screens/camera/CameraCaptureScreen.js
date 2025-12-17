@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -21,9 +21,27 @@ export default function CameraCaptureScreen({navigation}) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [showRelaxMessage, setShowRelaxMessage] = useState(false);
 
   const camera = useRef(null);
   const device = useCameraDevice('back');
+
+  // ✅ 로딩 1.5초 후 추가 메시지 표시
+  useEffect(() => {
+    let timer;
+    if (isRecognizing) {
+      setShowRelaxMessage(false);
+      timer = setTimeout(() => {
+        setShowRelaxMessage(true);
+      }, 1500);
+    } else {
+      setShowRelaxMessage(false);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isRecognizing]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -131,6 +149,11 @@ export default function CameraCaptureScreen({navigation}) {
         <View style={styles.recognizingOverlay}>
           <ActivityIndicator size="large" color="#00B8DB" />
           <Text style={styles.recognizingText}>재료 인식 중...</Text>
+          {showRelaxMessage && (
+            <Text style={styles.relaxMessage}>
+              📱 이제 폰을 내려놓으셔도 됩니다
+            </Text>
+          )}
         </View>
       )}
 

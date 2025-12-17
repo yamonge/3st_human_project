@@ -18,10 +18,27 @@ export const recognizeIngredients = async photoPath => {
   try {
     console.log('📤 OCR API 호출:', photoPath);
 
+    // ✅ URI 정규화: Android Content URI와 일반 파일 경로 모두 처리
+    let normalizedUri = photoPath;
+
+    // content:// 로 시작하면 Android Content URI
+    if (photoPath.startsWith('content://')) {
+      normalizedUri = photoPath; // 그대로 사용
+    }
+    // file:// 로 시작하면 그대로
+    else if (photoPath.startsWith('file://')) {
+      normalizedUri = photoPath;
+    }
+    // 일반 경로면 file:// 붙이기
+    else {
+      normalizedUri = `file://${photoPath}`;
+    }
+
+    console.log('🔄 정규화된 URI:', normalizedUri);
+
     const formData = new FormData();
     formData.append('file', {
-      // ✅ Controller와 일치
-      uri: `file://${photoPath}`,
+      uri: normalizedUri,
       type: 'image/jpeg',
       name: 'receipt.jpg',
     });
@@ -227,13 +244,17 @@ export const saveRecipe = async (userId, recipe) => {
  */
 export const consumeIngredients = async (userId, recipeId, ingredients) => {
   try {
+    console.log('📤 재료 소비 API 호출:', {userId, recipeId, ingredients});
+
     const requestBody = {
       recipeId,
       ingredients: ingredients.map(item => ({
         userIngredientId: item.userIngredientId,
-        usageType: item.usage, // "ALL" | "PARTIAL"
+        usageType: item.usageType, // "ALL" | "PARTIAL"
       })),
     };
+
+    console.log('📦 requestBody:', JSON.stringify(requestBody, null, 2));
 
     const response = await axios.post(
       `/v1/users/${userId}/ingredients/consume`,

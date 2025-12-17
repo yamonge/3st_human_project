@@ -122,4 +122,24 @@
           AND user_ingredient_id = #{userIngredientId}
     </delete>
 
+    <!-- 중복 체크용: 사용자 ID와 재료명으로 기존 재료 조회 -->
+    <select id="selectByUserIdAndIngredientName" resultMap="UserIngredientResultMap">
+        SELECT
+            user_ingredient_id,
+            user_id,
+            ingredient_name,
+            quantity_desc,
+            category_cd,
+            used_flag,
+            memo,
+            created_id,
+            created_date,
+            updated_id,
+            updated_date
+        FROM tb_user_ingredient
+        WHERE user_id = #{userId}
+          AND LOWER(TRIM(ingredient_name)) = LOWER(TRIM(#{ingredientName}))
+        FETCH FIRST 1 ROWS ONLY
+    </select>
+
 </mapper>

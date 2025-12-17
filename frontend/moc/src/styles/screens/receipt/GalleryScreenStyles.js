@@ -129,6 +129,34 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: 'white',
     lineHeight: 24,
+    includeFontPadding: false,
+  },
+
+  // 재료 인식 로딩 오버레이
+  recognizingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+
+  recognizingText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginTop: 20,
+    fontFamily: 'NotoSansKR-Bold',
+    includeFontPadding: false,
+  },
+
+  recognizingSubText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: '#9CA3AF',
+    marginTop: 8,
+    fontFamily: 'NotoSansKR-Regular',
+    includeFontPadding: false,
   },
 });
 
