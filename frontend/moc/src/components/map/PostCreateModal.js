@@ -7,6 +7,7 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import TimePickerModal from './TimePickerModal';
 import {createPost} from '../../api/map';
 import styles from '../../styles/components/map/PostCreateModalStyles';
+import {Alert} from 'react-native';
 import {colors} from '../../styles/common';
 
 /**
@@ -17,7 +18,13 @@ import {colors} from '../../styles/common';
  * - 구매할 재료 선택 (다중 선택)
  * - 설명 입력 (선택, 최대 100자)
  */
-export default function PostCreateModal({visible, onClose, storeName = ''}) {
+export default function PostCreateModal({
+  visible,
+  onClose,
+  storeName = '',
+  selectedMarker,
+  onCreated,
+}) {
   // 만날 시간
   const [selectedTime, setSelectedTime] = useState(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -32,7 +39,7 @@ export default function PostCreateModal({visible, onClose, storeName = ''}) {
     {id: 'vegetable', label: '🥬 채소', emoji: '🥬'},
     {id: 'fruit', label: '🍎 과일', emoji: '🍎'},
     {id: 'snack', label: '🍫 간식', emoji: '🍫'},
-    {id: 'icecream', label: '🍦 아이스크림', emoji: '🍦'},
+    {id: 'etc', label: '기타', emoji: ''},
   ];
   const [selectedIngredients, setSelectedIngredients] = useState([]);
 
@@ -68,42 +75,69 @@ export default function PostCreateModal({visible, onClose, storeName = ''}) {
   const handleCreate = async () => {
     // 유효성 검사
     if (!selectedTime) {
-      alert('만날 시간을 선택해주세요.');
+      Alert.alert('알림','만날 시간을 선택해주세요.');
       return;
     }
 
     if (selectedIngredients.length === 0) {
-      alert('구매할 재료를 선택해주세요.');
+      Alert.alert('알림','구매할 재료를 선택해주세요.');
       return;
     }
 
     // 백엔드 API 호출 (게시물 생성)
+    if (!selectedMarker?.latitude || !selectedMarker?.longitude) {
+      Alert.alert('알림', '마트(핀)를 먼저 선택해주세요.');
+      return;
+    }
+
+    const safeMax = Math.max(2, Number(peopleCount || 0));
+
     const postData = {
-      storeName,
-      meetTime: selectedTime.timestamp, // timestamp 전달
-      peopleCount,
-      ingredients: selectedIngredients,
+      placeName: selectedMarker?.name || storeName,
+      placeAddress: selectedMarker?.address || selectedMarker?.roadAddress || '',
+      latitude: Number(selectedMarker?.latitude),
+      longitude: Number(selectedMarker?.longitude),
+
+      // ✅ 백엔드가 Long(ms)로 받도록: 숫자(ms)로 보냄
+      meetDateTime:
+        typeof selectedTime?.timestamp === 'number'
+          ? selectedTime.timestamp
+          : new Date(selectedTime?.timestamp).getTime(),
+
+      minPersonCnt: 2,
+      maxPersonCnt: safeMax,
+
       description: tempDescription.trim(),
+      categoryCodes: selectedIngredients,
     };
 
-    console.log('[게시물 생성 요청]', postData);
+    console.log('[게시물 생성 요청]', JSON.stringify(postData, null, 2));
 
-    /* 백엔드 API 연동 (준비되면 주석 해제)
+
+    // 백엔드 API 연동
     try {
-      const result = await createPost(postData);
-      console.log('[게시물 생성 성공]', result);
-      alert('게시물이 작성되었습니다!');
-      // TODO: 채팅방 생성 및 이동
-      // navigation.navigate('ChatRoom', {postId: result.id});
-      onClose();
+      const postId = await createPost(postData); 
+      // axiosConfig가 response.data를 리턴하므로
+      // 백엔드가 Long(postId)만 반환하면 postId가 바로 들어옵니다.
+
+      console.log('[게시물 생성 성공] postId=', postId);
+      Alert.alert('완료', '게시물이 작성되었습니다.');
+
+      // (선택) 작성 후 목록 갱신 콜백이 있으면 호출
+      onCreated?.(postId);
+
+      // (중요) 성공시에만 닫기
+      onClose?.();
+
+      // TODO(2단계): "작성 시점에 채팅방 생성"을 백엔드가 하고,
+      // create 응답에서 chatRoomId까지 내려주도록 만들면
+      // 여기서 바로 이동 가능
+      // navigation.navigate('ChatRoom', { chatRoomId });
+
     } catch (error) {
       console.error('[게시물 생성 실패]', error);
-      alert('게시물 작성에 실패했습니다. 다시 시도해주세요.');
+      Alert.alert('오류', '게시물 작성에 실패했습니다. 다시 시도해주세요.');
     }
-    */
-
-    // 임시: 성공으로 간주
-    onClose();
   };
 
   if (!visible) return null;

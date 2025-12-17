@@ -3,7 +3,6 @@ package com.cucook.moc.chat.vo;
 import lombok.*;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

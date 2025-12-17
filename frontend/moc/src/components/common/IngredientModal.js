@@ -1,5 +1,6 @@
 import React from 'react';
-import {View, Text, Modal, TextInput, TouchableOpacity} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity} from 'react-native';
+import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import LinearGradient from 'react-native-linear-gradient';
 import {styles} from '../../styles/components/IngredientModalStyles';
 
@@ -34,7 +35,7 @@ export default function IngredientModal({
       case 'add':
         return '저장';
       case 'edit':
-        return '저장';
+        return '수정';
       case 'delete':
         return '삭제';
       default:
@@ -42,13 +43,27 @@ export default function IngredientModal({
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onCancel}>
-      <View style={styles.modalOverlay}>
+    <View style={styles.modalOverlay}>
+      <TouchableOpacity
+        style={styles.modalBackdrop}
+        activeOpacity={1}
+        onPress={onCancel}
+      />
+      <KeyboardAwareScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={{flex: 1}}>
         <View style={styles.modalContainer}>
           {/* 타이틀 */}
           <Text style={styles.modalTitle}>{title}</Text>
@@ -103,7 +118,7 @@ export default function IngredientModal({
             )}
           </View>
         </View>
-      </View>
-    </Modal>
+      </KeyboardAwareScrollView>
+    </View>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {ArrowLeft, Bookmark} from 'lucide-react-native';
+import {ArrowLeft, Bookmark, Heart, Star} from 'lucide-react-native';
 import RecipeListItem from '../../components/recipeboard/RecipeListItem';
 // import {getSavedRecipes, getLikedPosts} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/SavedRecipesStyles';
@@ -159,7 +159,26 @@ export default function SavedRecipesScreen({navigation}) {
             end={{x: 1, y: 0}}
             style={styles.headerGradient}
           />
-
+          {/* 배경 장식 아이콘들 */}
+          <View style={[styles.decorIcon, styles.decorIcon1]}>
+            <Bookmark
+              size={48}
+              color="rgba(255, 255, 255, 0.3)"
+              strokeWidth={2}
+              fill="rgba(255, 255, 255, 0.3)"
+            />
+          </View>
+          <View style={[styles.decorIcon, styles.decorIcon2]}>
+            <Heart size={28} color="rgba(255, 255, 255, 0.3)" strokeWidth={2} />
+          </View>
+          <View style={[styles.decorIcon, styles.decorIcon3]}>
+            <Star
+              size={42}
+              color="rgba(255, 255, 255, 0.3)"
+              strokeWidth={2}
+              fill="rgba(255, 255, 255, 0.3)"
+            />
+          </View>
           {/* 타이틀 영역 */}
           <View style={styles.headerTop}>
             <TouchableOpacity

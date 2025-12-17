@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, Modal, TouchableOpacity, StyleSheet} from 'react-native';
 import {Picker} from 'react-native-wheel-pick';
 import {X} from 'lucide-react-native';
@@ -112,7 +112,7 @@ export default function DatePickerModal({
             <View style={styles.pickerColumn}>
               <Picker
                 style={styles.picker}
-                selectedValue={selectedYear}
+                selectedValue={`${selectedYear}년`}
                 pickerData={yearOptions.map(y => `${y}년`)}
                 onValueChange={value => {
                   const year = value.replace('년', '');
@@ -133,7 +133,7 @@ export default function DatePickerModal({
             <View style={styles.pickerColumn}>
               <Picker
                 style={styles.picker}
-                selectedValue={selectedMonth}
+                selectedValue={`${selectedMonth}월`}
                 pickerData={monthOptions.map(m => `${m}월`)}
                 onValueChange={value => {
                   const month = value.replace('월', '');
@@ -154,7 +154,7 @@ export default function DatePickerModal({
             <View style={styles.pickerColumn}>
               <Picker
                 style={styles.picker}
-                selectedValue={selectedDay}
+                selectedValue={`${selectedDay}일`}
                 pickerData={dayOptions.map(d => `${d}일`)}
                 onValueChange={value => {
                   const day = value.replace('일', '');

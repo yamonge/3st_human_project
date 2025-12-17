@@ -47,3 +47,18 @@ export const reportContent = async (type, targetId, reason, details = '') => {
 export const reportRecipe = async (recipeId, reason, details = '') => {
   return reportContent('recipe', recipeId, reason, details);
 };
+
+/**
+ * 사용자 신고 전용 함수 (간편 사용)
+ *
+ * @param {number} userId - 사용자 ID
+ * @param {string} reason - 신고 사유 ('PROFANITY', 'INAPPROPRIATE_BEHAVIOR', 'FRAUD', 'NO_SHOW', 'FAKE_PROFILE', 'OTHER')
+ * @param {string} [details] - 상세 설명
+ * @returns {Promise<Object>}
+ *
+ * @example
+ * await reportUser(456, 'PROFANITY', '욕설 사용');
+ */
+export const reportUser = async (userId, reason, details = '') => {
+  return reportContent('user', userId, reason, details);
+};

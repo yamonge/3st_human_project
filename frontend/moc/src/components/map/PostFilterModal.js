@@ -38,7 +38,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
     {id: 'vegetable', label: '🥬 채소'},
     {id: 'fruit', label: '🍎 과일'},
     {id: 'snack', label: '🍫 간식'},
-    {id: 'icecream', label: '🍦 아이스크림'},
+    {id: 'etc', label: '기타'},
   ];
 
   /**
@@ -54,6 +54,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
 
   /**
    * 초기화
+   * UI만 초기화(원하면 즉시 적용까지 하려면 onApply 호출 정책 추가 가능)
    */
   const handleReset = () => {
     setSelectedIngredients([]);
@@ -62,7 +63,9 @@ export default function PostFilterModal({visible, onClose, onApply}) {
   };
 
   /**
-   * 적용하기
+   * ✅ 적용하기
+   * - onApply(filters)만 호출
+   * - 닫기는 부모(PostListBottomSheet)에서 처리 (중복 close 방지)
    */
   const handleApply = () => {
     const filters = {
@@ -71,8 +74,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
       time: selectedTime,
     };
     console.log('[필터 적용]', filters);
-    onApply(filters);
-    onClose();
+    onApply(filters); // 부모가 state 저장 + 리스트 갱신 + 모달 닫기 처리
   };
 
   /**
@@ -89,6 +91,7 @@ export default function PostFilterModal({visible, onClose, onApply}) {
   const handleTimeConfirm = timeData => {
     console.log('[시간 선택 완료]', timeData);
     setSelectedTime(timeData); // ← 전체 객체 저장 (timestamp 포함!)
+    setShowTimePickerModal(false); // ✅ 선택 완료 후 닫기(UX 개선)
   };
 
   if (!visible) return null;

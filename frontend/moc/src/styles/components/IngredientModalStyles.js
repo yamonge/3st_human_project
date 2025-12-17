@@ -3,11 +3,32 @@ import {StyleSheet} from 'react-native';
 export const styles = StyleSheet.create({
   // 모달 오버레이
   modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 38,
+    zIndex: 9999,
+  },
+
+  // 배경 (클릭 시 닫기)
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+
+  // 모달 래퍼
+  modalWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10000,
   },
 
   // 모달 컨테이너
@@ -18,7 +39,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 24,
     width: '100%',
-    maxWidth: 300,
+    minWidth: 250,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 20},
     shadowOpacity: 0.25,
