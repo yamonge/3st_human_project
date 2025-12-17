@@ -33,6 +33,8 @@ export default function RecipeDetailScreen({route, navigation}) {
     from = 'camera',
   } = route.params || {};
 
+  console.log('🔥 initialRecipe:', JSON.stringify(initialRecipe, null, 2));
+
   // 레시피->직접입력 플로우인지 확인
   const isRecipeDirectInput = from === 'recipe-direct-input';
 
@@ -68,7 +70,8 @@ export default function RecipeDetailScreen({route, navigation}) {
       console.log('⚠️ AsyncStorage에서 레시피 저장 여부 확인');
       const savedRecipes = await AsyncStorage.getItem('savedRecipes');
       const savedList = savedRecipes ? JSON.parse(savedRecipes) : [];
-      const isRecipeSaved = savedList.includes(initialRecipe?.id);
+      const isRecipeSaved =
+        initialRecipe?.recipeId && savedList.includes(initialRecipe.recipeId);
       setIsSaved(isRecipeSaved);
       console.log(`레시피 ${initialRecipe?.id} 저장 여부:`, isRecipeSaved);
     } catch (error) {
@@ -110,7 +113,7 @@ export default function RecipeDetailScreen({route, navigation}) {
       // 3️⃣ 백엔드 API 호출
       const result = await consumeIngredients(
         Number(userId),
-        recipe.id,
+        recipe.recipeId ?? null,
         consumeIngredientsPayload,
       );
 
@@ -158,8 +161,11 @@ export default function RecipeDetailScreen({route, navigation}) {
     // TODO: 실제로는 사용자의 냉장고 재료와 비교해야 함
     // 현재는 예시 데이터 사용
     const userIngredients = ingredients || [];
-    const available = recipe.ingredients.slice(0, 2).map(ing => ing.name); // 예시: 처음 2개는 보유
-    const missing = recipe.ingredients.slice(2).map(ing => ing.name); // 예시: 나머지는 부족
+    const available = recipe.ingredients
+      .slice(0, 2)
+      .map(ing => ing.ingredientName);
+
+    const missing = recipe.ingredients.slice(2).map(ing => ing.ingredientName);
 
     return {available, missing};
   };
@@ -169,6 +175,74 @@ export default function RecipeDetailScreen({route, navigation}) {
    */
   const toggleCheckbox = () => {
     setShareToBoard(!shareToBoard);
+  };
+
+  /**
+   * 레시피 저장 핸들러 (백엔드 연동)
+   */
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('오류', '로그인 정보가 없습니다.');
+        return;
+      }
+
+      const result = await saveRecipe(Number(userId), {
+        title: recipe.title,
+        summary: recipe.summary,
+        difficultyCd: recipe.difficultyCd,
+        cookTimeMin: recipe.cookTimeMin,
+        cuisineStyleCd: recipe.cuisineStyleCd,
+        category: recipe.category,
+        share: shareToBoard,
+
+        ingredients: recipe.requiredIngredients.map(ing => ({
+          ingredientName: ing.ingredientName,
+          quantityDesc: ing.quantityDesc,
+        })),
+
+        steps: recipe.cookingSteps.map((step, index) => ({
+          stepNo: step.stepNo ?? index + 1,
+          stepDesc: step.stepDesc,
+        })),
+      });
+
+      if (!result.success) {
+        Alert.alert('오류', result.error);
+        return;
+      }
+
+      setIsSaved(true);
+      setShowSaveModal(true);
+
+      // 프론트 저장 여부 관리 (recipeId 기준)
+      const savedRecipes = await AsyncStorage.getItem('savedRecipes');
+      const savedList = savedRecipes ? JSON.parse(savedRecipes) : [];
+      console.log('🔥 저장 payload 확인', {
+        title: recipe.title,
+        requiredIngredients: recipe.requiredIngredients,
+        cookingSteps: recipe.cookingSteps,
+      });
+      await AsyncStorage.setItem(
+        'savedRecipes',
+        JSON.stringify([...savedList, result.recipeId]),
+      );
+    } catch (e) {
+      console.error(e);
+      Alert.alert('오류', '레시피 저장 중 문제가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleCloseModal = () => {
+    setShowSaveModal(false);
+  };
+  const handleNavigateToRecipe = () => {
+    setShowSaveModal(false);
+    navigation.navigate('MyRecipes'); // 또는 RecipeBoard 등
   };
 
   return (
@@ -202,9 +276,9 @@ export default function RecipeDetailScreen({route, navigation}) {
         {/* 난이도 및 시간 */}
         {recipe && (
           <View style={styles.headerMetadata}>
-            <Text style={styles.metadataText}>{recipe.difficulty}</Text>
+            <Text style={styles.metadataText}>{recipe.difficultyCd}</Text>
             <View style={styles.metadataDivider} />
-            <Text style={styles.metadataText}>{recipe.cookingTime}</Text>
+            <Text style={styles.metadataText}>{recipe.cookTimeMin}분</Text>
           </View>
         )}
       </LinearGradient>
@@ -254,11 +328,15 @@ export default function RecipeDetailScreen({route, navigation}) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>필요한 재료</Text>
             <View style={styles.ingredientsList}>
-              {recipe.ingredients.map((ingredient, index) => (
-                <View key={index} style={styles.ingredientItem}>
-                  <Text style={styles.ingredientName}>{ingredient.name}</Text>
+              {initialRecipe.requiredIngredients.map(ingredient => (
+                <View
+                  key={`${ingredient.ingredientName}-${ingredient.quantityDesc}`}
+                  style={styles.ingredientItem}>
+                  <Text style={styles.ingredientName}>
+                    {ingredient.ingredientName}
+                  </Text>
                   <Text style={styles.ingredientAmount}>
-                    {ingredient.amount}
+                    {ingredient.quantityDesc}
                   </Text>
                 </View>
               ))}
@@ -269,16 +347,18 @@ export default function RecipeDetailScreen({route, navigation}) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>조리 순서</Text>
             <View style={styles.stepsList}>
-              {recipe.steps.map((step, index) => (
+              {recipe.cookingSteps.map((step, index) => (
                 <View key={index} style={styles.stepItem}>
                   <LinearGradient
                     colors={['#00B8DB', '#155DFC']}
                     start={{x: 0, y: 0}}
                     end={{x: 1, y: 0}}
                     style={styles.stepNumber}>
-                    <Text style={styles.stepNumberText}>{index + 1}</Text>
+                    <Text style={styles.stepNumberText}>
+                      {step.stepNo ?? index + 1}
+                    </Text>
                   </LinearGradient>
-                  <Text style={styles.stepText}>{step}</Text>
+                  <Text style={styles.stepText}>{step.stepDesc}</Text>
                 </View>
               ))}
             </View>

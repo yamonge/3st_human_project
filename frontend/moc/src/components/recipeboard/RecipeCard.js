@@ -16,6 +16,11 @@ const RecipeCard = ({recipe, onPress}) => {
         return styles.difficultyMedium;
     }
   };
+  const DIFFICULTY_LABEL_MAP = {
+    EASY: '하',
+    NORMAL: '중',
+    HARD: '상',
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
@@ -34,8 +39,8 @@ const RecipeCard = ({recipe, onPress}) => {
         <View style={styles.likeButton}>
           <Heart
             size={20}
-            color={recipe.isLiked ? '#FF2056' : '#D1D5DB'}
-            fill={recipe.isLiked ? '#FF2056' : 'none'}
+            color={recipe.likedByMe ? '#FF2056' : '#D1D5DB'}
+            fill={recipe.likedByMe ? '#FF2056' : 'none'}
           />
         </View>
 
@@ -59,7 +64,7 @@ const RecipeCard = ({recipe, onPress}) => {
           </View>
           <Text style={styles.ownerLabel}>소유자:</Text>
           <Text style={styles.ownerName} numberOfLines={1}>
-            {recipe.author}
+            {recipe.authorNickname}
           </Text>
         </View>
 
@@ -68,7 +73,7 @@ const RecipeCard = ({recipe, onPress}) => {
           <View style={styles.detailItem}>
             <Clock size={16} color="#4A5565" />
             <Text style={styles.detailLabel}>조리시간:</Text>
-            <Text style={styles.detailValue}>{recipe.cookingTime}분</Text>
+            <Text style={styles.detailValue}>{recipe.cookTimeMin}분</Text>
           </View>
 
           <View style={styles.detailItem}>
@@ -76,9 +81,9 @@ const RecipeCard = ({recipe, onPress}) => {
             <Text
               style={[
                 styles.detailValue,
-                getDifficultyStyle(recipe.difficulty),
+                getDifficultyStyle(DIFFICULTY_LABEL_MAP[recipe.difficultyCd]),
               ]}>
-              {recipe.difficulty}
+              {DIFFICULTY_LABEL_MAP[recipe.difficultyCd]}
             </Text>
           </View>
         </View>
@@ -87,12 +92,15 @@ const RecipeCard = ({recipe, onPress}) => {
         <View style={styles.ingredientsContainer}>
           <Text style={styles.ingredientsLabel}>준비재료:</Text>
           <View style={styles.ingredientsChips}>
-            {recipe.ingredients &&
-              recipe.ingredients.slice(0, 5).map((ingredient, index) => (
-                <View key={index} style={styles.ingredientChip}>
-                  <Text style={styles.ingredientText}>{ingredient.name}</Text>
-                </View>
-              ))}
+            {recipe.ingredientSummary &&
+              recipe.ingredientSummary
+                .split(', ')
+                .slice(0, 5)
+                .map((name, index) => (
+                  <View key={index} style={styles.ingredientChip}>
+                    <Text style={styles.ingredientText}>{name.trim()}</Text>
+                  </View>
+                ))}
           </View>
         </View>
       </View>

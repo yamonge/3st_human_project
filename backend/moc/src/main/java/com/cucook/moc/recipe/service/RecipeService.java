@@ -1,6 +1,7 @@
 package com.cucook.moc.recipe.service;
 
 import com.cucook.moc.recipe.dto.request.RecipeGenerationRequestDTO;
+import com.cucook.moc.recipe.dto.request.RecipeSaveRequestDTO;
 import com.cucook.moc.recipe.dto.response.RecipeRecommendationResponseDTO; // DTO 이름 유지
 import com.cucook.moc.recipe.dto.response.RecipeResponseDTO; // 단일 레시피 응답 DTO
 import com.cucook.moc.recipe.dto.response.RecipeListResponseDTO; // 레시피 목록 응답 DTO (공유 레시피 목록에 사용)
@@ -50,4 +51,14 @@ public interface RecipeService {
      * @return 공유된 레시피의 총 개수
      */
     int countSharedRecipesByUserId(Long userId);
+
+
+    /**
+     * 사용자가 선택한 레시피를 DB에 저장합니다.
+     *
+     * @param userId 레시피를 저장하는 사용자 ID
+     * @param dto 저장할 레시피 정보
+     * @return 생성된 recipeId
+     */
+    Long saveRecipe(Long userId, RecipeSaveRequestDTO dto);
 }

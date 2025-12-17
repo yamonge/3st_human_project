@@ -23,31 +23,33 @@ import api from './axiosConfig';
  *
  * @example
  * // 전체 레시피 조회
- * const data = await getRecipes({});
- *
- * // 검색어로 조회
- * const data = await getRecipes({ search: '김치' });
- *
- * // 검색 + 필터 조합
- * const data = await getRecipes({
- *   search: '볶음밥',
- *   style: '중식'
- * });
  */
-export const getRecipes = async (params = {}) => {
+export const getRecipeBoardList = async ({
+  search,
+  cuisineStyleCd,
+  difficultyCd,
+  maxCookTimeMin,
+  sort = 'LATEST', // LATEST | POPULAR
+  page = 1,
+  size = 10,
+} = {}) => {
   try {
-    const response = await api.get('/recipes', {
+    const response = await api.get('/v1/recipes/board', {
       params: {
-        search: params.search || undefined,
-        style: params.style || undefined,
-        difficulty: params.difficulty || undefined,
-        time: params.time || undefined,
+        search,
+        cuisineStyleCd,
+        difficultyCd,
+        maxCookTimeMin,
+        sort,
+        page: page - 1,
+        size,
       },
     });
+    console.log('📦 게시판 API raw response:', response.data);
 
-    return response.data;
+    return response; // RecipeBoardListResponseDTO
   } catch (error) {
-    console.error('레시피 목록 조회 실패:', error);
+    console.error('게시판 레시피 목록 조회 실패:', error);
     throw error;
   }
 };
@@ -78,13 +80,13 @@ export const getRecipes = async (params = {}) => {
  * console.log(data.ingredients); // [{name: "오징어", amount: "1마리"}, ...]
  * console.log(data.steps); // ["소고기를 썰어주세요.", ...]
  */
-export const getRecipeDetail = async recipeId => {
+export const getRecipeBoardDetail = async recipeId => {
   try {
-    const response = await api.get(`/recipes/${recipeId}`);
-
-    return response.data;
+    const response = await api.get(`/v1/recipes/board/${recipeId}`);
+    console.log('📦 게시판 상세 API raw response:', response);
+    return response; // RecipeBoardDetailResponseDTO
   } catch (error) {
-    console.error('레시피 상세 조회 실패:', error);
+    console.error('게시판 레시피 상세 조회 실패:', error);
     throw error;
   }
 };

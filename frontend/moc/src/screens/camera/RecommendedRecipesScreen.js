@@ -47,21 +47,31 @@ export default function RecommendedRecipesScreen({route, navigation}) {
     setIsLoading(true);
     setError(null);
 
-    // 새로운 AI 추천 시작 - 이전 저장 상태 초기화
     try {
       await AsyncStorage.removeItem('savedRecipes');
-      console.log('✅ AsyncStorage 초기화 (새로운 AI 추천)');
-    } catch (error) {
-      console.error('❌ AsyncStorage 초기화 실패:', error);
+    } catch (e) {
+      console.error(e);
     }
 
-    // 선택된 재료만 필터링
     const selectedIngredients = ingredients.filter(item => item.checked);
 
-    const result = await recommendRecipes(selectedIngredients, filters);
+    if (!Array.isArray(selectedIngredients)) {
+      setError('선택된 재료 정보가 올바르지 않습니다.');
+      setIsLoading(false);
+      return;
+    }
 
+    const userId = await AsyncStorage.getItem('userId');
+
+    const result = await recommendRecipes(
+      Number(userId),
+      selectedIngredients,
+      filters,
+    );
+    console.log('recommendRecipes result =', result);
     if (result.success) {
       setRecipes(result.recipes);
+      console.log('🍳 추천 레시피:', result.recipes);
     } else {
       setError(result.error);
     }
@@ -178,7 +188,9 @@ export default function RecommendedRecipesScreen({route, navigation}) {
           </View>
 
           {recipes.map(recipe => (
-            <View key={recipe.id} style={styles.recipeCard}>
+            <View
+              key={`${recipe.title}-${recipe.category}-${recipe.cookTimeMin}`}
+              style={styles.recipeCard}>
               {/* 레시피 이미지 또는 플레이스홀더 */}
               <View style={styles.recipeImageContainer}>
                 {recipe.imageUrl ? (
@@ -202,10 +214,10 @@ export default function RecommendedRecipesScreen({route, navigation}) {
 
                 <View style={styles.recipeMetadata}>
                   <Text style={styles.recipeDifficulty}>
-                    {recipe.difficulty}
+                    {recipe.difficultyCd}
                   </Text>
                   <View style={styles.recipeDivider} />
-                  <Text style={styles.recipeTime}>{recipe.cookingTime}</Text>
+                  <Text style={styles.recipeTime}>{recipe.cookTimeMin}</Text>
                 </View>
 
                 {/* 선택하기 버튼 */}

@@ -2,6 +2,7 @@ package com.cucook.moc.recipe.vo;
 
 import lombok.Data;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 public class RecipeVO {
@@ -17,6 +18,8 @@ public class RecipeVO {
     private Integer cookTimeMin;
     private String cuisineStyleCd;
     private String category;
+    private String authorNickname;
+    private Integer likedByMe;
     private String isPublic;
     private String isDeleted;
     private Integer viewCnt;
@@ -26,4 +29,6 @@ public class RecipeVO {
     private Timestamp createdDate;
     private Long updatedId;
     private Timestamp updatedDate;
+    private List<RecipeStepVO> recipeSteps;
+    private List<RecipeIngredientVO> recipeIngredients;
 }

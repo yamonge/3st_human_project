@@ -2,8 +2,7 @@ package com.cucook.moc.recipe.service.impl;
 
 import com.cucook.moc.recipe.client.GeminiApiUtils;
 import com.cucook.moc.recipe.dao.RecipeDAO;
-import com.cucook.moc.recipe.dto.request.RecipeGenerationRequestDTO;
-import com.cucook.moc.recipe.dto.request.SelectedIngredientRequestDTO;
+import com.cucook.moc.recipe.dto.request.*;
 import com.cucook.moc.recipe.dto.response.*;
 import com.cucook.moc.recipe.service.AiRecipeLogService;
 import com.cucook.moc.recipe.service.RecipeIngredientService;
@@ -14,7 +13,6 @@ import com.cucook.moc.recipe.vo.RecipeIngredientVO;
 import com.cucook.moc.recipe.vo.RecipeStepVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
 import com.cucook.moc.user.dao.UserIngredientDAO;
-import com.cucook.moc.user.dto.request.UserIngredientRequestDTO;
 import com.cucook.moc.user.service.UserIngredientService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -102,7 +100,8 @@ public class RecipeServiceImpl implements RecipeService {
 
         List<RecommendedRecipeDTO> generatedRecipes;
         try {
-            generatedRecipes = parseGeminiRecipeResponse(aiResponseJson, requestDTO);
+            String pureJson = extractPureJson(aiResponseJson);
+            generatedRecipes = parseGeminiRecipeResponse(pureJson, requestDTO);
         } catch (Exception e) {
             System.err.println("Gemini 응답 파싱 실패: " + e.getMessage());
             logAiRecipeGeneration(requestDTO, prompt, "ERROR: " + e.getMessage() + " / Raw response: " + aiResponseJson, 0);
@@ -113,50 +112,20 @@ public class RecipeServiceImpl implements RecipeService {
 
         for (RecommendedRecipeDTO recipeDTO : generatedRecipes) {
             try {
-                Long userIdLong = (requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty())
-                        ? Long.valueOf(requestDTO.getUserId())
-                        : null;
-
-                // 레시피 저장
-                RecipeVO recipeVO = mapToRecipeVO(recipeDTO, userIdLong);
-                recipeVO.setThumbnailUrl(null); // 썸네일은 프론트에서 category 기반 처리
-                recipeDAO.insertRecipe(recipeVO);
-                Long generatedRecipeId = recipeVO.getRecipeId();
-
-                // 조리 단계 저장
-                List<RecipeStepVO> stepVOs =
-                        mapToRecipeStepVOs(recipeDTO.getCookingSteps(), generatedRecipeId, userIdLong);
-                for (RecipeStepVO step : stepVOs) {
-                    if (step.getImageUrl() == null
-                            || step.getImageUrl().isEmpty()
-                            || "placeholder_url".equals(step.getImageUrl())) {
-                        step.setImageUrl(null); // 이미지도 프론트에서 처리
-                    }
-                }
-                recipeStepService.saveAllRecipeSteps(stepVOs);
-
-                // 재료 저장
-                List<RecipeIngredientVO> ingredientVOs =
-                        mapToRecipeIngredientVOs(recipeDTO.getRequiredIngredients(), generatedRecipeId, userIdLong);
-                for (RecipeIngredientVO ingredientVO : ingredientVOs) {
-                    boolean isUserOwned = requestDTO.getSelectedIngredients().stream()
-                            .anyMatch(si -> si.getIngredientName().equals(ingredientVO.getIngredientName()));
-                    ingredientVO.setIsOwnedDefault(isUserOwned ? "Y" : "N");
-                }
-                recipeIngredientService.saveAllRecipeIngredients(ingredientVOs);
-
-                // 응답 DTO에 recipeId, 썸네일, 재료 보유 여부 세팅
-                recipeDTO.setRecipeId(generatedRecipeId);
-                recipeDTO.setThumbnailUrl(null);
-
+                // ✅ 재료 보유 여부 계산만 수행
                 List<RecipeIngredientResponseDTO> responseIngredients =
-                        calculateIngredientOwnership(requestDTO.getSelectedIngredients(), ingredientVOs);
+                        calculateIngredientOwnership(
+                                requestDTO.getSelectedIngredients(),
+                                recipeDTO.getRequiredIngredients()
+                        );
+
                 recipeDTO.setRequiredIngredients(responseIngredients);
+                recipeDTO.setThumbnailUrl(null); // 프론트 처리
 
                 processedRecipes.add(recipeDTO);
 
             } catch (Exception e) {
-                System.err.println("개별 레시피 저장 실패 (제목: " + recipeDTO.getTitle() + "): " + e.getMessage());
+                System.err.println("추천 레시피 처리 실패 (제목: " + recipeDTO.getTitle() + ")");
                 e.printStackTrace();
             }
         }
@@ -193,6 +162,16 @@ public class RecipeServiceImpl implements RecipeService {
         logAiRecipeGeneration(requestDTO, prompt, aiResponseJson, finalRecommendedRecipes.size());
 
         return new RecipeRecommendationResponseDTO(finalRecommendedRecipes, "SUCCESS", "AI 레시피 추천이 완료되었습니다.");
+    }
+
+    private String extractPureJson(String raw) {
+        int start = raw.indexOf('[');
+        int end = raw.lastIndexOf(']');
+
+        if (start == -1 || end == -1 || end < start) {
+            throw new IllegalStateException("Invalid JSON from Gemini: " + raw);
+        }
+        return raw.substring(start, end + 1);
     }
 
     /**
@@ -252,7 +231,7 @@ public class RecipeServiceImpl implements RecipeService {
                         "    \"cuisineStyleCd\": \"KOR | CHN | JPN | WES | ETC\",\n" +
                         "    \"category\": \"rice_dish | noodle | soup_stew | stir_fry | grill_roast | salad | side_dish | dessert_snack\",\n" +
                         "    \"requiredIngredients\": [ { \"ingredientName\": \"string\", \"quantityDesc\": \"string\" } ],\n" +
-                        "    \"cookingSteps\": [ { \"stepNo\": number, \"stepDesc\": \"string\", \"imageUrl\": \"string\" } ]\n" +
+                        "    \"cookingSteps\": [ { \"stepNo\": number, \"stepDesc\": \"string\"} ]\n" +
                         "  }\n" +
                         "]\n" +
                         "\n" +
@@ -358,7 +337,7 @@ public class RecipeServiceImpl implements RecipeService {
      */
     private List<RecipeIngredientResponseDTO> calculateIngredientOwnership(
             List<SelectedIngredientRequestDTO> userSelectedIngredients,
-            List<RecipeIngredientVO> recipeRequiredIngredientVOs) {
+            List<RecipeIngredientResponseDTO> recipeRequiredIngredientVOs) {
 
         Map<String, SelectedIngredientRequestDTO> userIngredientMap =
                 userSelectedIngredients.stream()
@@ -466,5 +445,81 @@ public class RecipeServiceImpl implements RecipeService {
     @Transactional(readOnly = true)
     public int countSharedRecipesByUserId(Long userId) {
         return recipeDAO.countSharedRecipesByUserId(userId);
+    }
+
+    @Override
+    @Transactional
+    public Long saveRecipe(Long userId, RecipeSaveRequestDTO dto) {
+
+        // 1️⃣ 레시피 메타 저장
+        RecipeVO recipeVO = new RecipeVO();
+        recipeVO.setOwnerUserId(userId);
+        recipeVO.setSourceType("AI_GENERATED");
+        recipeVO.setTitle(dto.getTitle());
+        recipeVO.setSummary(dto.getSummary());
+        recipeVO.setThumbnailUrl(null);
+        recipeVO.setDifficultyCd(dto.getDifficultyCd());
+        recipeVO.setCookTimeMin(dto.getCookTimeMin());
+        recipeVO.setCuisineStyleCd(dto.getCuisineStyleCd());
+        recipeVO.setCategory(dto.getCategory());
+        recipeVO.setIsPublic(dto.isShare() ? "Y" : "N");
+        recipeVO.setIsDeleted("N");
+        recipeVO.setViewCnt(0);
+        recipeVO.setLikeCnt(0);
+        recipeVO.setReportCnt(0);
+        recipeVO.setCreatedId(userId);
+
+        recipeDAO.insertRecipe(recipeVO);
+        Long recipeId = recipeVO.getRecipeId();
+
+        // 2️⃣ 재료 저장
+        if (dto.getIngredients() != null) {
+            for (RecipeIngredientSaveDTO ing : dto.getIngredients()) {
+
+                if (ing.getIngredientName() == null || ing.getIngredientName().isBlank()) {
+                    throw new IllegalArgumentException("ingredientName is required");
+                }
+
+                if (ing.getQuantityDesc() == null || ing.getQuantityDesc().isBlank()) {
+                    throw new IllegalArgumentException("quantityDesc is required");
+                }
+
+                RecipeIngredientVO vo = new RecipeIngredientVO();
+                vo.setRecipeId(recipeId);
+                vo.setIngredientName(ing.getIngredientName());
+                vo.setQuantityDesc(ing.getQuantityDesc());
+                vo.setIsOwnedDefault("N");
+                vo.setCreatedId(userId);
+
+                recipeIngredientService.saveRecipeIngredient(vo);
+            }
+        }
+
+        // 3️⃣ 조리 단계 저장
+        if (dto.getSteps() == null || dto.getSteps().isEmpty()) {
+            throw new IllegalArgumentException("steps required");
+        }
+
+        for (RecipeStepSaveDTO step : dto.getSteps()) {
+
+            if (step.getStepNo() == null) {
+                throw new IllegalArgumentException("stepNo is required");
+            }
+
+            if (step.getStepDesc() == null || step.getStepDesc().isBlank()) {
+                throw new IllegalArgumentException("stepDesc is required");
+            }
+
+            RecipeStepVO vo = new RecipeStepVO();
+            vo.setRecipeId(recipeId);
+            vo.setStepNo(step.getStepNo());
+            vo.setStepDesc(step.getStepDesc());
+            vo.setImageUrl(null); // 이미지 URL은 추후 확장
+            vo.setCreatedId(userId);
+
+            recipeStepService.saveRecipeStep(vo);
+        }
+
+        return recipeId;
     }
 }

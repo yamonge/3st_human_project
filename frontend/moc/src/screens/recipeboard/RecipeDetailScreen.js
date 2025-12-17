@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import {Heart, ChevronLeft, Flag} from 'lucide-react-native';
 import styles from '../../styles/screens/recipeboard/RecipeDetailStyles';
-// import {getRecipeDetail, toggleRecipeLike} from '../../api/recipeBoard';
+import {getRecipeBoardDetail, toggleRecipeLike} from '../../api/recipeBoard';
 // import {reportRecipe} from '../../api/report';
 
 /**
@@ -57,16 +57,16 @@ export default function RecipeDetailScreen({route, navigation}) {
   const loadRecipeDetail = async () => {
     try {
       setLoading(true);
-      // const data = await getRecipeDetail(recipeId);
-      // setRecipe(data.recipe);
-      // setLiked(data.recipe.isLiked);
-      // setLikeCount(data.recipe.likeCount);
 
-      // 더미 데이터 (API 연동 전)
-      console.log('레시피 상세 조회 API 호출:', recipeId);
+      const data = await getRecipeBoardDetail(recipeId);
+      console.log('📦 상세 응답:', data);
+
+      setRecipe(data);
+      setLiked(data.likedByMe);
+      setLikeCount(data.likeCnt);
     } catch (error) {
       console.error('레시피 상세 조회 실패:', error);
-      // Alert.alert('오류', '레시피를 불러올 수 없습니다.');
+      Alert.alert('오류', '레시피를 불러올 수 없습니다.');
     } finally {
       setLoading(false);
     }
@@ -164,10 +164,10 @@ export default function RecipeDetailScreen({route, navigation}) {
                 {recipe.title}
               </Text>
               <View style={styles.headerMetadata}>
-                <Text style={styles.metadataText}>{recipe.difficulty}</Text>
+                <Text style={styles.metadataText}>{recipe.difficultyCd}</Text>
                 <View style={styles.metadataDivider} />
                 <Text
-                  style={styles.metadataText}>{`${recipe.cookingTime}분`}</Text>
+                  style={styles.metadataText}>{`${recipe.cookTimeMin}분`}</Text>
               </View>
             </View>
           </View>
@@ -193,10 +193,16 @@ export default function RecipeDetailScreen({route, navigation}) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>필요한 재료</Text>
           <View style={styles.ingredientsList}>
-            {ingredients.map((ingredient, index) => (
-              <View key={index} style={styles.ingredientItem}>
-                <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>
+            {recipe?.recipeIngredients?.map(ingredient => (
+              <View
+                key={`${ingredient.ingredientName}-${ingredient.quantityDesc}`}
+                style={styles.ingredientItem}>
+                <Text style={styles.ingredientName}>
+                  {ingredient.ingredientName}
+                </Text>
+                <Text style={styles.ingredientAmount}>
+                  {ingredient.quantityDesc}
+                </Text>
               </View>
             ))}
           </View>
@@ -206,7 +212,7 @@ export default function RecipeDetailScreen({route, navigation}) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>조리 순서</Text>
           <View style={styles.stepsList}>
-            {steps.map((step, index) => (
+            {recipe?.recipeSteps?.map((step, index) => (
               <View key={index} style={styles.stepItem}>
                 <LinearGradient
                   colors={stepNumberColors}
@@ -215,7 +221,7 @@ export default function RecipeDetailScreen({route, navigation}) {
                   style={styles.stepNumber}>
                   <Text style={styles.stepNumberText}>{index + 1}</Text>
                 </LinearGradient>
-                <Text style={styles.stepText}>{step}</Text>
+                <Text style={styles.stepText}>{step.stepDesc}</Text>
               </View>
             ))}
           </View>
