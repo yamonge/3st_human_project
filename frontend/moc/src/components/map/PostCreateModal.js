@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, TextInput, TouchableOpacity} from 'react-native';
 import {X, Clock} from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
@@ -48,6 +48,18 @@ export default function PostCreateModal({
   const [tempDescription, setTempDescription] = useState('');
   const MAX_DESCRIPTION_LENGTH = 100;
 
+  // ✅ visible이 true가 될 때마다 모든 state 초기화
+  useEffect(() => {
+    if (visible) {
+      setSelectedTime(null);
+      setShowTimePicker(false);
+      setPeopleCount(2);
+      setSelectedIngredients([]);
+      setDescription('');
+      setTempDescription('');
+    }
+  }, [visible]);
+
   /**
    * 재료 선택 토글
    */
@@ -75,12 +87,12 @@ export default function PostCreateModal({
   const handleCreate = async () => {
     // 유효성 검사
     if (!selectedTime) {
-      Alert.alert('알림','만날 시간을 선택해주세요.');
+      Alert.alert('알림', '만날 시간을 선택해주세요.');
       return;
     }
 
     if (selectedIngredients.length === 0) {
-      Alert.alert('알림','구매할 재료를 선택해주세요.');
+      Alert.alert('알림', '구매할 재료를 선택해주세요.');
       return;
     }
 
@@ -94,7 +106,8 @@ export default function PostCreateModal({
 
     const postData = {
       placeName: selectedMarker?.name || storeName,
-      placeAddress: selectedMarker?.address || selectedMarker?.roadAddress || '',
+      placeAddress:
+        selectedMarker?.address || selectedMarker?.roadAddress || '',
       latitude: Number(selectedMarker?.latitude),
       longitude: Number(selectedMarker?.longitude),
 
@@ -113,10 +126,9 @@ export default function PostCreateModal({
 
     console.log('[게시물 생성 요청]', JSON.stringify(postData, null, 2));
 
-
     // 백엔드 API 연동
     try {
-      const postId = await createPost(postData); 
+      const postId = await createPost(postData);
       // axiosConfig가 response.data를 리턴하므로
       // 백엔드가 Long(postId)만 반환하면 postId가 바로 들어옵니다.
 
@@ -133,7 +145,6 @@ export default function PostCreateModal({
       // create 응답에서 chatRoomId까지 내려주도록 만들면
       // 여기서 바로 이동 가능
       // navigation.navigate('ChatRoom', { chatRoomId });
-
     } catch (error) {
       console.error('[게시물 생성 실패]', error);
       Alert.alert('오류', '게시물 작성에 실패했습니다. 다시 시도해주세요.');

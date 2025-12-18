@@ -106,7 +106,7 @@ api.interceptors.response.use(
       );
     }
 
-    console.log('📥 Response Data:', JSON.stringify(response.data, null, 2));
+    console.log('📥 Response Data:', JSON.stringify(response, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // 응답 데이터만 반환

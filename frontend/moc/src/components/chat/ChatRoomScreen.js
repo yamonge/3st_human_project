@@ -302,6 +302,42 @@ const ChatRoomScreen = ({
       }
     };
 
+    // ✅ WebSocket 연결 확인 및 자동 재연결
+    const ensureWebSocketConnection = async () => {
+      if (!StompClient.isConnected) {
+        console.log('⚠️ [ChatRoomScreen] WebSocket 연결 안 됨. 재연결 시도...');
+        try {
+          const userId = await AsyncStorage.getItem('userId');
+          const nickname = await AsyncStorage.getItem('userNickname');
+
+          if (userId) {
+            await new Promise((resolve, reject) => {
+              StompClient.connect(
+                Number(userId),
+                () => {
+                  console.log('✅ [ChatRoomScreen] WebSocket 재연결 성공!');
+                  store.setConnected(true);
+                  resolve();
+                },
+                error => {
+                  console.error(
+                    '❌ [ChatRoomScreen] WebSocket 재연결 실패:',
+                    error,
+                  );
+                  store.setConnected(false);
+                  reject(error);
+                },
+              );
+            });
+          }
+        } catch (error) {
+          console.error('💥 [ChatRoomScreen] WebSocket 재연결 에러:', error);
+        }
+      } else {
+        console.log('✅ [ChatRoomScreen] WebSocket 이미 연결됨');
+      }
+    };
+
     // 3. 과거 메시지 로드 (REST API)
     const loadPastMessages = async () => {
       try {
@@ -339,7 +375,15 @@ const ChatRoomScreen = ({
       }
     };
 
-    // 4. WebSocket 구독 (실시간 메시지 수신)
+    // 4. 초기화 함수 실행
+    const initialize = async () => {
+      await ensureWebSocketConnection(); // WebSocket 재연결 확인
+      await loadUserInfo(); // 사용자 정보 로드
+      await loadPastMessages(); // 과거 메시지 로드
+      await sendJoinNotification(); // 입장 알림
+    };
+
+    // 5. WebSocket 구독 (실시간 메시지 수신)
     const subscription = StompClient.subscribe(chatRoomId, newMessage => {
       console.log('📨 [ChatRoomScreen] 실시간 메시지 수신:', newMessage);
 
@@ -390,13 +434,7 @@ const ChatRoomScreen = ({
       }
     };
 
-    // 초기화 실행
-    const initialize = async () => {
-      await loadUserInfo();
-      await loadPastMessages();
-      await sendJoinNotification(); // 입장 알림 (마지막에 전송)
-    };
-
+    // ✅ 초기화 실행 (위에서 정의한 initialize 함수 호출)
     initialize();
 
     // 클린업 (화면 나갈 때)

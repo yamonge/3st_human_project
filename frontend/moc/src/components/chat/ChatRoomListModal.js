@@ -328,17 +328,25 @@ export default function ChatRoomListModal({
             <Text style={styles.emptyText}>참여한 채팅방이 없습니다</Text>
           </View>
         ) : (
-          <SwipeListView
-            data={chatRooms}
-            keyExtractor={item => item.chatRoomId.toString()}
-            renderItem={renderChatRoomCard}
-            renderHiddenItem={renderHiddenItem}
-            rightOpenValue={-160}
-            disableRightSwipe
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-            style={styles.listContainer}
-          />
+          <>
+            <SwipeListView
+              data={chatRooms}
+              keyExtractor={item => item.chatRoomId.toString()}
+              renderItem={renderChatRoomCard}
+              renderHiddenItem={renderHiddenItem}
+              rightOpenValue={-160}
+              disableRightSwipe
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+              style={styles.listContainer}
+            />
+            {/* 하단 힌트 */}
+            <View style={styles.hintContainer}>
+              <Text style={styles.hintText}>
+                💡 카드를 왼쪽으로 밀면 삭제/후기 메뉴가 나타납니다
+              </Text>
+            </View>
+          </>
         )}
       </View>
       <ChatRoomScreen

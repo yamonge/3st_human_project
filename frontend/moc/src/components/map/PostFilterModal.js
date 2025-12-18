@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -20,13 +20,27 @@ import {colors} from '../../styles/common';
  * - 인원수 슬라이더 (2~5명)
  * - 만날 시간 선택 (추후 구현)
  */
-export default function PostFilterModal({visible, onClose, onApply}) {
+export default function PostFilterModal({
+  visible,
+  onClose,
+  onApply,
+  initialFilters,
+}) {
   console.log('[PostFilterModal] visible:', visible);
 
   // 필터 상태
   const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [peopleCount, setPeopleCount] = useState(2);
   const [selectedTime, setSelectedTime] = useState(null);
+
+  // ✅ visible이 true가 될 때마다 initialFilters로 초기화
+  useEffect(() => {
+    if (visible) {
+      setSelectedIngredients(initialFilters?.ingredients || []);
+      setPeopleCount(initialFilters?.peopleCount || 2);
+      setSelectedTime(initialFilters?.time || null);
+    }
+  }, [visible, initialFilters]);
 
   // 시간 선택 모달
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
@@ -160,7 +174,9 @@ export default function PostFilterModal({visible, onClose, onApply}) {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>인원수: {peopleCount}명</Text>
+                <Text style={styles.sectionTitle}>
+                  인원수: {peopleCount}명 이하
+                </Text>
                 <Slider
                   style={styles.slider}
                   minimumValue={2}

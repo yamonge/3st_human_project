@@ -52,6 +52,7 @@ export default function PostListBottomSheet({
   const [showChatRoom, setShowChatRoom] = useState(false);
   const [selectedChatRoomId, setSelectedChatRoomId] = useState(null);
   const [selectedStoreName, setSelectedStoreName] = useState(null);
+  const [selectedChatRoomStatus, setSelectedChatRoomStatus] = useState(null);
 
   // 현재 사용자 정보 로드
   useEffect(() => {
@@ -183,6 +184,7 @@ export default function PostListBottomSheet({
       creatorUserId: dto.writerUserId, // ✅ 작성자 ID 추가
       description: dto.description || '',
       createdAt: toIso(dto.createdDate) || new Date().toISOString(),
+      statusCd: dto.statusCd || 'OPEN', // ✅ 게시글 상태 추가 (OPEN, DONE, CANCELLED)
     };
   };
 
@@ -238,11 +240,11 @@ export default function PostListBottomSheet({
         if (!hasAny) return false;
       }
 
-      // 2) 인원수 필터 (maxCount 정확히 일치)
+      // 2) 인원수 필터 (maxCount 이하)
       if (peopleCount != null) {
         const maxCountNum = Number(post.maxCount);
         if (Number.isNaN(maxCountNum) || maxCountNum <= 0) return false;
-        if (maxCountNum !== peopleCount) return false;
+        if (maxCountNum > peopleCount) return false; // peopleCount 이하만 표시
       }
       // 3) 시간: 날짜+시 동일 (hideMinutes=true 정책에 가장 자연스러움)
       if (time?.timestamp) {
@@ -374,6 +376,7 @@ export default function PostListBottomSheet({
       onClose();
       setSelectedChatRoomId(post.id);
       setSelectedStoreName(post.storeName);
+      setSelectedChatRoomStatus(post.statusCd || 'OPEN'); // ✅ 상태 설정
       setShowChatRoom(true);
       return;
     }
@@ -420,6 +423,7 @@ export default function PostListBottomSheet({
 
       setSelectedChatRoomId(chatRoomId);
       setSelectedStoreName(post.storeName);
+      setSelectedChatRoomStatus(post.statusCd || 'OPEN'); // ✅ 상태 설정
       setShowChatRoom(true);
 
       console.log('[채팅방 모달] state 설정 완료');
@@ -586,11 +590,13 @@ export default function PostListBottomSheet({
         <ChatRoomScreen
           visible={showChatRoom}
           chatRoomId={selectedChatRoomId}
-          storeName={selectedStoreName}
+          placeName={selectedStoreName}
+          statusCd={selectedChatRoomStatus}
           onClose={() => {
             setShowChatRoom(false);
             setSelectedChatRoomId(null);
             setSelectedStoreName(null);
+            setSelectedChatRoomStatus(null);
           }}
         />
       )}
