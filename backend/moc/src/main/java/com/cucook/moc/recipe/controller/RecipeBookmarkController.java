@@ -69,6 +69,19 @@ public class RecipeBookmarkController {
     }
 
     /**
+     * 마이페이지 > 공유한 게시글
+     * 내가 저장했고 공개한 레시피 목록
+     */
+    @GetMapping("/my-public")
+    public ResponseEntity<RecipeBookmarkListResponseDTO> getMyPublicRecipes(
+            @PathVariable("userId") Long userId
+    ) {
+        return ResponseEntity.ok(
+                recipeBookmarkService.getMyPublicRecipes(userId)
+        );
+    }
+
+    /**
      * 특정 사용자가 저장한 특정 레시피 북마크를 삭제합니다. (저장 취소)
      * DELETE /api/v1/users/{userId}/bookmarks/{recipeId}
      *

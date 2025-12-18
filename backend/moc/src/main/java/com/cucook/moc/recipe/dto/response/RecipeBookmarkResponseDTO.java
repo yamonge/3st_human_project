@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import java.sql.Timestamp;
 import java.time.LocalDateTime; // UI 표시용
 import java.time.format.DateTimeFormatter; // 날짜 포맷팅용
+import com.cucook.moc.recipe.vo.RecipeVO;
 
 @Data
 @NoArgsConstructor
@@ -50,6 +51,34 @@ public class RecipeBookmarkResponseDTO {
             recipeDetail.setAuthorNickname(recipeVO.getAuthorNickname());
             dto.setRecipe(recipeDetail);
         }
+        return dto;
+    }
+    public static RecipeBookmarkResponseDTO fromRecipe(RecipeVO recipeVO) {
+        RecipeBookmarkResponseDTO dto = new RecipeBookmarkResponseDTO();
+
+        dto.setRecipeId(recipeVO.getRecipeId());
+        dto.setAuthorNickname(recipeVO.getAuthorNickname());
+
+        BookmarkedRecipeDetailDTO recipeDetail = new BookmarkedRecipeDetailDTO();
+        recipeDetail.setRecipeId(recipeVO.getRecipeId());
+        recipeDetail.setTitle(recipeVO.getTitle());
+        recipeDetail.setSummary(recipeVO.getSummary());
+        recipeDetail.setThumbnailUrl(recipeVO.getThumbnailUrl());
+        recipeDetail.setDifficultyCd(recipeVO.getDifficultyCd());
+        recipeDetail.setCookTimeMin(recipeVO.getCookTimeMin());
+        recipeDetail.setCuisineStyleCd(recipeVO.getCuisineStyleCd());
+        recipeDetail.setViewCnt(recipeVO.getViewCnt());
+        recipeDetail.setLikeCnt(recipeVO.getLikeCnt());
+        recipeDetail.setAuthorNickname(recipeVO.getAuthorNickname());
+
+        dto.setRecipe(recipeDetail);
+
+        // 공유한 게시글에서는 북마크 메타 정보 없음
+        dto.setBookmarkId(null);
+        dto.setUserId(null);
+        dto.setSavedDate(null);
+        dto.setCreatedDate(recipeVO.getCreatedDate());
+
         return dto;
     }
 }

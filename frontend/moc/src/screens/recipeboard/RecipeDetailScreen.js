@@ -21,6 +21,7 @@ import {getRecipeBoardDetail, toggleRecipeLike} from '../../api/recipeBoard';
  * - 필요한 재료, 조리 순서 표시
  */
 export default function RecipeDetailScreen({route, navigation}) {
+  const [userId, setUserId] = useState(null);
   const {recipeId, recipe: initialRecipe} = route.params || {};
   const [recipe, setRecipe] = useState(initialRecipe);
   const [liked, setLiked] = useState(!!initialRecipe?.isLiked);
@@ -30,6 +31,18 @@ export default function RecipeDetailScreen({route, navigation}) {
 
   const headerColors = ['#FBB2B2', '#F55E5E']; // 게시판 전용 그라데이션
   const stepNumberColors = ['#00D3F2', '#2B7FFF']; // 조리 순서 번호 그라데이션
+
+  useEffect(() => {
+    const loadUserId = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('userId');
+        if (stored) setUserId(Number(stored));
+      } catch (e) {
+        console.error('userId 로드 실패:', e);
+      }
+    };
+    loadUserId();
+  }, []);
 
   // 현재 사용자 확인 (내 글인지 체크)
   useEffect(() => {
@@ -73,21 +86,28 @@ export default function RecipeDetailScreen({route, navigation}) {
   };
 
   // 좋아요 토글 핸들러
-  const handleLikeToggle = async () => {
-    try {
-      // const result = await toggleRecipeLike(recipe.id);
-      // setLiked(result.isLiked);
-      // setLikeCount(result.likeCount);
-
-      // 더미 동작 (API 연동 전)
-      setLiked(!liked);
-      setLikeCount(prev => (liked ? prev - 1 : prev + 1));
-      console.log('좋아요 토글 API 호출:', recipe?.id);
-    } catch (error) {
-      console.error('좋아요 토글 실패:', error);
-      // Alert.alert('오류', '좋아요 처리에 실패했습니다.');
+const handleLikeToggle = async () => {
+  try {
+    if (!userId) {
+      console.warn('❌ userId 없음');
+      return;
     }
-  };
+    const rid = recipe?.recipeId ?? recipeId;
+    if (!rid) {
+      console.warn('❌ recipeId 없음');
+      return;
+    }
+
+    const isLiked = await toggleRecipeLike(rid, userId);
+
+    setLiked(isLiked);
+    setLikeCount(prev => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
+
+    console.log('✅ 좋아요 토글 성공:', { userId, recipeId: rid, isLiked });
+  } catch (error) {
+    console.error('❌ 좋아요 토글 실패:', error);
+  }
+};
 
   // 신고하기 핸들러
   const handleReport = () => {

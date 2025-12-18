@@ -1,5 +1,32 @@
 import api from './axiosConfig';
 
+// ✅ 레시피 공통 정규화 함수 (여기 딱 1번만)
+const normalizeRecipe = recipe => {
+  if (!recipe) return recipe;
+
+  const r = {...recipe};
+
+  // 안드로이드 에뮬레이터 localhost 보정
+  if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
+    r.thumbnailUrl = r.thumbnailUrl.replace(
+      'http://localhost:8090',
+      'http://10.0.2.2:8090',
+    );
+  }
+
+  // 난이도 한글화
+  r.difficultyText =
+    r.difficultyCd === 'EASY'
+      ? '쉬움'
+      : r.difficultyCd === 'NORMAL'
+      ? '보통'
+      : r.difficultyCd === 'HARD'
+      ? '어려움'
+      : r.difficultyCd;
+
+  return r;
+};
+
 /**
  * 레시피 목록 조회 API
  *
@@ -45,8 +72,6 @@ export const getRecipeBoardList = async ({
         size,
       },
     });
-    console.log('📦 게시판 API raw response:', response);
-
     return response; // RecipeBoardListResponseDTO
   } catch (error) {
     console.error('게시판 레시피 목록 조회 실패:', error);
@@ -106,10 +131,12 @@ export const getRecipeBoardDetail = async recipeId => {
  * console.log(result.isLiked); // true 또는 false
  * console.log(result.likeCount); // 999
  */
-export const toggleRecipeLike = async recipeId => {
+export const toggleRecipeLike = async (recipeId, userId) => {
   try {
-    const response = await api.post(`/recipes/${recipeId}/like`);
-
+    const response = await api.post(`/v1/users/${userId}/likes`, {
+      recipeId: recipeId,
+    });
+    console.log('📦 좋아요 토글 API raw response:', response);
     return response.data;
   } catch (error) {
     console.error('좋아요 토글 실패:', error);

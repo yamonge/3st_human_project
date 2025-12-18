@@ -25,12 +25,26 @@ import {colors} from '../../styles/common';
  * - 좋아요한 게시물 목록 표시 (좋아요 버튼 표시)
  */
 export default function SavedRecipesScreen({navigation}) {
+  const fixImageUrl = url => {
+    if (!url) return null;
+    return url.replace('http://localhost:8090', 'http://10.0.2.2:8090');
+  };
+
   const [userId, setUserId] = useState(null);
   const [activeTab, setActiveTab] = useState('saved'); // 'saved' | 'liked'
   const [savedRecipes, setSavedRecipes] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    console.log(
+      '🧠 [SavedRecipesScreen] likedPosts state 변경됨:',
+      likedPosts,
+      'length:',
+      likedPosts?.length,
+    );
+  }, [likedPosts]);
 
   // 데이터 불러오기
   const loadData = async () => {
@@ -41,6 +55,7 @@ export default function SavedRecipesScreen({navigation}) {
       if (!userId) {
         console.warn('❌ userId 없음 → API 호출 중단');
         setSavedRecipes([]);
+        setLikedPosts([]);
         setTotalCount(0);
         return;
       }
@@ -50,8 +65,9 @@ export default function SavedRecipesScreen({navigation}) {
         setSavedRecipes(response.bookmarkedRecipes ?? []);
         setTotalCount(response.totalCount ?? 0);
       } else {
-        setLikedPosts([]);
-        setTotalCount(0);
+        const response = await getLikedPosts(userId);
+        setLikedPosts(response.likedRecipes);
+        setTotalCount(response.totalCount);
       }
     } catch (error) {
       console.error('데이터 불러오기 실패:', error);
@@ -60,12 +76,12 @@ export default function SavedRecipesScreen({navigation}) {
     }
   };
   useEffect(() => {
-    loadData(); // ✅ TS가 "아 사용되는구나" 인식
+    loadData();
   }, [activeTab]);
 
   // 레시피 카드 클릭 핸들러
   const handleRecipePress = recipe => {
-    navigation.navigate('RecipeBoardDetail', {recipeId: recipe.id});
+    navigation.navigate('RecipeBoardDetail', {recipeId: recipe.recipeId});
   };
 
   // 현재 표시할 리스트
@@ -175,18 +191,20 @@ export default function SavedRecipesScreen({navigation}) {
         ) : (
           <View style={styles.recipeListContainer}>
             {currentList.length > 0 ? (
-              currentList.map(item => (
-                <RecipeListItem
-                  key={
-                    item.bookmarkId
-                      ? `bookmark-${item.bookmarkId}`
-                      : `recipe-${item.recipe.recipeId}`
-                  }
-                  recipe={item.recipe}
-                  onPress={() => handleRecipePress(item)}
-                  hideLike={activeTab === 'saved'}
-                />
-              ))
+              currentList.map(item => {
+                const recipe = item.recipe; // ⭐ saved / liked 공통
+
+                const key = `recipe-${item.recipe.recipeId}`;
+
+                return (
+                  <RecipeListItem
+                    key={key}
+                    recipe={recipe}
+                    onPress={() => handleRecipePress(recipe)}
+                    hideLike={activeTab === 'saved'}
+                  />
+                );
+              })
             ) : (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>

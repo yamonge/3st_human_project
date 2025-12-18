@@ -60,17 +60,11 @@ public class RecipeLikeController {
     @GetMapping
     public ResponseEntity<RecipeLikeListResponseDTO> getLikedRecipes(
             @PathVariable("userId") Long userId) {
-        try {
-            RecipeLikeListResponseDTO response = recipeLikeService.getLikedRecipes(userId);
-            if (response.getLikedRecipes().isEmpty()) {
-                return new ResponseEntity<>(response, HttpStatus.NO_CONTENT); // 204 No Content
-            }
-            return new ResponseEntity<>(response, HttpStatus.OK); // 200 OK
-        } catch (Exception e) {
-            System.err.println("좋아요한 레시피 목록 조회 중 오류 발생: " + e.getMessage());
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
-        }
+
+        RecipeLikeListResponseDTO response =
+                recipeLikeService.getLikedRecipes(userId);
+
+        return ResponseEntity.ok(response);
     }
 
     /**

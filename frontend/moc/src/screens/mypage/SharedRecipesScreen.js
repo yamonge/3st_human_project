@@ -7,11 +7,12 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {ArrowLeft, Send, Star, Share2} from 'lucide-react-native';
 import RecipeListItem from '../../components/recipeboard/RecipeListItem';
-// import {getSharedRecipes} from '../../api/mypage';
+import {getSharedRecipes} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/SharedRecipesStyles';
 import {colors} from '../../styles/common';
 
@@ -33,84 +34,54 @@ export default function SharedRecipesScreen({navigation}) {
   }, []);
 
   // 레시피 목록 불러오기
-  const loadRecipes = async () => {
-    try {
-      setLoading(true);
+const loadRecipes = async () => {
+  try {
+    setLoading(true);
 
-      // TODO: 실제 API 연동 (주석 해제)
-      // const response = await getSharedRecipes();
-      // setRecipes(response.recipes);
-      // setTotalCount(response.totalCount);
-
-      // 임시 더미 데이터
-      const dummyData = {
-        recipes: [
-          {
-            id: 1,
-            title: '팬케이크',
-            author: '베이킹마스터',
-            cookingTime: '15',
-            difficulty: '하',
-            image: null,
-            ingredients: [
-              {name: '밀가루'},
-              {name: '계란'},
-              {name: '우유'},
-              {name: '설탕'},
-            ],
-            isLiked: true,
-            likeCount: 121,
-          },
-          {
-            id: 2,
-            title: '김치찌개',
-            author: '요리왕',
-            cookingTime: '30',
-            difficulty: '중',
-            image: null,
-            ingredients: [{name: '김치'}, {name: '돼지고기'}, {name: '두부'}],
-            isLiked: false,
-            likeCount: 85,
-          },
-          {
-            id: 3,
-            title: '된장찌개',
-            author: '집밥요리사',
-            cookingTime: '25',
-            difficulty: '하',
-            image: null,
-            ingredients: [{name: '된장'}, {name: '두부'}, {name: '감자'}],
-            isLiked: true,
-            likeCount: 67,
-          },
-          {
-            id: 4,
-            title: '불고기',
-            author: '한식러버',
-            cookingTime: '40',
-            difficulty: '중',
-            image: null,
-            ingredients: [{name: '소고기'}, {name: '양파'}, {name: '당근'}],
-            isLiked: false,
-            likeCount: 152,
-          },
-        ],
-        totalCount: 4,
-      };
-
-      setRecipes(dummyData.recipes);
-      setTotalCount(dummyData.totalCount);
-    } catch (error) {
-      console.error('레시피 불러오기 실패:', error);
-    } finally {
-      setLoading(false);
+    const userId = await AsyncStorage.getItem('userId');
+    console
+    if (!userId) {
+      setRecipes([]);
+      setTotalCount(0);
+      return;
     }
-  };
+
+    const response = await getSharedRecipes(userId);
+    console.log('✅ [SharedRecipesScreen] API raw response:', response);
+    const list = response?.bookmarkedRecipes ?? [];
+    console.log('[SharedRecipes] bookmarkedRecipes length:', list.length);
+    console.log('[SharedRecipes] first item:', list[0]);
+    setRecipes(
+      list
+        .filter(item => item?.recipe)
+        .map(item => {
+          const r = item.recipe;
+          return {
+            recipeId: r.recipeId, // ← id 말고
+            title: r.title,
+            authorNickname: r.authorNickname,
+            cookTimeMin: r.cookTimeMin,
+            difficultyCd: r.difficultyCd,
+            thumbnailUrl: r.thumbnailUrl,
+            likeCnt: r.likeCnt,
+            isLiked: false,
+            createdDate: item.createdDate,
+          };
+        }),
+    );
+    setTotalCount(response?.totalCount ?? 0);
+  } catch (error) {
+    console.error('공유한 레시피 불러오기 실패:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // 레시피 카드 클릭 핸들러
-  const handleRecipePress = recipe => {
-    navigation.navigate('RecipeBoardDetail', {recipeId: recipe.id});
+  const handleRecipePress = recipeId => {
+    navigation.navigate('RecipeDetail', {recipeId});
   };
+
 
   return (
     <View style={styles.container}>
@@ -185,12 +156,12 @@ export default function SharedRecipesScreen({navigation}) {
           ) : (
             <View style={styles.recipeListContainer}>
               {recipes.length > 0 ? (
-                recipes.map(recipe => (
+                recipes.map(item => (
                   <RecipeListItem
-                    key={recipe.id}
-                    recipe={recipe}
-                    onPress={() => handleRecipePress(recipe)}
-                    hideLike={true} // 공유한 레시피에서는 좋아요 버튼 숨김
+                    key={item.recipeId}
+                    recipe={item}
+                    onPress={() => handleRecipePress(item.recipeId)}
+                    hideLike={true}
                   />
                 ))
               ) : (
