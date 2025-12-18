@@ -10,8 +10,5 @@ module.exports = {
       ios: {},
     },
   },
-  bundler: {
-    port: 3010,
-  },
   assets: ['./src/assets/fonts/'],
 };
