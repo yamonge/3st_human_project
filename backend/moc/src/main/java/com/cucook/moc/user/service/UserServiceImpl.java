@@ -18,6 +18,7 @@ import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import com.cucook.moc.user.vo.UserReviewVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserDAO userDAO;
@@ -42,22 +44,28 @@ public class UserServiceImpl implements UserService {
     private final UserReviewDAO userReviewDAO;
     private final ShoppingPostDAO shoppingPostDAO;
     private final ChatParticipantDAO chatParticipantDAO;
+    
+    // 관리자 권한 판정
+    @Override
+    public CheckAdminResponseDTO checkAdmin(Long userId) {
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_REQUIRED");
+        }
 
-    public UserServiceImpl(UserDAO userDAO,
-                           PasswordResetTokenDAO passwordResetTokenDAO,
-                           BCryptPasswordEncoder passwordEncoder,
-                           MailService mailService,
-                           UserReviewDAO userReviewDAO,
-                           ShoppingPostDAO shoppingPostDAO,
-                           ChatParticipantDAO chatParticipantDAO) {
-        this.userDAO = userDAO;
-        this.passwordEncoder = passwordEncoder;
-        this.mailService = mailService;
-        this.passwordResetTokenDAO = passwordResetTokenDAO;
+        UserVO user = userDAO.selectById(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND");
+        }
 
-        this.userReviewDAO = userReviewDAO;
-        this.shoppingPostDAO = shoppingPostDAO;
-        this.chatParticipantDAO = chatParticipantDAO;
+        String userType = user.getUserType();     // 'Y' or 'N'
+        String status = user.getUserStatus();     // ACTIVE/SUSPENDED/WITHDRAW
+
+        // 관리자 판정 기준(원하시는 정책에 맞게 최소한만 적용)
+        // - user_type='Y' 이면 관리자
+        // - WITHDRAW이면 관리자여도 의미 없으므로 false 처리(선택 사항)
+        boolean isAdmin = "Y".equalsIgnoreCase(userType) && !"WITHDRAW".equalsIgnoreCase(status);
+
+        return new CheckAdminResponseDTO(isAdmin, userType, status);
     }
 
     @Override
@@ -307,6 +315,7 @@ public class UserServiceImpl implements UserService {
                 request.getDeviceVersion()
         );
     }
+    
     // 유저 프로필 정보
     @Transactional(readOnly = true)
     public UserProfileDTO getMyProfile(Long userId) {

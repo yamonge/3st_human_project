@@ -14,8 +14,7 @@ import lombok.*;
 @ToString
 public class AdminUserWithdrawRequestDTO {
 
-    private Long userId;
-    private Long adminUserId;
+   private Long adminUserId;
 
     /** 탈퇴 사유(로그용) */
     private String reason;

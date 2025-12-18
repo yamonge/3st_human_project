@@ -22,6 +22,8 @@
         FROM tb_user u
         WHERE 1=1
         AND u.user_type = 'N'
+        AND u.user_status != 'WITHDRAW'   <!-- 추가: 탈퇴 유저는 목록에서 제외 -->
+        
         <if test="keyword != null and keyword != ''">
             AND (u.user_email    LIKE '%' || #{keyword} || '%'
             OR  u.user_nickname LIKE '%' || #{keyword} || '%')
@@ -60,9 +62,10 @@
     <!-- 상태 변경 (정지/해제/탈퇴 공통) -->
     <update id="updateUserStatus">
         UPDATE tb_user
-        SET user_status      = #{userStatus},
-        suspended_until  = #{suspendedUntil},
-        suspended_reason = #{suspendedReason},
+        SET
+        user_status      = #{userStatus},
+        suspended_until  = #{suspendedUntil, jdbcType=TIMESTAMP},
+        suspended_reason = #{suspendedReason, jdbcType=VARCHAR},
         updated_id       = #{adminUserId},
         updated_date     = SYSTIMESTAMP
         WHERE user_id = #{userId}

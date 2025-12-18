@@ -31,7 +31,7 @@ export default function UserManagementModal({
   const [loading, setLoading] = useState(false);
   const [showDurationModal, setShowDurationModal] = useState(false);
 
-  if (!user) return null;
+  if (!visible || !user) return null;
 
   const isActive = user.status === 'active';
 
@@ -40,6 +40,7 @@ export default function UserManagementModal({
     if (isActive) {
       // 정지 -> 기간 선택 모달 열기
       setShowDurationModal(true);
+      return;
     } else {
       // 활성화 -> 바로 실행
       Alert.alert(
@@ -52,9 +53,7 @@ export default function UserManagementModal({
             onPress: async () => {
               try {
                 setLoading(true);
-
-                // TODO: 실제 API 연동 (주석 해제)
-                // await unsuspendUser(user.id);
+                await unsuspendUser(user.id);
 
                 Alert.alert('완료', '계정이 활성화되었습니다.');
                 onUpdate?.();
@@ -88,13 +87,10 @@ export default function UserManagementModal({
           onPress: async () => {
             try {
               setLoading(true);
-
-              // TODO: 실제 API 연동 (주석 해제)
-              // await suspendUser(user.id, {
-              //   reason: '관리자 직접 정지',
-              //   duration: duration === 'permanent' ? 999999 : duration,
-              // });
-
+              await suspendUser(user.id, {
+                reason: '관리자 직접 정지',
+                duration: duration,
+              });
               Alert.alert('완료', `계정이 ${durationText}되었습니다.`);
               onUpdate?.();
               onClose();
@@ -124,11 +120,7 @@ export default function UserManagementModal({
             try {
               setLoading(true);
 
-              // TODO: 실제 API 연동 (주석 해제)
-              // await deleteUser(user.id, {
-              //   reason: '관리자 직접 탈퇴',
-              // });
-
+              await deleteUser(user.id, {reason: '약관 위반'});
               Alert.alert('완료', '회원이 탈퇴되었습니다.');
               onUpdate?.();
               onClose();
@@ -143,8 +135,6 @@ export default function UserManagementModal({
       ],
     );
   };
-
-  if (!visible) return null;
 
   return (
     <View style={styles.modalOverlay}>

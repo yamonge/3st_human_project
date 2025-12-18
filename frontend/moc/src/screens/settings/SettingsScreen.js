@@ -26,11 +26,7 @@ import {
 } from 'lucide-react-native';
 import styles from '../../styles/screens/settings/SettingsStyles';
 import {colors} from '../../styles/common/index';
-import {
-  getUserInfo,
-  checkAdminStatus as checkAdmin,
-  withdrawUser,
-} from '../../api/settings';
+import {getUserInfo, withdrawUser, checkAdminStatus} from '../../api/settings';
 
 /**
  * 설정 메인 화면
@@ -62,10 +58,17 @@ export default function SettingsScreen({navigation}) {
     return unsubscribe;
   }, [navigation]);
 
-  // AsyncStorage에서 사용자 역할 로드
+  // AsyncStorage에서 사용자 역할 로드 (즉시 판별: userType 우선)
   const loadUserRole = async () => {
+    const userType = await AsyncStorage.getItem('userType'); // 'Y' | 'N'
+    if (userType) {
+      setIsAdmin(userType === 'Y');
+      return;
+    }
+
+    // fallback: 기존 userRole
     const role = await AsyncStorage.getItem('userRole'); // 'admin' | 'user' | null
-    setIsAdmin(role === 'admin'); // ✅ admin만 true, user/null은 false
+    setIsAdmin(role === 'admin');
   };
 
   // 사용자 정보 로드
@@ -77,26 +80,19 @@ export default function SettingsScreen({navigation}) {
         email: data.email,
       });
       // 역할 정보도 함께 확인
-      if (data.role === 'admin') {
-        setIsAdmin(true);
+      // ✅ 중요: admin이 아니면 false로도 세팅
+      const role = data?.role; // 'admin' | 'user' (백엔드 스펙에 맞게)
+      setIsAdmin(role === 'admin');
+
+      // (권장) role 저장 유지
+      if (role) {
+        await AsyncStorage.setItem('userRole', role);
       }
-      // ✅ (권장) 저장도 같이 해두면 다른 화면에서도 일관되게 사용 가능
-      await AsyncStorage.setItem('userRole', data.role);
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
       Alert.alert('오류', '사용자 정보를 불러오는데 실패했습니다.');
     }
   };
-
-  // 관리자 권한 확인
-  // const loadAdminStatus = async () => {
-  //   try {
-  //     const adminStatus = await checkAdmin();
-  //     setIsAdmin(!!adminStatus);
-  //   } catch (error) {
-  //     console.error('관리자 권한 확인 실패:', error);
-  //   }
-  // };
 
   // 회원탈퇴 처리
   const handleWithdraw = () => {
