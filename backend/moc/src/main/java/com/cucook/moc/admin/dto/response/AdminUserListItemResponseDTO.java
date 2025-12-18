@@ -14,13 +14,20 @@ import java.sql.Timestamp;
 @ToString
 public class AdminUserListItemResponseDTO {
 
-    private Long userId;
-    private String userEmail;
-    private String userName;
-    private String userNickname;
+    // 프론트 필드명 유지: id, name, nickname, email, joinDate, reportCount, status
+    private Long id;
+    private String email;
+    private String name;
+    private String nickname;
 
-    private String userStatus;
-    private Integer reportedCnt;
+    // ACTIVE / SUSPENDED (프론트에서 normalizeStatus로 처리)
+    private String status;
+
+    private Integer reportCount;
+
+    // "yyyy.MM.dd"
+    private String joinDate;
+
+    // 선택값(추가 정보)
     private Timestamp suspendedUntil;
-    private Timestamp createdDate;
 }

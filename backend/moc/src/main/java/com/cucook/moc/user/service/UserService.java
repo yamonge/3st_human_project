@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface UserService {
 
+    CheckAdminResponseDTO checkAdmin(Long userId);
+
     boolean isDuplicateEmail(String userEmail);
 
     void signup(SignupRequestDTO request);

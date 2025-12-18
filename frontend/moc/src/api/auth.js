@@ -153,17 +153,35 @@ export const authAPI = {
   logout: async () => {
     try {
       // 로컬 저장소에서 사용자 정보 삭제
-      await AsyncStorage.removeItem('userEmail');
-      await AsyncStorage.removeItem('userNickname');
-      await AsyncStorage.removeItem('userName');
+      await AsyncStorage.multiRemove([
+        'accessToken',
+        'refreshToken',
+        'userId',
+        'userEmail',
+        'userName',
+        'userNickname',
+        'userType',
+        'userStatus',
+        'userRole',
+        'profileImage',
+      ]);
 
       return {success: true};
     } catch (error) {
       console.error('로그아웃 에러:', error);
       // 에러가 발생해도 사용자 정보는 삭제
-      await AsyncStorage.removeItem('userEmail');
-      await AsyncStorage.removeItem('userNickname');
-      await AsyncStorage.removeItem('userName');
+      await AsyncStorage.multiRemove([
+        'accessToken',
+        'refreshToken',
+        'userId',
+        'userEmail',
+        'userName',
+        'userNickname',
+        'userType',
+        'userStatus',
+        'userRole',
+        'profileImage',
+      ]);
       throw error;
     }
   },

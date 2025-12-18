@@ -14,11 +14,13 @@ import java.util.List;
  */
 @Mapper
 public interface AdminUserDAO {
+    // 회원 목록 (WITHDRAW 제외)
+    List<AdminUserVO> selectAdminUserList(AdminUserSearchRequestDTO request);
 
-    List<AdminUserVO> selectAdminUserList(AdminUserSearchRequestDTO searchDTO);
-
+    // 관리자 본인 조회 (권한 검증용)
     AdminUserVO selectAdminUserById(@Param("userId") Long userId);
 
+    // 상태 업데이트(정지/해제/탈퇴 공통)
     int updateUserStatus(
             @Param("userId") Long userId,
             @Param("userStatus") String userStatus,
@@ -26,9 +28,4 @@ public interface AdminUserDAO {
             @Param("suspendedReason") String suspendedReason,
             @Param("adminUserId") Long adminUserId
     );
-
-    /** adminUserId 가 관리자(user_type='Y') 인지 확인 */
-    @Select("SELECT CASE WHEN COUNT(1) > 0 THEN 1 ELSE 0 END " +
-            "FROM tb_user WHERE user_id = #{userId} AND user_type = 'Y'")
-    boolean isAdminUser(@Param("userId") Long userId);
 }
