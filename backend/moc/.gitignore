@@ -6,7 +6,7 @@ build/
 !**/src/test/**/build/
 *.yml
 *.properties
-
+**firebase-service-account.json
 
 ### STS ###
 .apt_generated
