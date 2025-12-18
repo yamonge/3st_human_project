@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -25,11 +26,7 @@ import {
 } from 'lucide-react-native';
 import styles from '../../styles/screens/settings/SettingsStyles';
 import {colors} from '../../styles/common/index';
-import {
-  getUserInfo,
-  checkAdminStatus as checkAdmin,
-  withdrawUser,
-} from '../../api/settings';
+import {getUserInfo, withdrawUser, checkAdminStatus} from '../../api/settings';
 
 /**
  * 설정 메인 화면
@@ -45,24 +42,34 @@ import {
  * - 하단: 회원탈퇴 버튼, 버전 정보
  */
 export default function SettingsScreen({navigation}) {
-  const [userInfo, setUserInfo] = useState({
-    nickname: '둘리',
-    email: '',
-  });
+  const [userInfo, setUserInfo] = useState({nickname: '', email: ''});
   const [isAdmin, setIsAdmin] = useState(false);
   const [appVersion] = useState('1.0.0');
 
   useEffect(() => {
     loadUserInfo();
-    loadAdminStatus();
+    loadUserRole(); // ✅ 최초 1회
 
-    // 화면 포커스 시 정보 새로고침
     const unsubscribe = navigation.addListener('focus', () => {
       loadUserInfo();
+      loadUserRole(); // ✅ 돌아올 때마다 즉시 반영
     });
 
     return unsubscribe;
   }, [navigation]);
+
+  // AsyncStorage에서 사용자 역할 로드 (즉시 판별: userType 우선)
+  const loadUserRole = async () => {
+    const userType = await AsyncStorage.getItem('userType'); // 'Y' | 'N'
+    if (userType) {
+      setIsAdmin(userType === 'Y');
+      return;
+    }
+
+    // fallback: 기존 userRole
+    const role = await AsyncStorage.getItem('userRole'); // 'admin' | 'user' | null
+    setIsAdmin(role === 'admin');
+  };
 
   // 사용자 정보 로드
   const loadUserInfo = async () => {
@@ -73,22 +80,17 @@ export default function SettingsScreen({navigation}) {
         email: data.email,
       });
       // 역할 정보도 함께 확인
-      if (data.role === 'admin') {
-        setIsAdmin(true);
+      // ✅ 중요: admin이 아니면 false로도 세팅
+      const role = data?.role; // 'admin' | 'user' (백엔드 스펙에 맞게)
+      setIsAdmin(role === 'admin');
+
+      // (권장) role 저장 유지
+      if (role) {
+        await AsyncStorage.setItem('userRole', role);
       }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
       Alert.alert('오류', '사용자 정보를 불러오는데 실패했습니다.');
-    }
-  };
-
-  // 관리자 권한 확인
-  const loadAdminStatus = async () => {
-    try {
-      const adminStatus = await checkAdmin();
-      setIsAdmin(true);
-    } catch (error) {
-      console.error('관리자 권한 확인 실패:', error);
     }
   };
 

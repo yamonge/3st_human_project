@@ -16,15 +16,14 @@ import UserManagementModal from '../../components/admin/UserManagementModal';
 /**
  * 회원 관리 화면
  *
- * 구조:
- * - 상단 헤더: 뒤로가기 + "회원 관리" 타이틀
- * - 검색 바: 이메일 또는 닉네임 검색
- * - 필터 탭: 전체, 활동중, 정지
- * - 회원 목록: 전체 선택 + 회원 카드 리스트
- *   - 체크박스, 이름, 닉네임, 가입일, 신고 횟수, 상태 배지
+ * ✅ 변경 최소화 핵심
+ * - dummyUsers 삭제
+ * - 서버에서 받아온 원본 목록을 allUsers에 저장
+ * - 기존 주석(필터/검색) 로직 그대로 사용
  */
 export default function UserManagementScreen({navigation}) {
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // 서버 원본(매핑 후) 보관
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all'); // 'all', 'active', 'suspended'
@@ -33,128 +32,90 @@ export default function UserManagementScreen({navigation}) {
   const [selectedUser, setSelectedUser] = useState(null); // 선택된 회원 (모달용)
   const [modalVisible, setModalVisible] = useState(false);
 
+  /**
+   * ✅ 서버 status 매핑 함수
+   * - ACTIVE -> active
+   * - SUSPENDED -> suspended
+   * - 이미 active/suspended면 그대로
+   */
+  const normalizeStatus = status => {
+    if (!status) return 'active';
+    const s = String(status).toUpperCase();
+    if (s === 'ACTIVE') return 'active';
+    if (s === 'SUSPENDED') return 'suspended';
+    // 이미 프론트 형태로 내려오는 경우
+    if (String(status).toLowerCase() === 'active') return 'active';
+    if (String(status).toLowerCase() === 'suspended') return 'suspended';
+    return 'active';
+  };
+
+  // ✅ 최초 1회 서버에서 원본 목록을 받아온다.
   useEffect(() => {
     loadUsers();
-  }, [selectedFilter]);
+  }, []);
 
-  // 회원 목록 로드
+  // ✅ 필터/검색/allUsers 변경 시 즉시 로컬 필터링 적용
+  useEffect(() => {
+    applyFilterAndSearch();
+  }, [selectedFilter, searchQuery, allUsers]);
+
+  // ✅ 서버에서 원본 목록 로드(여기서 status 매핑)
   const loadUsers = async () => {
     try {
       setLoading(true);
 
-      // TODO: 실제 API 연동 (주석 해제)
-      // const params = {
-      //   status: selectedFilter === 'all' ? null : selectedFilter,
-      //   search: searchQuery,
-      // };
-      // const response = await getUserList(params);
-      // setUsers(response.users || []);
+      // 전체 원본만 받기(필터/검색은 프론트에서)
+      const response = await getUserList({status: null, search: ''});
+      const serverUsers = response.users || [];
 
-      // 임시 더미 데이터
-      const dummyUsers = [
-        {
-          id: 1,
-          name: '홍길동',
-          nickname: '길동이',
-          email: 'hong@example.com',
-          joinDate: '2024.11.20',
-          reportCount: 0,
-          status: 'active',
-        },
-        {
-          id: 2,
-          name: '김철수',
-          nickname: '철수',
-          email: 'kim@example.com',
-          joinDate: '2024.11.18',
-          reportCount: 2,
-          status: 'active',
-        },
-        {
-          id: 3,
-          name: '이영희',
-          nickname: '영희',
-          email: 'lee@example.com',
-          joinDate: '2024.11.15',
-          reportCount: 5,
-          status: 'suspended',
-        },
-        {
-          id: 4,
-          name: '박민수',
-          nickname: '민수야',
-          email: 'park@example.com',
-          joinDate: '2024.11.10',
-          reportCount: 1,
-          status: 'active',
-        },
-        {
-          id: 5,
-          name: '최지우',
-          nickname: '지우짱',
-          email: 'choi@example.com',
-          joinDate: '2024.11.08',
-          reportCount: 0,
-          status: 'active',
-        },
-        {
-          id: 6,
-          name: '정수민',
-          nickname: '수민',
-          email: 'jung@example.com',
-          joinDate: '2024.11.05',
-          reportCount: 3,
-          status: 'suspended',
-        },
-        {
-          id: 7,
-          name: '강태양',
-          nickname: '태양',
-          email: 'kang@example.com',
-          joinDate: '2024.11.01',
-          reportCount: 0,
-          status: 'active',
-        },
-        {
-          id: 8,
-          name: '윤서연',
-          nickname: '서연이',
-          email: 'yoon@example.com',
-          joinDate: '2024.10.28',
-          reportCount: 1,
-          status: 'active',
-        },
-      ];
+      // ✅ 여기서 한 번만 status 매핑해서 allUsers에 저장
+      const mappedUsers = serverUsers.map(u => ({
+        ...u,
+        status: normalizeStatus(u.status),
+      }));
 
-      // 필터 적용
-      let filteredUsers = dummyUsers;
-      if (selectedFilter !== 'all') {
-        filteredUsers = dummyUsers.filter(
-          user => user.status === selectedFilter,
-        );
-      }
-
-      // 검색 적용
-      if (searchQuery.trim()) {
-        filteredUsers = filteredUsers.filter(
-          user =>
-            user.name.includes(searchQuery) ||
-            user.nickname.includes(searchQuery) ||
-            user.email.includes(searchQuery),
-        );
-      }
-
-      setUsers(filteredUsers);
-    } catch (error) {
-      console.error('회원 목록 로드 실패:', error);
+      setAllUsers(mappedUsers);
+    } catch (err) {
+      console.error('회원 목록 로드 실패:', err);
+      setAllUsers([]);
+      setUsers([]);
+      setSelectedUsers([]);
+      setSelectAll(false);
     } finally {
       setLoading(false);
     }
   };
 
-  // 검색
+  /**
+   * allUsers에 그대로 적용
+   */
+  const applyFilterAndSearch = () => {
+    // 필터 적용
+    let filteredUsers = allUsers;
+    if (selectedFilter !== 'all') {
+      filteredUsers = allUsers.filter(user => user.status === selectedFilter);
+    }
+
+    // 검색 적용
+    if (searchQuery.trim()) {
+      filteredUsers = filteredUsers.filter(
+        user =>
+          (user.name || '').includes(searchQuery) ||
+          (user.nickname || '').includes(searchQuery) ||
+          (user.email || '').includes(searchQuery),
+      );
+    }
+
+    setUsers(filteredUsers);
+
+    // 목록이 바뀌면 선택 상태 초기화
+    setSelectedUsers([]);
+    setSelectAll(false);
+  };
+
+  // 엔터(선택 사항) - 로컬 필터 한 번 더
   const handleSearch = () => {
-    loadUsers();
+    applyFilterAndSearch();
   };
 
   // 필터 변경
@@ -200,7 +161,7 @@ export default function UserManagementScreen({navigation}) {
     setSelectedUser(null);
   };
 
-  // 회원 정보 업데이트
+  // 회원 정보 업데이트 후 → 서버 원본 재로딩
   const handleUpdateUser = () => {
     loadUsers();
   };
@@ -246,7 +207,7 @@ export default function UserManagementScreen({navigation}) {
     );
   };
 
-  // 회원 카드 렌더링
+  // 회원 카드 렌더링 (원본 유지)
   const UserCard = ({user}) => {
     const isSelected = selectedUsers.includes(user.id);
     const CheckIcon = isSelected ? CheckSquare : Square;
@@ -311,8 +272,8 @@ export default function UserManagementScreen({navigation}) {
             placeholder="이메일 또는 닉네임 검색"
             placeholderTextColor="rgba(10, 10, 10, 0.5)"
             value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
+            onChangeText={setSearchQuery} // 입력 즉시 로컬 필터링
+            onSubmitEditing={handleSearch} // (유지)
             returnKeyType="search"
           />
         </View>

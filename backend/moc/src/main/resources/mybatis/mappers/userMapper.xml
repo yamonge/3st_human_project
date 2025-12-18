@@ -16,6 +16,7 @@
         <result property="userType"              column="user_type"/>
         <result property="userStatus"            column="user_status"/>
         <result property="suspendedReason"       column="suspended_reason"/>
+        <result property="suspendedUntil"        column="suspended_until"/>
         <result property="reportedCnt"           column="reported_cnt"/>
         <result property="shoppingCompletedCnt"  column="shopping_completed_cnt"/>
         <result property="shoppingParticipatedCnt" column="shopping_participated_cnt"/>
@@ -168,5 +169,29 @@
             WHERE r.target_user_id = #{targetUserId}
         )
         WHERE u.user_id = #{targetUserId}
+    </update>
+
+    <!-- 설정화면 - 프로필 수정 -->
+    <update id="updateUserProfile">
+        UPDATE tb_user
+        SET user_name = #{userName},
+        user_nickname = #{userNickname},
+        user_profile_image_url =
+            CASE
+                WHEN #{userProfileImageUrl, jdbcType=VARCHAR} IS NULL THEN user_profile_image_url
+                ELSE #{userProfileImageUrl, jdbcType=VARCHAR}
+            END,
+        updated_id = #{updatedId},
+        updated_date = #{updatedDate}
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 설정화면 - 회원 상태 변경 -->
+    <update id="updateUserStatus">
+        UPDATE tb_user
+        SET user_status = #{userStatus},
+        updated_id = #{updatedId},
+        updated_date = #{updatedDate}
+        WHERE user_id = #{userId}
     </update>
 </mapper>

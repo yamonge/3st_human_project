@@ -2,6 +2,7 @@ package com.cucook.moc.admin.service;
 
 import com.cucook.moc.admin.dto.request.*;
 import com.cucook.moc.admin.dto.response.AdminUserListItemResponseDTO;
+import com.cucook.moc.admin.dto.response.AdminUserListResponseDTO;
 
 import java.util.List;
 
@@ -10,11 +11,11 @@ import java.util.List;
  */
 public interface AdminUserService {
 
-    List<AdminUserListItemResponseDTO> getAdminUserList(AdminUserSearchRequestDTO searchDTO);
+    AdminUserListResponseDTO getUserList(Long adminUserId, AdminUserSearchRequestDTO request);
 
-    void suspendUser(AdminUserSuspendRequestDTO requestDTO);
+    void suspendUser(Long adminUserId, Long targetUserId, AdminUserSuspendRequestDTO request);
 
-    void activateUser(AdminUserActivateRequestDTO requestDTO);
+    void activateUser(Long adminUserId, Long targetUserId, AdminUserActivateRequestDTO request);
 
-    void withdrawUser(AdminUserWithdrawRequestDTO requestDTO);
+    void withdrawUser(Long adminUserId, Long targetUserId, AdminUserWithdrawRequestDTO request);
 }

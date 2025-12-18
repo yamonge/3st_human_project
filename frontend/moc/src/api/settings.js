@@ -11,48 +11,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 export const getUserInfo = async () => {
   try {
-    // TODO: 백엔드 API 연동 시 주석 해제
-    // const response = await api.get('/users/me');
-    // return response.data;
+    const response = await api.get('/users/me', {
+      meta: {requiresUserId: true},
+    });
 
-    // 임시: AsyncStorage에서 가져오기
-    const name = await AsyncStorage.getItem('userName');
-    const nickname = await AsyncStorage.getItem('userNickname');
-    const email = await AsyncStorage.getItem('userEmail');
-    const role = await AsyncStorage.getItem('userRole');
-    const profileImage = await AsyncStorage.getItem('profileImage');
-
-    return {
-      name: name || '홍길동',
-      nickname: nickname || '사용자',
-      email: email || 'user@example.com',
-      role: role || 'user',
-      profileImage: profileImage || null,
-    };
+    return response;
   } catch (error) {
     console.error('사용자 정보 조회 실패:', error);
     throw error;
   }
 };
 
-/**
- * 관리자 권한 확인
- * @returns {Promise<boolean>}
- */
-export const checkAdminStatus = async () => {
-  try {
-    // TODO: 백엔드 API 연동 시 주석 해제
-    // const response = await api.get('/users/check-admin');
-    // return response.data.isAdmin;
-
-    // 임시: AsyncStorage에서 가져오기
-    const userRole = await AsyncStorage.getItem('userRole');
-    return userRole === 'admin';
-  } catch (error) {
-    console.error('관리자 권한 확인 실패:', error);
-    return false;
-  }
-};
+// /**
+//  * 관리자 권한 확인
+//  * @returns {Promise<boolean>}
+//  */
+// export const checkAdminStatus = async () => {
+//   try {
+//     const response = await api.get('/users/check-admin');
+//     return response.isAdmin;
+//   } catch (error) {
+//     console.error('관리자 권한 확인 실패:', error);
+//     return false;
+//   }
+// };
 
 /**
  * 프로필 수정
@@ -65,21 +47,11 @@ export const checkAdminStatus = async () => {
 export const updateProfile = async profileData => {
   try {
     // TODO: 백엔드 API 연동 시 주석 해제
-    // const response = await api.put('/users/profile', profileData);
-    // return response.data;
+    const response = await api.put('/users/profile', profileData, {
+      meta: {requiresUserId: true},
+    });
 
-    // 임시: AsyncStorage에 저장
-    if (profileData.name) {
-      await AsyncStorage.setItem('userName', profileData.name);
-    }
-    if (profileData.nickname) {
-      await AsyncStorage.setItem('userNickname', profileData.nickname);
-    }
-    if (profileData.profileImage) {
-      await AsyncStorage.setItem('profileImage', profileData.profileImage);
-    }
-
-    return {success: true};
+    return response;
   } catch (error) {
     console.error('프로필 수정 실패:', error);
     throw error;
@@ -95,8 +67,10 @@ export const updateProfile = async profileData => {
  */
 export const changePassword = async passwordData => {
   try {
-    const response = await api.put('/users/password', passwordData);
-    return response.data;
+    const response = await api.put('/users/password', passwordData, {
+      meta: {requiresUserId: true},
+    });
+    return response;
   } catch (error) {
     console.error('비밀번호 변경 실패:', error);
     throw error;
@@ -138,19 +112,23 @@ export const updateNotificationSettings = async settings => {
  */
 export const withdrawUser = async () => {
   try {
-    const response = await api.delete('/users/withdraw');
+    const response = await api.delete('/users/withdraw', {
+      meta: {requiresUserId: true},
+    });
 
-    // AsyncStorage 데이터 삭제
+    // AsyncStorage 로그인 정보 정리
     await AsyncStorage.multiRemove([
       'accessToken',
       'refreshToken',
+      'userId',
+      'userName',
       'userNickname',
       'userEmail',
       'profileImage',
       'userRole',
     ]);
 
-    return response.data;
+    return response;
   } catch (error) {
     console.error('회원탈퇴 실패:', error);
     throw error;
@@ -163,11 +141,6 @@ export const withdrawUser = async () => {
  */
 export const getAppVersion = async () => {
   try {
-    // TODO: 백엔드 API 연동 시 주석 해제
-    // const response = await api.get('/app/version');
-    // return response.data;
-
-    // 임시 데이터
     return {
       version: '1.0.0',
       latestVersion: '1.0.0',

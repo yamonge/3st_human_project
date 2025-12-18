@@ -1,9 +1,37 @@
-import axiosInstance from './axiosConfig';
+import api from './axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * 관리자 API
  * 관리자 전용 기능 API
  */
+
+const withAdminMeta = (config = {}) => ({
+  ...config,
+  meta: {...(config.meta || {}), requiresUserId: true},
+});
+
+/** ✅ 로그인한 내 userId를 adminUserId로 사용(업데이트 updated_id 용도) */
+const getMyUserId = async () => {
+  const raw = await AsyncStorage.getItem('userId');
+  return raw ? Number(raw) : null;
+};
+
+/** ✅ 프론트 필터값 -> 백엔드 상태값 매핑 */
+const mapFilterToStatus = filter => {
+  if (!filter || filter === 'all') return 'ALL';
+  if (filter === 'active') return 'ACTIVE';
+  if (filter === 'suspended') return 'SUSPENDED';
+  return 'ALL';
+};
+
+/** ✅ duration -> suspendType 매핑(백엔드 DTO 기준) */
+const mapDurationToSuspendType = duration => {
+  if (duration === 'permanent') return 'PERMANENT';
+  if (duration === 1) return 'ONE_DAY';
+  if (duration === 3) return 'THREE_DAYS';
+  if (duration === 7) return 'SEVEN_DAYS';
+  return null;
+};
 
 // ===== 관리자 통계 =====
 
@@ -13,7 +41,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  */
 export const getAdminStats = async () => {
   try {
-    const response = await axiosInstance.get('/admin/stats');
+    const response = await api.get('/admin/stats');
     return response;
   } catch (error) {
     console.error('관리자 통계 조회 실패:', error);
@@ -23,15 +51,24 @@ export const getAdminStats = async () => {
 
 // ===== 회원 관리 =====
 
-/**
- * 회원 목록 조회
- * @param {Object} params - { page, size, search, status }
- * @returns {Promise<Object>} 회원 목록
+/** 회원 목록 조회
+ * GET /api/admin/users?userId=관리자ID&status=all|active|suspended&search=...
  */
-export const getUserList = async params => {
+export const getUserList = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/admin/users', {params});
-    return response;
+    const mappedParams = {
+      // 백엔드 DTO/Mapper: status
+      status: mapFilterToStatus(params.status),
+
+      // 백엔드 DTO/Mapper: keyword (프론트는 search로 쓰고 있어 변환)
+      keyword: params.search ? String(params.search).trim() : '',
+
+      // cursor 기반(선택 사항)
+      lastUserId: params.lastUserId ?? null,
+      limit: params.limit ?? null,
+    };
+
+    return api.get('/admin/users', withAdminMeta({params: mappedParams}));
   } catch (error) {
     console.error('회원 목록 조회 실패:', error);
     throw error;
@@ -39,35 +76,48 @@ export const getUserList = async params => {
 };
 
 /**
- * 회원 정지
- * @param {number} userId - 회원 ID
- * @param {Object} data - { reason, duration }
- * @returns {Promise<Object>}
+ * ✅ 회원 정지
+ * 백엔드: POST /api/admin/users/{userId}/suspend
+ * Body: { suspendType, reason, adminUserId }
+ *
+ * 사용 예:
+ * suspendUser(targetUserId, { duration: 1|3|7|'permanent', reason: '사유' })
  */
 export const suspendUser = async (userId, data) => {
   try {
-    const response = await axiosInstance.post(
-      `/admin/users/${userId}/suspend`,
-      data,
-    );
-    return response;
+    const adminUserId = await getMyUserId();
+
+    const payload = {
+      suspendType: mapDurationToSuspendType(data?.duration),
+      reason: data?.reason ?? null,
+      adminUserId,
+    };
+
+    return api.post(`/admin/users/${userId}/suspend`, payload, withAdminMeta());
   } catch (error) {
-    console.error('회원 정지 실패:', error);
+    console.error('계정 정지 실패:', error);
     throw error;
   }
 };
 
 /**
- * 회원 정지 해제
- * @param {number} userId - 회원 ID
- * @returns {Promise<Object>}
+ * ✅ 회원 정지 해제(활성화)
+ * 백엔드: POST /api/admin/users/{userId}/activate
+ * Body: { adminUserId }
+ *
+ * 사용 예:
+ * unsuspendUser(targetUserId)
  */
 export const unsuspendUser = async userId => {
   try {
-    const response = await axiosInstance.post(
-      `/admin/users/${userId}/unsuspend`,
+    const adminUserId = await getMyUserId();
+    const payload = {adminUserId};
+
+    return api.post(
+      `/admin/users/${userId}/activate`,
+      payload,
+      withAdminMeta(),
     );
-    return response;
   } catch (error) {
     console.error('회원 정지 해제 실패:', error);
     throw error;
@@ -83,7 +133,7 @@ export const unsuspendUser = async userId => {
  */
 export const getReportList = async params => {
   try {
-    const response = await axiosInstance.get('/admin/reports', {params});
+    const response = await api.get('/admin/reports', {params});
     return response;
   } catch (error) {
     console.error('신고 목록 조회 실패:', error);
@@ -99,10 +149,7 @@ export const getReportList = async params => {
  */
 export const sendWarning = async (reportId, data) => {
   try {
-    const response = await axiosInstance.post(
-      `/admin/reports/${reportId}/warning`,
-      data,
-    );
+    const response = await api.post(`/admin/reports/${reportId}/warning`, data);
     return response;
   } catch (error) {
     console.error('경고 발송 실패:', error);
@@ -118,10 +165,7 @@ export const sendWarning = async (reportId, data) => {
  */
 export const suspendUserByReport = async (reportId, data) => {
   try {
-    const response = await axiosInstance.post(
-      `/admin/reports/${reportId}/suspend`,
-      data,
-    );
+    const response = await api.post(`/admin/reports/${reportId}/suspend`, data);
     return response;
   } catch (error) {
     console.error('계정 정지 실패:', error);
@@ -138,7 +182,7 @@ export const suspendUserByReport = async (reportId, data) => {
  */
 export const getPostList = async params => {
   try {
-    const response = await axiosInstance.get('/admin/posts', {params});
+    const response = await api.get('/admin/posts', {params});
     return response;
   } catch (error) {
     console.error('게시글 목록 조회 실패:', error);
@@ -153,7 +197,7 @@ export const getPostList = async params => {
  */
 export const deletePost = async postId => {
   try {
-    const response = await axiosInstance.delete(`/admin/posts/${postId}`);
+    const response = await api.delete(`/admin/posts/${postId}`);
     return response;
   } catch (error) {
     console.error('게시글 삭제 실패:', error);
@@ -169,10 +213,9 @@ export const deletePost = async postId => {
  */
 export const togglePostVisibility = async (postId, hidden) => {
   try {
-    const response = await axiosInstance.patch(
-      `/admin/posts/${postId}/visibility`,
-      {hidden},
-    );
+    const response = await api.patch(`/admin/posts/${postId}/visibility`, {
+      hidden,
+    });
     return response;
   } catch (error) {
     console.error('게시글 숨김/복원 실패:', error);
@@ -189,7 +232,7 @@ export const togglePostVisibility = async (postId, hidden) => {
  */
 export const getNoticeList = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/admin/notices', {params});
+    const response = await api.get('/admin/notices', {params});
     return response;
   } catch (error) {
     console.error('공지사항 목록 조회 실패:', error);
@@ -204,7 +247,7 @@ export const getNoticeList = async (params = {}) => {
  */
 export const getNoticeDetail = async noticeId => {
   try {
-    const response = await axiosInstance.get(`/admin/notices/${noticeId}`);
+    const response = await api.get(`/admin/notices/${noticeId}`);
     return response;
   } catch (error) {
     console.error('공지사항 상세 조회 실패:', error);
@@ -219,7 +262,7 @@ export const getNoticeDetail = async noticeId => {
  */
 export const createNotice = async data => {
   try {
-    const response = await axiosInstance.post('/admin/notices', data);
+    const response = await api.post('/admin/notices', data);
     return response;
   } catch (error) {
     console.error('공지사항 작성 실패:', error);
@@ -235,10 +278,7 @@ export const createNotice = async data => {
  */
 export const updateNotice = async (noticeId, data) => {
   try {
-    const response = await axiosInstance.put(
-      `/admin/notices/${noticeId}`,
-      data,
-    );
+    const response = await api.put(`/admin/notices/${noticeId}`, data);
     return response;
   } catch (error) {
     console.error('공지사항 수정 실패:', error);
@@ -253,7 +293,7 @@ export const updateNotice = async (noticeId, data) => {
  */
 export const deleteNotice = async noticeId => {
   try {
-    const response = await axiosInstance.delete(`/admin/notices/${noticeId}`);
+    const response = await api.delete(`/admin/notices/${noticeId}`);
     return response;
   } catch (error) {
     console.error('공지사항 삭제 실패:', error);
@@ -268,9 +308,7 @@ export const deleteNotice = async noticeId => {
  */
 export const toggleNoticePin = async noticeId => {
   try {
-    const response = await axiosInstance.patch(
-      `/admin/notices/${noticeId}/pin`,
-    );
+    const response = await api.patch(`/admin/notices/${noticeId}/pin`);
     return response;
   } catch (error) {
     console.error('공지사항 고정 토글 실패:', error);
@@ -281,17 +319,27 @@ export const toggleNoticePin = async noticeId => {
 // ===== 회원 탈퇴 (관리자) =====
 
 /**
- * 회원 강제 탈퇴
- * @param {number} userId - 회원 ID
- * @param {Object} data - { reason }
- * @returns {Promise<Object>}
+ * ✅ 회원 탈퇴(소프트 삭제)
+ * 백엔드: POST /api/admin/users/{userId}/withdraw
+ * Body: { adminUserId, reason }
+ *
+ * 사용 예:
+ * deleteUser(targetUserId, { reason: '탈퇴 처리 사유' })
  */
-export const deleteUser = async (userId, data) => {
+export const deleteUser = async (userId, data = {}) => {
   try {
-    const response = await axiosInstance.delete(`/admin/users/${userId}`, {
-      data,
-    });
-    return response;
+    const adminUserId = await getMyUserId();
+
+    const payload = {
+      adminUserId,
+      reason: data?.reason ?? null,
+    };
+
+    return api.post(
+      `/admin/users/${userId}/withdraw`,
+      payload,
+      withAdminMeta(),
+    );
   } catch (error) {
     console.error('회원 탈퇴 실패:', error);
     throw error;

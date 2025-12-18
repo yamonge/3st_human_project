@@ -36,7 +36,17 @@ public class UserIngredientServiceImpl implements UserIngredientService {
     @Override
     @Transactional // 데이터 변경 트랜잭션 적용
     public UserIngredientResponseDTO addUserIngredient(Long userId, UserIngredientRequestDTO requestDTO) {
-        // 1. Request DTO -> VO 변환
+        // ✅ 1. 중복 체크: 같은 사용자의 같은 재료명이 이미 있는지 확인
+        String ingredientName = requestDTO.getIngredientName();
+        UserIngredientVO existingIngredient = userIngredientDAO.selectByUserIdAndIngredientName(userId, ingredientName);
+
+        if (existingIngredient != null) {
+            // 이미 존재하는 재료인 경우: 기존 데이터를 그대로 반환
+            System.out.println("⚠️ 중복 재료 감지: userId=" + userId + ", ingredientName=" + ingredientName);
+            return UserIngredientResponseDTO.from(existingIngredient);
+        }
+
+        // 2. Request DTO -> VO 변환
         UserIngredientVO vo = new UserIngredientVO();
         vo.setUserId(userId); // 현재 로그인한 사용자 ID 설정
         vo.setIngredientName(requestDTO.getIngredientName());
@@ -53,13 +63,13 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         );
         vo.setCreatedId(userId); // 생성자 ID 설정
 
-        // 2. DB에 저장
+        // 3. DB에 저장
         int insertedCount = userIngredientDAO.insertUserIngredient(vo);
         if (insertedCount == 0 || vo.getUserIngredientId() == null) {
             throw new RuntimeException("재료 추가에 실패했습니다.");
         }
 
-        // 3. 저장된 VO를 기반으로 Response DTO 생성 및 반환
+        // 4. 저장된 VO를 기반으로 Response DTO 생성 및 반환
         return UserIngredientResponseDTO.from(vo); // 편의 메서드 사용
     }
 
@@ -233,15 +243,42 @@ public class UserIngredientServiceImpl implements UserIngredientService {
     @Override
     @Transactional
     public void consumeIngredients(Long userId, IngredientConsumeRequestDTO requestDTO) {
+        System.out.println("🔥 재료 소비 시작 - userId: " + userId);
+        System.out.println("🔥 recipeId: " + requestDTO.getRecipeId());
+        System.out.println("🔥 ingredients: " + requestDTO.getIngredients());
+
+        if (requestDTO.getIngredients() == null || requestDTO.getIngredients().isEmpty()) {
+            System.out.println("⚠️ 소비할 재료가 없습니다.");
+            return;
+        }
 
         for (IngredientConsumeRequestDTO.ConsumeIngredientDTO item : requestDTO.getIngredients()) {
+            System.out.println("📍 재료 처리 - ID: " + item.getUserIngredientId() + ", usageType: " + item.getUsageType());
 
             if ("ALL".equals(item.getUsageType())) {
-                userIngredientDAO.deleteUserIngredientByUserAndId(
-                        userId,
-                        item.getUserIngredientId()
-                );
+                System.out.println("🗑️ 재료 삭제 시도 - userId: " + userId + ", userIngredientId: " + item.getUserIngredientId());
+                
+                // 삭제 전 재료 존재 확인
+                UserIngredientVO existingIngredient = userIngredientDAO.selectUserIngredientById(item.getUserIngredientId());
+                if (existingIngredient == null) {
+                    System.err.println("❌ 재료를 찾을 수 없습니다 - ID: " + item.getUserIngredientId());
+                    throw new IllegalArgumentException("재료를 찾을 수 없습니다: " + item.getUserIngredientId());
+                }
+                
+                if (!existingIngredient.getUserId().equals(userId)) {
+                    System.err.println("❌ 권한 없음 - 재료 소유자: " + existingIngredient.getUserId() + ", 요청자: " + userId);
+                    throw new IllegalArgumentException("해당 재료에 대한 권한이 없습니다.");
+                }
+                
+                userIngredientDAO.deleteUserIngredientByUserAndId(userId, item.getUserIngredientId());
+                System.out.println("✅ 재료 삭제 완료 - ID: " + item.getUserIngredientId());
+            } else if ("PARTIAL".equals(item.getUsageType())) {
+                System.out.println("ℹ️ 부분 사용 - 삭제하지 않음 (ID: " + item.getUserIngredientId() + ")");
+            } else {
+                System.err.println("⚠️ 잘못된 usageType: " + item.getUsageType());
             }
         }
+        
+        System.out.println("✅ 재료 소비 처리 완료");
     }
 }

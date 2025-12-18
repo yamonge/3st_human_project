@@ -1,14 +1,18 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StatusBar,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import {ChevronLeft, ChevronRight, Check} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {styles} from '../../styles/screens/camera/ingredientSelectionStyles';
+import {getUserIngredients} from '../../api/camera';
 
 export default function IngredientSelectionScreen({route, navigation}) {
   const {ingredients = [], filters = {}, from = 'camera'} = route.params || {};
@@ -17,14 +21,62 @@ export default function IngredientSelectionScreen({route, navigation}) {
   const isRecipeDirectInput = from === 'recipe-direct-input';
 
   // 각 재료의 선택 상태
-  const [ingredientStates, setIngredientStates] = useState(
-    ingredients.map((ingredient, index) => ({
-      ...ingredient,
-      checked: isRecipeDirectInput ? true : index < 3, // 레시피->직접입력은 모두 선택
-      usage: '전부 사용',
-      amount: '중간',
-    })),
-  );
+  const [ingredientStates, setIngredientStates] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 재료 로드
+  useEffect(() => {
+    loadIngredients();
+  }, []);
+
+  const loadIngredients = async () => {
+    try {
+      setIsLoading(true);
+
+      // 직접입력으로 들어온 경우 → route.params 사용
+      if (isRecipeDirectInput) {
+        setIngredientStates(
+          ingredients.map(ingredient => ({
+            ...ingredient,
+            checked: true, // 직접입력은 모두 선택
+            usage: '전부 사용',
+            amount: '중간',
+          })),
+        );
+      } else {
+        // 일반 플로우 → DB에서 전체 재료 조회
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          Alert.alert('오류', '로그인 정보가 없습니다.');
+          setIngredientStates([]);
+          return;
+        }
+
+        const result = await getUserIngredients(Number(userId));
+
+        if (result.success) {
+          setIngredientStates(
+            result.ingredients.map((ing, index) => ({
+              id: ing.userIngredientId,
+              name: ing.ingredientName,
+              checked: index < 3, // 처음 3개만 기본 선택
+              usage: '전부 사용',
+              amount: '중간',
+            })),
+          );
+        } else {
+          Alert.alert('알림', result.error || '재료를 불러올 수 없습니다.');
+          setIngredientStates([]);
+        }
+      }
+    } catch (error) {
+      console.error('❌ 재료 로드 에러:', error);
+      Alert.alert('오류', '재료를 불러오는 중 문제가 발생했습니다.');
+      setIngredientStates([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 체크박스 토글
   const toggleIngredient = id => {
@@ -121,11 +173,19 @@ export default function IngredientSelectionScreen({route, navigation}) {
         style={styles.content}
         contentContainerStyle={{paddingBottom: 250}}
         showsVerticalScrollIndicator={false}>
-        {ingredients.length === 0 ? (
+        {isLoading ? (
+          // 로딩 중
+          <View style={styles.emptyContainer}>
+            <ActivityIndicator size="large" color="#155DFC" />
+            <Text style={[styles.emptyText, {marginTop: 16}]}>
+              재료를 불러오는 중...
+            </Text>
+          </View>
+        ) : ingredientStates.length === 0 ? (
           // 재료가 없을 때
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              재료가 없습니다.{'\n'}홈 화면에서 재료를 추가해주세요.
+              재료가 없습니다.{'\n'} 재료를 추가해주세요.
             </Text>
           </View>
         ) : (
@@ -304,15 +364,16 @@ export default function IngredientSelectionScreen({route, navigation}) {
       <View style={styles.bottomButtonContainer}>
         <TouchableOpacity
           onPress={
-            ingredients.length === 0
+            ingredientStates.length === 0
               ? () => navigation.navigate('Home')
               : handleRecommend
           }
           activeOpacity={0.7}
+          disabled={isLoading}
           style={{width: '100%'}}>
           <LinearGradient
             colors={
-              ingredients.length === 0
+              ingredientStates.length === 0 || isLoading
                 ? ['#6B7280', '#4B5563']
                 : ['#E879F9', '#C026D3']
             }
@@ -320,7 +381,9 @@ export default function IngredientSelectionScreen({route, navigation}) {
             end={{x: 1, y: 0}}
             style={styles.recommendButton}>
             <Text style={styles.recommendButtonText}>
-              {ingredients.length === 0 ? '홈으로 가기' : '레시피 추천받기'}
+              {ingredientStates.length === 0
+                ? '홈으로 가기'
+                : '레시피 추천받기'}
             </Text>
             <ChevronRight color="#FFFFFF" size={20} />
           </LinearGradient>

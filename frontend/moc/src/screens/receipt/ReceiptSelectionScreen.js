@@ -40,9 +40,9 @@ const ReceiptSelectionScreen = ({navigation}) => {
   };
 
   const handleDirectInput = () => {
-    // TODO: 마이페이지 > 재료 관리 화면으로 이동
+    // 마이페이지 > 재료 관리 화면으로 이동
     console.log('직접 입력 - 재료 관리로 이동');
-    // navigation.navigate('MyIngredients');
+    navigation.navigate('IngredientManagement');
   };
 
   return (

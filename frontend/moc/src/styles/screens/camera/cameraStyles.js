@@ -173,12 +173,25 @@ export const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginTop: 20,
     fontFamily: 'NotoSansKR-Bold',
+    includeFontPadding: false,
   },
   recognizingSubText: {
     fontSize: 14,
     color: '#CCCCCC',
     marginTop: 8,
     fontFamily: 'NotoSansKR-Regular',
+    includeFontPadding: false,
+  },
+  relaxMessage: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#10B981',
+    marginTop: 16,
+    paddingHorizontal: 32,
+    textAlign: 'center',
+    lineHeight: 22,
+    fontFamily: 'NotoSansKR-Medium',
+    includeFontPadding: false,
   },
 
   // 모달 스타일

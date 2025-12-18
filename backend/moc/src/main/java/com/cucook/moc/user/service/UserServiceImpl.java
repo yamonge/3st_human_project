@@ -18,6 +18,7 @@ import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import com.cucook.moc.user.vo.UserReviewVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,8 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.cucook.moc.user.dao.UserDAO;
-import com.cucook.moc.user.dto.response.FindEmailResponseDTO;
-import com.cucook.moc.user.dto.response.LoginResponseDTO;
+import com.cucook.moc.user.dto.response.*;
 import com.cucook.moc.user.vo.UserVO;
 import com.cucook.moc.common.MailService;
 import com.cucook.moc.shopping.dao.ShoppingPostDAO;
@@ -34,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserDAO userDAO;
@@ -43,22 +44,28 @@ public class UserServiceImpl implements UserService {
     private final UserReviewDAO userReviewDAO;
     private final ShoppingPostDAO shoppingPostDAO;
     private final ChatParticipantDAO chatParticipantDAO;
+    
+    // 관리자 권한 판정
+    @Override
+    public CheckAdminResponseDTO checkAdmin(Long userId) {
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_REQUIRED");
+        }
 
-    public UserServiceImpl(UserDAO userDAO,
-                           PasswordResetTokenDAO passwordResetTokenDAO,
-                           BCryptPasswordEncoder passwordEncoder,
-                           MailService mailService,
-                           UserReviewDAO userReviewDAO,
-                           ShoppingPostDAO shoppingPostDAO,
-                           ChatParticipantDAO chatParticipantDAO) {
-        this.userDAO = userDAO;
-        this.passwordEncoder = passwordEncoder;
-        this.mailService = mailService;
-        this.passwordResetTokenDAO = passwordResetTokenDAO;
+        UserVO user = userDAO.selectById(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND");
+        }
 
-        this.userReviewDAO = userReviewDAO;
-        this.shoppingPostDAO = shoppingPostDAO;
-        this.chatParticipantDAO = chatParticipantDAO;
+        String userType = user.getUserType();     // 'Y' or 'N'
+        String status = user.getUserStatus();     // ACTIVE/SUSPENDED/WITHDRAW
+
+        // 관리자 판정 기준(원하시는 정책에 맞게 최소한만 적용)
+        // - user_type='Y' 이면 관리자
+        // - WITHDRAW이면 관리자여도 의미 없으므로 false 처리(선택 사항)
+        boolean isAdmin = "Y".equalsIgnoreCase(userType) && !"WITHDRAW".equalsIgnoreCase(status);
+
+        return new CheckAdminResponseDTO(isAdmin, userType, status);
     }
 
     @Override
@@ -121,7 +128,12 @@ public class UserServiceImpl implements UserService {
 
         // 3. 상태 체크
         if ("SUSPENDED".equalsIgnoreCase(user.getUserStatus())) {
-            throw new IllegalStateException("정지된 계정입니다.");
+            // 251217 수정 -  정지 계정 로그인 차단
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "정지된 계정입니다.");
+        }
+        if ("WITHDRAW".equalsIgnoreCase(user.getUserStatus())) {
+            // 251217 추가 -  탈퇴 계정 로그인 차단
+            throw new ResponseStatusException(HttpStatus.GONE, "탈퇴한 계정입니다.");
         }
 
         // 4. 마지막 로그인 시간 업데이트
@@ -303,6 +315,7 @@ public class UserServiceImpl implements UserService {
                 request.getDeviceVersion()
         );
     }
+    
     // 유저 프로필 정보
     @Transactional(readOnly = true)
     public UserProfileDTO getMyProfile(Long userId) {
@@ -394,5 +407,96 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public List<UserReviewDTO> getUserReviews(Long targetUserId) {
         return userReviewDAO.selectReviewsForUser(targetUserId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserSettingsInfoResponseDTO getSettingsUserInfo(Long userId) {
+        UserVO user = userDAO.selectById(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+
+        UserSettingsInfoResponseDTO dto = new UserSettingsInfoResponseDTO();
+        dto.setName(user.getUserName());
+        dto.setNickname(user.getUserNickname());
+        dto.setEmail(user.getUserEmail());
+        dto.setProfileImage(user.getUserProfileImageUrl());
+
+        // ✅ [추가] user_type: 'Y'면 admin, 그 외 user
+        dto.setRole("Y".equalsIgnoreCase(user.getUserType()) ? "admin" : "user");
+        return dto;
+    }
+
+    @Override
+    public UserSettingsInfoResponseDTO updateMyProfile(Long userId, UpdateProfileRequestDTO request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "요청값이 없습니다.");
+        }
+
+        UserVO current = userDAO.selectById(userId);
+        if (current == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+
+        // ✅ [추가] 닉네임 변경 시 중복 체크(본인 닉네임이면 통과)
+        if (request.getNickname() != null
+                && !request.getNickname().isBlank()
+                && !request.getNickname().equals(current.getUserNickname())) {
+            int cnt = userDAO.countByNickname(request.getNickname());
+            if (cnt > 0) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다.");
+            }
+        }
+
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        // ✅ [추가] DB 업데이트
+        userDAO.updateUserProfile(
+                userId,
+                request.getName(),
+                request.getNickname(),
+                request.getProfileImage(),
+                userId,  // updated_id
+                now      // updated_date
+        );
+
+        // ✅ [추가] 업데이트 후 최신값 반환
+        return getSettingsUserInfo(userId);
+    }
+
+    @Override
+    public void changePassword(Long userId, ChangePasswordRequestDTO request) {
+        if (request == null || request.getCurrentPassword() == null || request.getNewPassword() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "비밀번호 입력값이 누락되었습니다.");
+        }
+
+        UserVO user = userDAO.selectById(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+
+        // ✅ [추가] 현재 비밀번호 검증
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getUserPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        String encoded = passwordEncoder.encode(request.getNewPassword());
+
+        // 기존 DAO 메소드 재사용 (이미 존재) :contentReference[oaicite:6]{index=6}
+        userDAO.updatePassword(userId, encoded);
+    }
+
+    @Override
+    public void withdrawUser(Long userId) {
+        UserVO user = userDAO.selectById(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
+        }
+
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        // ✅ [추가] tb_user.user_status = WITHDRAW (DDL 주석) :contentReference[oaicite:7]{index=7}
+        userDAO.updateUserStatus(userId, "WITHDRAW", userId, now);
     }
 }

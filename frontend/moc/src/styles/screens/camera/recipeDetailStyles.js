@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '700',
     color: colors.textWhite,
     fontFamily: 'Noto Sans KR',

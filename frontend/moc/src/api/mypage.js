@@ -110,7 +110,7 @@ export const deleteIngredient = async (userId, userIngredientId) => {
 export const getUserProfile = async () => {
   try {
     const response = await api.get('/mypage/profile');
-    return response.data;
+    return response;
   } catch (error) {
     console.error('프로필 정보 조회 실패:', error);
     throw error;

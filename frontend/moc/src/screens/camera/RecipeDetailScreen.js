@@ -34,6 +34,7 @@ export default function RecipeDetailScreen({route, navigation}) {
   } = route.params || {};
 
   console.log('🔥 initialRecipe:', JSON.stringify(initialRecipe, null, 2));
+  console.log('🔥 ingredients:', ingredients);
 
   // 레시피->직접입력 플로우인지 확인
   const isRecipeDirectInput = from === 'recipe-direct-input';
@@ -60,6 +61,22 @@ export default function RecipeDetailScreen({route, navigation}) {
       checkIfRecipeSaved();
     }
   }, [initialRecipe]);
+
+  /**
+   * 난이도 한글 변환
+   */
+  const getDifficultyText = code => {
+    switch (code) {
+      case 'EASY':
+        return '쉬움';
+      case 'NORMAL':
+        return '보통';
+      case 'HARD':
+        return '어려움';
+      default:
+        return code;
+    }
+  };
 
   /**
    * 레시피 저장 여부 확인 (AsyncStorage 전용)
@@ -98,12 +115,12 @@ export default function RecipeDetailScreen({route, navigation}) {
       }
 
       // 2️⃣ 소비할 재료 DTO 구성 (ID + usageType 기준)
-      const consumeIngredientsPayload = ingredients
-        .filter(item => item.checked !== false)
-        .map(item => ({
-          userIngredientId: item.userIngredientId, // ✅ 핵심
-          usageType: item.usageType, // "ALL" | "PARTIAL"
-        }));
+      console.log('🔍 ingredients:', ingredients);
+      const consumeIngredientsPayload = ingredients.map(item => ({
+        userIngredientId: item.id, // DB의 user_ingredient_id
+        usageType: item.usage === '전부 사용' ? 'ALL' : 'PARTIAL',
+      }));
+      console.log('🔍 consumeIngredientsPayload:', consumeIngredientsPayload);
 
       if (consumeIngredientsPayload.length === 0) {
         Alert.alert('안내', '소비할 재료가 없습니다.');
@@ -154,18 +171,38 @@ export default function RecipeDetailScreen({route, navigation}) {
    * 보유 재료 및 부족한 재료 계산
    */
   const getIngredientStatus = () => {
-    if (!recipe?.ingredients) {
+    if (!recipe?.requiredIngredients) {
       return {available: [], missing: []};
     }
 
-    // TODO: 실제로는 사용자의 냉장고 재료와 비교해야 함
-    // 현재는 예시 데이터 사용
-    const userIngredients = ingredients || [];
-    const available = recipe.ingredients
-      .slice(0, 2)
+    // 사용자가 선택한 재료 목록 (route.params에서 전달받음)
+    const userIngredientNames = ingredients
+      .filter(item => item.checked !== false)
+      .map(item => item.name);
+
+    // 레시피에 필요한 재료들
+    const requiredIngredients = recipe.requiredIngredients;
+
+    // 보유 재료: 사용자가 가진 재료 중 레시피에 필요한 것
+    const available = requiredIngredients
+      .filter(ing =>
+        userIngredientNames.some(
+          userName =>
+            userName.toLowerCase() === ing.ingredientName.toLowerCase(),
+        ),
+      )
       .map(ing => ing.ingredientName);
 
-    const missing = recipe.ingredients.slice(2).map(ing => ing.ingredientName);
+    // 부족한 재료: 레시피에 필요하지만 사용자가 없는 것
+    const missing = requiredIngredients
+      .filter(
+        ing =>
+          !userIngredientNames.some(
+            userName =>
+              userName.toLowerCase() === ing.ingredientName.toLowerCase(),
+          ),
+      )
+      .map(ing => ing.ingredientName);
 
     return {available, missing};
   };
@@ -242,7 +279,7 @@ export default function RecipeDetailScreen({route, navigation}) {
   };
   const handleNavigateToRecipe = () => {
     setShowSaveModal(false);
-    navigation.navigate('MyRecipes'); // 또는 RecipeBoard 등
+    setShowConsumeModal(true); // 재료 소비 확인 모달 표시
   };
 
   return (
@@ -276,7 +313,9 @@ export default function RecipeDetailScreen({route, navigation}) {
         {/* 난이도 및 시간 */}
         {recipe && (
           <View style={styles.headerMetadata}>
-            <Text style={styles.metadataText}>{recipe.difficultyCd}</Text>
+            <Text style={styles.metadataText}>
+              {getDifficultyText(recipe.difficultyCd)}
+            </Text>
             <View style={styles.metadataDivider} />
             <Text style={styles.metadataText}>{recipe.cookTimeMin}분</Text>
           </View>
@@ -328,18 +367,28 @@ export default function RecipeDetailScreen({route, navigation}) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>필요한 재료</Text>
             <View style={styles.ingredientsList}>
-              {initialRecipe.requiredIngredients.map(ingredient => (
-                <View
-                  key={`${ingredient.ingredientName}-${ingredient.quantityDesc}`}
-                  style={styles.ingredientItem}>
-                  <Text style={styles.ingredientName}>
-                    {ingredient.ingredientName}
-                  </Text>
-                  <Text style={styles.ingredientAmount}>
-                    {ingredient.quantityDesc}
-                  </Text>
-                </View>
-              ))}
+              {initialRecipe.requiredIngredients
+                .filter(
+                  (item, index, self) =>
+                    index ===
+                    self.findIndex(
+                      t =>
+                        t.ingredientName === item.ingredientName &&
+                        t.quantityDesc === item.quantityDesc,
+                    ),
+                )
+                .map((ingredient, index) => (
+                  <View
+                    key={`ingredient-${index}`}
+                    style={styles.ingredientItem}>
+                    <Text style={styles.ingredientName}>
+                      {ingredient.ingredientName}
+                    </Text>
+                    <Text style={styles.ingredientAmount}>
+                      {ingredient.quantityDesc}
+                    </Text>
+                  </View>
+                ))}
             </View>
           </View>
 

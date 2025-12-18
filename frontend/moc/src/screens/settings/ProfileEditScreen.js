@@ -137,7 +137,7 @@ export default function ProfileEditScreen({navigation, route}) {
       Alert.alert('완료', '프로필이 수정되었습니다.', [
         {
           text: '확인',
-          onPress: () => navigation.goBack(),
+          onPress: () => navigation.navigate('Settings'),
         },
       ]);
     } catch (error) {

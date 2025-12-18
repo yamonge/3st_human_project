@@ -4,6 +4,8 @@ import com.cucook.moc.user.dto.PublicProfileDTO;
 import com.cucook.moc.user.dto.UserProfileDTO;
 import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
+import com.cucook.moc.user.dto.response.CheckAdminResponseDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +18,11 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class UserAuthController {
 
     private final UserService userService;
-
-    public UserAuthController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/check-email")
     public ResponseEntity<Boolean> checkEmail(@RequestParam("email") String email) {
@@ -51,6 +50,7 @@ public class UserAuthController {
         LoginResponseDTO response = userService.login(request);
         return ResponseEntity.ok(response);
     }
+
 
     @PostMapping("/find-email")
     public ResponseEntity<FindEmailResponseDTO> findEmail(@RequestBody FindEmailRequestDTO request) {
@@ -86,6 +86,19 @@ public class UserAuthController {
     userService.updateFcmToken(request);
     return ResponseEntity.ok().build();
     }
+
+    /**
+     * 관리자 권한 여부 확인
+     * GET /api/user/check-admin?userId=123
+     *
+     * - 프론트(AsyncStorage)에 저장된 userId를 그대로 보내서 확인용으로만 사용합니다.
+     * - 이 API는 "권한 검증 강제"가 아니라 "상태 조회/판정" 용도입니다.
+     */
+    @GetMapping("/check-admin")
+    public CheckAdminResponseDTO checkAdmin(@RequestParam("userId") Long userId) {
+        return userService.checkAdmin(userId);
+    }
+
     /**
      * 내 계정 정보 보기
      * 지금은 userId를 파라미터로 받지만, 나중에 인증 붙이면 토큰에서 꺼내면 됨
