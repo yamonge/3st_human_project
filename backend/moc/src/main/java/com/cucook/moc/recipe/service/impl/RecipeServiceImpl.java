@@ -8,6 +8,7 @@ import com.cucook.moc.recipe.service.AiRecipeLogService;
 import com.cucook.moc.recipe.service.RecipeIngredientService;
 import com.cucook.moc.recipe.service.RecipeService;
 import com.cucook.moc.recipe.service.RecipeStepService;
+import com.cucook.moc.recipe.service.support.RecipeImageResolver;
 import com.cucook.moc.recipe.vo.AiRecipeLogVO;
 import com.cucook.moc.recipe.vo.RecipeIngredientVO;
 import com.cucook.moc.recipe.vo.RecipeStepVO;
@@ -35,7 +36,7 @@ public class RecipeServiceImpl implements RecipeService {
     private final ObjectMapper objectMapper;
     private final RecipeIngredientService recipeIngredientService;
     private final RecipeStepService recipeStepService;
-
+    private final RecipeImageResolver recipeImageResolver;
     // 🔥 추가: 사용자 재료 관련 의존성
     private final UserIngredientService userIngredientService;
     private final UserIngredientDAO userIngredientDAO;
@@ -45,6 +46,7 @@ public class RecipeServiceImpl implements RecipeService {
                              AiRecipeLogService aiRecipeLogService,
                              GeminiApiUtils geminiApiUtils,
                              ObjectMapper objectMapper,
+                             RecipeImageResolver recipeImageResolver,
                              RecipeIngredientService recipeIngredientService,
                              RecipeStepService recipeStepService,
                              UserIngredientService userIngredientService,
@@ -53,6 +55,7 @@ public class RecipeServiceImpl implements RecipeService {
         this.aiRecipeLogService = aiRecipeLogService;
         this.geminiApiUtils = geminiApiUtils;
         this.objectMapper = objectMapper;
+        this.recipeImageResolver = recipeImageResolver;
         this.recipeIngredientService = recipeIngredientService;
         this.recipeStepService = recipeStepService;
         this.userIngredientService = userIngredientService;
@@ -120,7 +123,9 @@ public class RecipeServiceImpl implements RecipeService {
                         );
 
                 recipeDTO.setRequiredIngredients(responseIngredients);
-                recipeDTO.setThumbnailUrl(null); // 프론트 처리
+                recipeDTO.setThumbnailUrl(
+                        recipeImageResolver.resolveByCategory(recipeDTO.getCategory())
+                );
 
                 processedRecipes.add(recipeDTO);
 

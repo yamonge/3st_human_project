@@ -26,6 +26,11 @@ import {consumeIngredients, saveRecipe} from '../../api/camera';
  * - ingredients: 선택한 재료 목록 (선택사항)
  */
 export default function RecipeDetailScreen({route, navigation}) {
+
+  const fixImageUrl = url => {
+    if (!url) return null;
+    return url.replace('http://localhost:8090', 'http://10.0.2.2:8090');
+  };
   const {
     recipe: initialRecipe,
     ingredients = [],
@@ -276,7 +281,9 @@ export default function RecipeDetailScreen({route, navigation}) {
         {/* 난이도 및 시간 */}
         {recipe && (
           <View style={styles.headerMetadata}>
-            <Text style={styles.metadataText}>{recipe.difficultyCd}</Text>
+            <Text style={styles.metadataText}>
+              {recipe.difficultyText ?? recipe.difficultyCd}
+            </Text>
             <View style={styles.metadataDivider} />
             <Text style={styles.metadataText}>{recipe.cookTimeMin}분</Text>
           </View>
