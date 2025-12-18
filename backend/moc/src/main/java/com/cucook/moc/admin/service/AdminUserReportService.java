@@ -10,5 +10,5 @@ public interface AdminUserReportService {
 
     List<AdminUserReportListItemResponseDTO> getUserReportList(AdminUserReportSearchRequestDTO searchDTO);
 
-    void processUserReport(Long userReportId, AdminUserReportProcessRequestDTO requestDTO);
+    void processUserReport(AdminUserReportProcessRequestDTO requestDTO);
 }

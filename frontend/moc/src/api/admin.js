@@ -4,6 +4,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * 관리자 API
  * 관리자 전용 기능 API
  */
+// 날짜 포맷
+const formatDateYYYYMMDD = value => {
+  try {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}.${m}.${day}`;
+  } catch (e) {
+    return '';
+  }
+};
 
 const withAdminMeta = (config = {}) => ({
   ...config,
@@ -26,12 +39,28 @@ const mapFilterToStatus = filter => {
 
 /** ✅ duration -> suspendType 매핑(백엔드 DTO 기준) */
 const mapDurationToSuspendType = duration => {
-  if (duration === 'permanent') return 'PERMANENT';
   if (duration === 1) return 'ONE_DAY';
   if (duration === 3) return 'THREE_DAYS';
   if (duration === 7) return 'SEVEN_DAYS';
+  if (duration === 'permanent') return 'PERMANENT';
+  // 혹시 화면에서 999999 같은 값 쓰면 여기에 흡수
+  if (duration === 999999) return 'PERMANENT';
   return null;
 };
+
+// 화면 상태/사유 -> 백엔드 검색값 매핑
+const mapStatusToStatusCd = status => {
+  if (!status || status === 'all') return 'ALL';
+  if (status === 'pending') return 'PENDING';
+  return 'PROCESSED'; // resolved
+};
+
+// 신고 유형 -> reasonCd 매핑 (noshow/abuse/fake -> NOSHOW/ABUSE/FAKE)
+const mapTypeToReasonCd = type => {
+  if (!type || type === 'all') return '';
+  return String(type).toUpperCase();
+};
+
 
 // ===== 관리자 통계 =====
 
@@ -41,8 +70,9 @@ const mapDurationToSuspendType = duration => {
  */
 export const getAdminStats = async () => {
   try {
-    const response = await api.get('/admin/stats');
-    return response;
+    // ✅ userId 자동 첨부되도록 meta 적용
+    const response = await api.get('/admin/stats', withAdminMeta());
+    return response; // axiosConfig가 response.data만 리턴
   } catch (error) {
     console.error('관리자 통계 조회 실패:', error);
     throw error;
@@ -131,10 +161,46 @@ export const unsuspendUser = async userId => {
  * @param {Object} params - { type, status, search }
  * @returns {Promise<Object>}
  */
-export const getReportList = async params => {
+export const getReportList = async (params = {}) => {
   try {
-    const response = await api.get('/admin/reports', {params});
-    return response;
+    // ✅ 현재 백엔드는 "유저 신고"만 있으므로,
+    // reportType이 'post'인 경우는 일단 빈 배열 반환(추후 게시물 신고 API 추가 시 확장)
+    const reportType = params.reportType;
+    if (reportType && reportType !== 'user') {
+      return {reports: []};
+    }
+
+    const mappedParams = {
+      keyword: params.search ? String(params.search).trim() : '',
+      reasonCd: mapTypeToReasonCd(params.type),
+      statusCd: mapStatusToStatusCd(params.status),
+      // cursor 기반 확장 여지
+      lastUserReportId: params.lastUserReportId ?? null,
+      limit: params.limit ?? 50,
+    };
+
+    const list = await api.get(
+      '/admin/reports/users',
+      withAdminMeta({params: mappedParams}),
+    );
+
+    // 백엔드 DTO -> 화면 모델 매핑
+    const reports = (list || []).map(dto => ({
+      id: dto.userReportId,
+      reportType: 'user',
+      // tb_user_report에 출처 컬럼이 없다면, UI 표시용으로 고정
+      source: 'shopping_together',
+      type: String(dto.reportReasonCd || '').toLowerCase(),
+      status: dto.processingStatusCd === 'PENDING' ? 'pending' : 'resolved',
+      date: formatDateYYYYMMDD(dto.createdDate),
+      reporter: dto.reporterNickname,
+      reported: dto.reportedNickname,
+      reportedUserId: dto.reportedUserId,
+      description: dto.reportComment,
+      details: dto.reportComment,
+    }));
+
+    return {reports};
   } catch (error) {
     console.error('신고 목록 조회 실패:', error);
     throw error;
@@ -143,14 +209,29 @@ export const getReportList = async params => {
 
 /**
  * 경고 발송
- * @param {number} reportId - 신고 ID
- * @param {Object} data - { userId, reason }
- * @returns {Promise<Object>}
+ * - 실제 FCM 발송은 추후
+ * - 지금은 "신고 처리완료 마킹"으로만 연결
+ *
+ * 백엔드:
+ * POST /api/admin/reports/users/{userReportId}/process
+ * Body: { userReportId, reportedUserId, actionType:'WARNING', adminUserId }
  */
 export const sendWarning = async (reportId, data) => {
   try {
-    const response = await api.post(`/admin/reports/${reportId}/warning`, data);
-    return response;
+    const adminUserId = await getMyUserId();
+
+    const payload = {
+      userReportId: reportId,
+      reportedUserId: data?.userId ?? null,
+      actionType: 'WARNING',
+      adminUserId,
+    };
+
+    return api.post(
+      `/admin/reports/users/${reportId}/process`,
+      payload,
+      withAdminMeta(),
+    );
   } catch (error) {
     console.error('경고 발송 실패:', error);
     throw error;
@@ -159,14 +240,40 @@ export const sendWarning = async (reportId, data) => {
 
 /**
  * 신고를 통한 계정 정지
- * @param {number} reportId - 신고 ID
- * @param {Object} data - { userId, duration, reason }
- * @returns {Promise<Object>}
+ * - 기존 "회원 정지 API"를 그대로 재사용 (매핑 유지)
+ * - 이후 신고 처리완료 마킹(process) 호출
+ *
+ * 화면에서 전달하는 data:
+ * { userId, duration(1|3|7|'permanent'|999999), reason }
+ *
+ * 처리 순서:
+ * 1) suspendUser(targetUserId, {duration, reason})  // 기존 구현 유지
+ * 2) POST /api/admin/reports/users/{reportId}/process  // 처리완료 마킹
  */
 export const suspendUserByReport = async (reportId, data) => {
   try {
-    const response = await api.post(`/admin/reports/${reportId}/suspend`, data);
-    return response;
+    // 1) 기존 정지 API 그대로 사용 (회원관리 화면과 완전히 동일한 매핑)
+    await suspendUser(data?.userId, {
+      duration: data?.duration,
+      reason: data?.reason,
+    });
+
+    // 2) 신고 처리완료 마킹
+    const adminUserId = await getMyUserId();
+
+    const payload = {
+      userReportId: reportId,
+      reportedUserId: data?.userId ?? null,
+      actionType: 'SUSPEND',
+      suspendType: mapDurationToSuspendType(data?.duration), // 기록용
+      adminUserId,
+    };
+
+    return api.post(
+      `/admin/reports/users/${reportId}/process`,
+      payload,
+      withAdminMeta(),
+    );
   } catch (error) {
     console.error('계정 정지 실패:', error);
     throw error;
