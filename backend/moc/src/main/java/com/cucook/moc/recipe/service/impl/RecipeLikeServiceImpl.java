@@ -40,40 +40,42 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
      * @throws IllegalArgumentException 레시피 ID가 유효하지 않을 경우 등
      */
     @Override
-    @Transactional // 데이터 변경 및 레시피 카운터 업데이트를 포함하므로 트랜잭션 적용
+    @Transactional
     public boolean toggleRecipeLike(Long userId, RecipeLikeRequestDTO requestDTO) {
         Long recipeId = requestDTO.getRecipeId();
 
-        // 1. 레시피 존재 여부 확인 (tb_recipe 테이블에서)
-        RecipeVO recipe = recipeDAO.selectRecipeById(recipeId);
-        if (recipe == null) {
+        // 1. 레시피 존재 여부 확인 (COUNT 쿼리 사용)
+        int recipeExists = recipeDAO.selectRecipeExists(recipeId);
+        if (recipeExists == 0) {
             throw new IllegalArgumentException("존재하지 않는 레시피입니다. (Recipe ID: " + recipeId + ")");
         }
 
         // 2. 현재 좋아요 상태 확인
-        boolean isCurrentlyLiked = recipeLikeDAO.checkIfRecipeIsLiked(userId, recipeId) > 0;
+        boolean isCurrentlyLiked =
+                recipeLikeDAO.checkIfRecipeIsLiked(userId, recipeId) > 0;
 
         if (isCurrentlyLiked) {
-            // 3. 이미 좋아요 상태이면, 좋아요 취소 (DELETE)
+            // 3. 좋아요 취소
             int deletedCount = recipeLikeDAO.deleteRecipeLike(userId, recipeId);
             if (deletedCount > 0) {
-                recipeDAO.decrementRecipeLikeCount(recipeId); // tb_recipe의 좋아요 카운트 감소
-                return false; // 좋아요 취소됨
+                recipeDAO.decrementRecipeLikeCount(recipeId);
+                return false;
             }
         } else {
-            // 4. 좋아요 상태가 아니면, 좋아요 추가 (INSERT)
+            // 4. 좋아요 추가
             RecipeLikeVO vo = new RecipeLikeVO();
             vo.setUserId(userId);
             vo.setRecipeId(recipeId);
-            vo.setCreatedId(userId); // 생성자 ID를 사용자 ID로 설정
+            vo.setCreatedId(userId);
 
             int insertedCount = recipeLikeDAO.insertRecipeLike(vo);
             if (insertedCount > 0) {
-                recipeDAO.incrementRecipeLikeCount(recipeId); // tb_recipe의 좋아요 카운트 증가
-                return true; // 좋아요 추가됨
+                recipeDAO.incrementRecipeLikeCount(recipeId);
+                return true;
             }
         }
-        throw new RuntimeException("좋아요 상태 변경에 실패했습니다. (DB 오류)"); // 예기치 않은 오류
+
+        throw new RuntimeException("좋아요 상태 변경에 실패했습니다.");
     }
 
 

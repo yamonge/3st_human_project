@@ -83,4 +83,26 @@ public interface RecipeDAO {
      * @return 공유된 레시피의 총 개수
      */
     int countSharedRecipesByUserId(Long userId);
+
+    /**
+     * 레시피 존재 여부 확인
+     *
+     * @param recipeId 레시피 ID
+     * @return 존재하면 1 이상, 없으면 0
+     */
+    int selectRecipeExists(Long recipeId);
+
+    /**
+     * 특정 사용자가 저장한 레시피 중
+     * 게시판에 공개(is_public = 'Y')된 레시피 목록을 조회합니다.
+     *
+     * tb_recipe 테이블을 기준으로 조회하며,
+     * owner_user_id가 주어진 userId와 일치하는 레시피만 반환합니다.
+     *
+     * 마이페이지의 '공유한 게시글' 목록 조회 시 사용됩니다.
+     *
+     * @param userId 레시피 소유자(저장한 사용자)의 ID
+     * @return 공개된 레시피(RecipeVO) 목록
+     */
+    List<RecipeVO> selectMyPublicRecipes(@Param("userId") Long userId);
 }

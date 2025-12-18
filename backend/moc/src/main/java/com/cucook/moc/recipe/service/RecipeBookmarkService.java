@@ -58,4 +58,15 @@ public interface RecipeBookmarkService {
      * @return 북마크된 레시피의 총 개수
      */
     int countBookmarkedRecipes(Long userId);
+
+    /**
+     * 특정 사용자가 저장(북마크)한 레시피 중
+     * 게시판에 공개(is_public = 'Y')한 레시피 목록을 조회합니다.
+     *
+     * 마이페이지의 '공유한 게시글' 탭에 표시되는 목록 조회용 API입니다.
+     *
+     * @param userId 조회 대상이 되는 사용자의 ID
+     * @return 공개된(공유된) 레시피 목록과 총 개수를 담은 응답 DTO
+     */
+    RecipeBookmarkListResponseDTO getMyPublicRecipes(Long userId);
 }

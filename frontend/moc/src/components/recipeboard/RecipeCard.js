@@ -46,7 +46,7 @@ const RecipeCard = ({recipe, onPress}) => {
 
         {/* 좋아요 수 */}
         <View style={styles.likeCount}>
-          <Text style={styles.likeCountText}>{recipe.likeCount || 0}</Text>
+          <Text style={styles.likeCountText}>{recipe.likeCnt || 0}</Text>
         </View>
       </View>
 
@@ -92,15 +92,14 @@ const RecipeCard = ({recipe, onPress}) => {
         <View style={styles.ingredientsContainer}>
           <Text style={styles.ingredientsLabel}>준비재료:</Text>
           <View style={styles.ingredientsChips}>
-            {recipe.ingredientSummary &&
-              recipe.ingredientSummary
-                .split(', ')
-                .slice(0, 5)
-                .map((name, index) => (
-                  <View key={index} style={styles.ingredientChip}>
-                    <Text style={styles.ingredientText}>{name.trim()}</Text>
-                  </View>
-                ))}
+            {recipe.ingredients &&
+              recipe.ingredients.slice(0, 5).map((item, index) => (
+                <View key={index} style={styles.ingredientChip}>
+                  <Text style={styles.ingredientText}>
+                    {item.ingredientName}
+                  </Text>
+                </View>
+              ))}
           </View>
         </View>
       </View>

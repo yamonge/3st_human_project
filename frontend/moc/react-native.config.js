@@ -10,6 +10,5 @@ module.exports = {
       ios: {},
     },
   },
-  bundler: {},
   assets: ['./src/assets/fonts/'],
 };

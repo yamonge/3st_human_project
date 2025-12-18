@@ -126,4 +126,20 @@ public class RecipeBookmarkServiceImpl implements RecipeBookmarkService {
     public int countBookmarkedRecipes(Long userId) {
         return recipeBookmarkDAO.countRecipeBookmarksByUserId(userId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RecipeBookmarkListResponseDTO getMyPublicRecipes(Long userId) {
+
+        List<RecipeVO> recipes =
+                recipeDAO.selectMyPublicRecipes(userId);
+
+        // 기존에 "RecipeVO → RecipeBookmarkResponseDTO" 변환 로직 있으면 그대로 재사용
+        List<RecipeBookmarkResponseDTO> list =
+                recipes.stream()
+                        .map(RecipeBookmarkResponseDTO::fromRecipe)
+                        .toList();
+
+        return new RecipeBookmarkListResponseDTO(list, list.size());
+    }
 }

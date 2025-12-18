@@ -17,7 +17,7 @@ public class RecipeLikeResponseDTO {
     private Long userId;          // 사용자 ID (tb_recipe_like.user_id)
     private Timestamp createdDate; // DDL의 created_date, VO의 createdDate와 매핑. (DB에서 좋아요 누른 일시)
     private String likedDateFormatted; // ⭐ UI 표시용: "YYYY-MM-DD HH:mm:ss" 포맷
-
+    private String authorNickname;
     // ⭐ LikedRecipeDetailDTO를 포함하여 레시피 상세 정보를 제공
     private LikedRecipeDetailDTO recipe;
 
@@ -53,6 +53,7 @@ public class RecipeLikeResponseDTO {
             recipeDetail.setCuisineStyleCd(recipeVO.getCuisineStyleCd());
             recipeDetail.setViewCnt(recipeVO.getViewCnt());
             recipeDetail.setLikeCnt(recipeVO.getLikeCnt());
+            recipeDetail.setAuthorNickname(recipeVO.getAuthorNickname());
             dto.setRecipe(recipeDetail);
         }
 

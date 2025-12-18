@@ -26,6 +26,7 @@
             <result property="cuisineStyleCd" column="cuisine_style_cd"/>
             <result property="viewCnt"        column="view_cnt"/>
             <result property="likeCnt"        column="like_cnt"/>
+            <result property="authorNickname" column="author_nickname"/>
         </association>
     </resultMap>
 
@@ -52,12 +53,16 @@
         WHERE user_id = #{userId} AND recipe_id = #{recipeId}
     </delete>
 
-    <select id="selectRecipeLikesWithDetailByUserId" parameterType="long" resultMap="RecipeLikeDetailResultMap">
+    <select id="selectRecipeLikesWithDetailByUserId"
+            parameterType="long"
+            resultMap="RecipeLikeDetailResultMap">
+
         SELECT
             rl.recipe_like_id      AS like_id_alias,
             rl.recipe_id           AS recipe_id_alias,
             rl.user_id             AS user_id_alias,
             rl.created_date        AS created_date_alias,
+
             r.recipe_id            AS recipe_pk_id,
             r.title                AS recipe_title,
             r.summary,
@@ -66,15 +71,18 @@
             r.cook_time_min,
             r.cuisine_style_cd,
             r.view_cnt,
-            r.like_cnt
-        FROM
-            tb_recipe_like rl
-                JOIN
-            tb_recipe r ON rl.recipe_id = r.recipe_id
-        WHERE
-            rl.user_id = #{userId}
-        ORDER BY
-            rl.created_date DESC -- 최신 좋아요 순으로 정렬
+            r.like_cnt,
+
+            u.user_nickname        AS author_nickname   -- 🔥 핵심
+
+        FROM tb_recipe_like rl
+                 JOIN tb_recipe r
+                      ON rl.recipe_id = r.recipe_id
+                 JOIN tb_user u
+                      ON r.owner_user_id = u.user_id              -- 🔥 작성자 JOIN
+
+        WHERE rl.user_id = #{userId}
+        ORDER BY rl.created_date DESC
     </select>
 
     <select id="countRecipeLikesByUserId" parameterType="long" resultType="int">

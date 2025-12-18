@@ -65,18 +65,13 @@ public class UserIngredientController {
      */
     @GetMapping
     public ResponseEntity<UserIngredientListResponseDTO> getUserIngredients(
-            @PathVariable("userId") Long userId) {
-        try {
-            UserIngredientListResponseDTO response = userIngredientService.getUserIngredients(userId);
-            if (response.getUserIngredients().isEmpty()) {
-                return new ResponseEntity<>(response, HttpStatus.NO_CONTENT); // 204 No Content
-            }
-            return new ResponseEntity<>(response, HttpStatus.OK); // 200 OK
-        } catch (Exception e) {
-            System.err.println("재료 목록 조회 중 오류 발생: " + e.getMessage());
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // 500 Internal Server Error
-        }
+            @PathVariable Long userId) {
+
+        UserIngredientListResponseDTO response =
+                userIngredientService.getUserIngredients(userId);
+
+        // ✅ 재료가 없어도 정상 응답
+        return ResponseEntity.ok(response);
     }
 
     /**
