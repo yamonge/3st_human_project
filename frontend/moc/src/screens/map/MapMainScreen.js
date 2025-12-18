@@ -18,6 +18,7 @@ import {
 } from '@mj-studio/react-native-naver-map';
 import Geolocation from '@react-native-community/geolocation';
 import {getDistance} from 'geolib';
+import {useFocusEffect} from '@react-navigation/native';
 import {Search, SlidersHorizontal, MessageCircle} from 'lucide-react-native';
 import PermissionModal from '../../components/common/PermissionModal';
 import MapFilterModal from '../../components/map/MapFilterModal';
@@ -77,10 +78,12 @@ export default function MapMainScreen({navigation}) {
   // 마커 목록 ... 아래 아무 곳 state 구간에 추가
   const [isLoading, setIsLoading] = useState(false);
 
-  // GPS 권한 요청 및 현재 위치 가져오기
-  useEffect(() => {
-    checkAndRequestPermission();
-  }, []);
+  // ✅ 화면 포커스 시마다 GPS 권한 확인 및 현재 위치 가져오기
+  useFocusEffect(
+    React.useCallback(() => {
+      checkAndRequestPermission();
+    }, []),
+  );
 
   const checkAndRequestPermission = async () => {
     if (Platform.OS === 'android') {

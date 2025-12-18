@@ -4,11 +4,9 @@ import com.cucook.moc.recipe.client.GeminiApiUtils;
 import com.cucook.moc.recipe.dao.RecipeDAO;
 import com.cucook.moc.recipe.dto.request.*;
 import com.cucook.moc.recipe.dto.response.*;
-import com.cucook.moc.recipe.service.AiRecipeLogService;
 import com.cucook.moc.recipe.service.RecipeIngredientService;
 import com.cucook.moc.recipe.service.RecipeService;
 import com.cucook.moc.recipe.service.RecipeStepService;
-import com.cucook.moc.recipe.vo.AiRecipeLogVO;
 import com.cucook.moc.recipe.vo.RecipeIngredientVO;
 import com.cucook.moc.recipe.vo.RecipeStepVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
@@ -30,7 +28,6 @@ import java.util.stream.Collectors;
 public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeDAO recipeDAO;
-    private final AiRecipeLogService aiRecipeLogService;
     private final GeminiApiUtils geminiApiUtils;
     private final ObjectMapper objectMapper;
     private final RecipeIngredientService recipeIngredientService;
@@ -42,7 +39,6 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Autowired
     public RecipeServiceImpl(RecipeDAO recipeDAO,
-                             AiRecipeLogService aiRecipeLogService,
                              GeminiApiUtils geminiApiUtils,
                              ObjectMapper objectMapper,
                              RecipeIngredientService recipeIngredientService,
@@ -50,7 +46,6 @@ public class RecipeServiceImpl implements RecipeService {
                              UserIngredientService userIngredientService,
                              UserIngredientDAO userIngredientDAO) {
         this.recipeDAO = recipeDAO;
-        this.aiRecipeLogService = aiRecipeLogService;
         this.geminiApiUtils = geminiApiUtils;
         this.objectMapper = objectMapper;
         this.recipeIngredientService = recipeIngredientService;
@@ -94,7 +89,6 @@ public class RecipeServiceImpl implements RecipeService {
             aiResponseJson = geminiApiUtils.callGeminiApi(prompt);
         } catch (Exception e) {
             System.err.println("Gemini API 호출 실패: " + e.getMessage());
-            logAiRecipeGeneration(requestDTO, prompt, "ERROR: " + e.getMessage(), 0);
             return new RecipeRecommendationResponseDTO(new ArrayList<>(), "ERROR", "레시피 생성 중 오류가 발생했습니다.");
         }
 
@@ -104,7 +98,6 @@ public class RecipeServiceImpl implements RecipeService {
             generatedRecipes = parseGeminiRecipeResponse(pureJson, requestDTO);
         } catch (Exception e) {
             System.err.println("Gemini 응답 파싱 실패: " + e.getMessage());
-            logAiRecipeGeneration(requestDTO, prompt, "ERROR: " + e.getMessage() + " / Raw response: " + aiResponseJson, 0);
             return new RecipeRecommendationResponseDTO(new ArrayList<>(), "ERROR", "AI 응답 파싱 중 오류가 발생했습니다.");
         }
 
@@ -158,8 +151,6 @@ public class RecipeServiceImpl implements RecipeService {
         List<RecommendedRecipeDTO> finalRecommendedRecipes = processedRecipes.stream()
                 .limit(3)
                 .collect(Collectors.toList());
-
-        logAiRecipeGeneration(requestDTO, prompt, aiResponseJson, finalRecommendedRecipes.size());
 
         return new RecipeRecommendationResponseDTO(finalRecommendedRecipes, "SUCCESS", "AI 레시피 추천이 완료되었습니다.");
     }
@@ -238,8 +229,13 @@ public class RecipeServiceImpl implements RecipeService {
                         "### [출력 규칙]\n" +
                         "- 반드시 JSON 배열을 출력할 것\n" +
                         "- 레시피는 3개 생성할 것\n" +
-                        "- 재료 이름은 정규화된 한글 식재료명으로 출력\n" +
-                        "- 재료량은 '1개', '200g', '1컵' 등 구체적으로\n" +
+                        "- ⚠️ 재료 이름은 사용자가 제공한 이름을 절대 변경하지 말고 정확히 그대로 사용\n" +
+                        "- 예: 사용자 재료에 '친환경경주머니양파'가 있으면 레시피에도 '친환경경주머니양파'로 작성\n" +
+                        "- 예: 사용자 재료에 '송송어린대파'가 있으면 레시피에도 '송송어린대파'로 작성\n" +
+                        "- ⚠️ 재료량(quantityDesc)은 '1개', '200g', '1컵' 등 구체적인 양으로 새로 작성\n" +
+                        "- ⚠️ 사용자 재료의 '사용량', '추정량' 정보는 참고만 하고 절대 복사하지 말 것\n" +
+                        "- 잘못된 예: \"quantityDesc\": \"전부사용\" ❌\n" +
+                        "- 올바른 예: \"quantityDesc\": \"1개\" ✅\n" +
                         "- 모든 단계(stepDesc)는 실제로 요리 가능한 수준으로 상세하게 작성\n" +
                         "\n" +
                         "### [이미지 규칙]\n" +
@@ -269,6 +265,20 @@ public class RecipeServiceImpl implements RecipeService {
             }
             if (recipe.getDifficultyCd() == null || recipe.getDifficultyCd().isEmpty()) {
                 recipe.setDifficultyCd(requestDTO.getFilterDifficultyCd());
+            }
+
+            // ✅ 중복 재료 제거 (ingredientName 기준)
+            if (recipe.getRequiredIngredients() != null) {
+                List<RecipeIngredientResponseDTO> uniqueIngredients = recipe.getRequiredIngredients().stream()
+                        .collect(Collectors.toMap(
+                                ing -> ing.getIngredientName() + "|" + ing.getQuantityDesc(), // 재료명+수량으로 유일성 보장
+                                ing -> ing,
+                                (existing, replacement) -> existing // 중복 시 첫 번째 유지
+                        ))
+                        .values()
+                        .stream()
+                        .collect(Collectors.toList());
+                recipe.setRequiredIngredients(uniqueIngredients);
             }
         }
         return recipes;
@@ -354,55 +364,6 @@ public class RecipeServiceImpl implements RecipeService {
             dto.setOwned(userIngredientMap.containsKey(vo.getIngredientName()));
             return dto;
         }).collect(Collectors.toList());
-    }
-
-    /**
-     * AI 레시피 생성 로그 저장
-     */
-    private void logAiRecipeGeneration(RecipeGenerationRequestDTO requestDTO,
-                                       String prompt,
-                                       String aiResponse,
-                                       int resultCount) {
-
-        AiRecipeLogVO logVO = new AiRecipeLogVO();
-
-        logVO.setUserId(
-                requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty()
-                        ? Long.valueOf(requestDTO.getUserId())
-                        : null
-        );
-
-        logVO.setBaseSourceCd(
-                requestDTO.getCameraSessionId() != null && !requestDTO.getCameraSessionId().isEmpty()
-                        ? "CAMERA"
-                        : "MANUAL"
-        );
-
-        if (requestDTO.getCameraSessionId() != null && !requestDTO.getCameraSessionId().isEmpty()) {
-            logVO.setCameraSessionId(Long.valueOf(requestDTO.getCameraSessionId()));
-        }
-
-        logVO.setManualIngredients(
-                requestDTO.getSelectedIngredients().stream()
-                        .map(SelectedIngredientRequestDTO::getIngredientName)
-                        .collect(Collectors.joining(","))
-        );
-
-        logVO.setFilterCuisineCd(requestDTO.getFilterCuisineCd());
-        logVO.setFilterDiffCd(requestDTO.getFilterDifficultyCd());
-        logVO.setFilterTimeCd(requestDTO.getFilterCookTimeCd());
-        logVO.setGovApiRaw("N/A_NO_GOV_API");
-        logVO.setAiRequest(prompt);
-        logVO.setAiResponse(aiResponse);
-        logVO.setResultCnt(resultCount);
-
-        logVO.setCreatedId(
-                requestDTO.getUserId() != null && !requestDTO.getUserId().isEmpty()
-                        ? Long.valueOf(requestDTO.getUserId())
-                        : null
-        );
-
-        aiRecipeLogService.saveAiRecipeLog(logVO);
     }
 
     /**

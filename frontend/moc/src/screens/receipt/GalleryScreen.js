@@ -14,7 +14,9 @@ import {
 import {X, Image as ImageIcon} from 'lucide-react-native';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
 import LinearGradient from 'react-native-linear-gradient';
+import {useFocusEffect} from '@react-navigation/native';
 import styles from '../../styles/screens/receipt/GalleryScreenStyles';
+import {recognizeIngredients} from '../../api/camera';
 
 const GalleryScreen = ({navigation, route}) => {
   const [photos, setPhotos] = useState([]);
@@ -22,11 +24,18 @@ const GalleryScreen = ({navigation, route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState(null);
+  const [isRecognizing, setIsRecognizing] = useState(false);
   const from = route.params?.from; // 'receipt' 또는 'profile'
 
-  useEffect(() => {
-    loadPhotos();
-  }, []);
+  // ✅ 화면 진입 시마다 선택 초기화 및 사진 목록 새로 로드
+  useFocusEffect(
+    React.useCallback(() => {
+      setSelectedPhoto(null); // 선택 초기화
+      setPhotos([]); // 사진 목록 초기화
+      setEndCursor(null); // 커서 초기화
+      loadPhotos(); // 사진 다시 로드
+    }, []),
+  );
 
   // 사진 불러오기
   const loadPhotos = async () => {
@@ -80,7 +89,7 @@ const GalleryScreen = ({navigation, route}) => {
   };
 
   // 선택한 사진 업로드
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!selectedPhoto) {
       Alert.alert('안내', '사진을 선택해주세요.');
       return;
@@ -105,12 +114,46 @@ const GalleryScreen = ({navigation, route}) => {
         currentImage: route.params?.currentImage,
       });
     } else {
-      // 재료 인식 결과 화면으로 이동
-      navigation.navigate('IngredientResult', {
-        photoPath: selectedPhoto.uri,
-        recognizedIngredients: [], // 빈 배열 → 더미 데이터 사용
-        from: 'gallery', // 갤러리에서 왔음을 표시
-      });
+      // ✅ 영수증 재료 인식 처리
+      try {
+        setIsRecognizing(true);
+
+        // 1️⃣ OCR API 호출
+        console.log('📤 OCR 인식 시작:', selectedPhoto.uri);
+        // ✅ URI를 그대로 전달 (처리는 API 내부에서)
+        const ocrResult = await recognizeIngredients(selectedPhoto.uri);
+
+        if (!ocrResult?.ingredients || ocrResult.ingredients.length === 0) {
+          Alert.alert(
+            '안내',
+            '인식된 재료가 없습니다.\n다른 사진을 선택해주세요.',
+          );
+          return;
+        }
+
+        // 2️⃣ 재료 데이터 변환
+        const ingredients = ocrResult.ingredients.map(name => ({
+          id: Date.now() + Math.random(),
+          name,
+        }));
+
+        console.log('✅ OCR 인식 완료:', ingredients);
+
+        // 3️⃣ 재료 인식 결과 화면으로 이동
+        navigation.navigate('IngredientResult', {
+          photoPath: selectedPhoto.uri,
+          recognizedIngredients: ingredients,
+          from: 'gallery',
+        });
+      } catch (error) {
+        console.error('❌ OCR 인식 오류:', error);
+        Alert.alert(
+          '오류',
+          '재료 인식 중 문제가 발생했습니다.\n다시 시도해주세요.',
+        );
+      } finally {
+        setIsRecognizing(false);
+      }
     }
   };
 
@@ -175,16 +218,27 @@ const GalleryScreen = ({navigation, route}) => {
         />
       )}
 
+      {/* ✅ 재료 인식 로딩 오버레이 */}
+      {isRecognizing && (
+        <View style={styles.recognizingOverlay}>
+          <ActivityIndicator size="large" color="#00B8DB" />
+          <Text style={styles.recognizingText}>재료 인식 중...</Text>
+          <Text style={styles.recognizingSubText}>잠시만 기다려주세요</Text>
+        </View>
+      )}
+
       {/* 하단 업로드 버튼 */}
       <View style={styles.bottomButtonContainer}>
         <TouchableOpacity
           onPress={handleUpload}
           activeOpacity={0.8}
-          disabled={!selectedPhoto}
+          disabled={!selectedPhoto || isRecognizing}
           style={{width: '100%'}}>
           <LinearGradient
             colors={
-              selectedPhoto ? ['#00B8DB', '#155DFC'] : ['#9CA3AF', '#6B7280']
+              selectedPhoto && !isRecognizing
+                ? ['#00B8DB', '#155DFC']
+                : ['#9CA3AF', '#6B7280']
             }
             start={{x: 0, y: 0}}
             end={{x: 1, y: 0}}

@@ -28,8 +28,24 @@ export default function RecipeDetailScreen({route, navigation}) {
   const [loading, setLoading] = useState(false);
   const [isMyRecipe, setIsMyRecipe] = useState(false); // 내 글 여부
 
-  const headerColors = ['#FBB2B2', '#F55E5E']; // 게시판 전용 그라데이션
-  const stepNumberColors = ['#00D3F2', '#2B7FFF']; // 조리 순서 번호 그라데이션
+  const headerColors = ['#FBB2B2', '#F55E5E']; // 게시판 전용 그라디엘트
+  const stepNumberColors = ['#00D3F2', '#2B7FFF']; // 조리 순서 번호 그라디엘트
+
+  /**
+   * 난이도 한글 변환
+   */
+  const getDifficultyText = code => {
+    switch (code) {
+      case 'EASY':
+        return '쉬움';
+      case 'NORMAL':
+        return '보통';
+      case 'HARD':
+        return '어려움';
+      default:
+        return code;
+    }
+  };
 
   // 현재 사용자 확인 (내 글인지 체크)
   useEffect(() => {
@@ -164,7 +180,9 @@ export default function RecipeDetailScreen({route, navigation}) {
                 {recipe.title}
               </Text>
               <View style={styles.headerMetadata}>
-                <Text style={styles.metadataText}>{recipe.difficultyCd}</Text>
+                <Text style={styles.metadataText}>
+                  {getDifficultyText(recipe.difficultyCd)}
+                </Text>
                 <View style={styles.metadataDivider} />
                 <Text
                   style={styles.metadataText}>{`${recipe.cookTimeMin}분`}</Text>
