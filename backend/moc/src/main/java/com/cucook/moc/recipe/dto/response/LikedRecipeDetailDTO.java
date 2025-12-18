@@ -18,5 +18,6 @@ public class LikedRecipeDetailDTO {
     // private String category;
     private Integer viewCnt;
     private Integer likeCnt;
+    private String authorNickname;
     // private Long ownerUserId;
 }

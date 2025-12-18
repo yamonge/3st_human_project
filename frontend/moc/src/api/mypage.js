@@ -1,4 +1,32 @@
 import api from './axiosConfig';
+
+// ✅ 레시피 공통 정규화 함수 (여기 딱 1번만)
+const normalizeRecipe = recipe => {
+  if (!recipe) return recipe;
+
+  const r = {...recipe};
+
+  // 안드로이드 에뮬레이터 localhost 보정
+  if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
+    r.thumbnailUrl = r.thumbnailUrl.replace(
+      'http://localhost:8090',
+      'http://10.0.2.2:8090',
+    );
+  }
+
+  // 난이도 한글화
+  r.difficultyText =
+    r.difficultyCd === 'EASY'
+      ? '쉬움'
+      : r.difficultyCd === 'NORMAL'
+      ? '보통'
+      : r.difficultyCd === 'HARD'
+      ? '어려움'
+      : r.difficultyCd;
+
+  return r;
+};
+
 /**
  * 마이페이지 관련 API
  */
@@ -161,16 +189,17 @@ export const getSavedRecipes = async userId => {
  * @returns {Object} response.posts - 게시물 목록
  * @returns {number} response.totalCount - 전체 개수
  */
-export const getLikedPosts = async () => {
+export const getLikedPosts = async userId => {
   try {
-    const response = await api.get('/mypage/posts/liked');
-    return response.data;
+    const data = await api.get(`/v1/users/${userId}/likes`);
+    console.log('🔥 [API getLikedPosts] raw data:', data);
+
+    return data ?? {likedRecipes: [], totalCount: 0};
   } catch (error) {
-    console.error('좋아요한 게시물 조회 실패:', error);
-    throw error;
+    console.error('getLikedPosts 실패:', error);
+    return {likedRecipes: [], totalCount: 0};
   }
 };
-
 // ==================== 공유한 레시피 ====================
 
 /**
@@ -179,13 +208,14 @@ export const getLikedPosts = async () => {
  * @returns {Object} response.recipes - 레시피 목록
  * @returns {number} response.totalCount - 전체 개수
  */
-export const getSharedRecipes = async () => {
+export const getSharedRecipes = async userId => {
   try {
-    const response = await api.get('/mypage/recipes/shared');
-    return response.data;
+    const response = await api.get(`/v1/users/${userId}/bookmarks/my-public`);
+
+    return response ?? {bookmarkedRecipes: [], totalCount: 0};
   } catch (error) {
     console.error('공유한 레시피 조회 실패:', error);
-    throw error;
+    return {bookmarkedRecipes: [], totalCount: 0};
   }
 };
 

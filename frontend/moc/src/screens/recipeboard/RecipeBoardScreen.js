@@ -45,7 +45,6 @@ const TIME_TO_MIN_MAP = {
 };
 
 const RecipeBoardScreen = ({navigation}) => {
-  console.log('🔥 RecipeBoardScreen 렌더 시작');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState(null);
