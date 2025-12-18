@@ -37,6 +37,7 @@
         FROM tb_shopping_participant
         WHERE chat_room_id = #{chatRoomId}
           AND user_id      = #{userId}
+          AND leave_date IS NULL
     </select>
 
     <!-- 참가자 목록 + 닉네임/평점 (프로필용) -->
@@ -44,6 +45,7 @@
         <result property="userId"       column="user_id"/>
         <result property="nickname"     column="user_nickname"/>
         <result property="ratingScore"  column="rating_score"/>
+        <result property="isOwner"      column="is_owner"/>
     </resultMap>
 
     <select id="selectParticipantInfos"
@@ -52,11 +54,17 @@
         SELECT
             p.user_id,
             u.user_nickname,
-            u.rating_score
+            u.rating_score,
+            CASE WHEN sp.writer_user_id = p.user_id THEN 1 ELSE 0 END as is_owner
         FROM tb_shopping_participant p
         JOIN tb_user u
           ON p.user_id = u.user_id
+        JOIN tb_shopping_chat_room r
+          ON p.chat_room_id = r.chat_room_id
+        JOIN tb_shopping_post sp
+          ON r.shopping_post_id = sp.shopping_post_id
         WHERE p.chat_room_id = #{chatRoomId}
+          AND p.leave_date IS NULL
     </select>
 
     <!-- 특정 장보기에 해당 유저가 참여했는지 -->
@@ -68,6 +76,7 @@
         ON p.chat_room_id = r.chat_room_id
         WHERE r.shopping_post_id = #{shoppingPostId}
         AND p.user_id          = #{userId}
+        AND p.leave_date IS NULL
     </select>
 
     <!-- 참여자 나가기 (퇴장 시간 업데이트) -->

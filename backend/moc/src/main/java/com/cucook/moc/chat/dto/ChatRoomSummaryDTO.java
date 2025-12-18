@@ -14,6 +14,7 @@ public class ChatRoomSummaryDTO {
 
     private Long chatRoomId;
     private Long shoppingPostId;
+    private Long hostUserId;         // 방장(게시글 작성자) ID
     private String placeName;        // 게시글/장소 이름
 
     private String lastMessage;      // 마지막 메시지

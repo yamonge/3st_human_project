@@ -56,6 +56,14 @@
         WHERE shopping_post_id = #{postId}
     </update>
 
+    <!-- current_person_cnt - 1 -->
+    <update id="decreaseCurrentPersonCnt">
+        UPDATE tb_shopping_post
+        SET current_person_cnt = current_person_cnt - 1
+        WHERE shopping_post_id = #{postId}
+          AND current_person_cnt > 0
+    </update>
+
     <!-- 게시글 ↔ 채팅방 매핑 -->
     <select id="selectChatRoomIdByPostId" resultType="long">
         SELECT chat_room_id

@@ -9,8 +9,8 @@
         <id     property="chatRoomId"     column="chat_room_id"/>
         <result property="shoppingPostId" column="shopping_post_id"/>
         <result property="statusCd"       column="status_cd"/>
-        <result property="createdDate"    column="created_date"/>
-        <result property="updatedDate"    column="updated_date"/>
+        <result property="createdAt"    column="created_date"/>
+        <result property="updatedAt"    column="updated_date"/>
     </resultMap>
 
     <!-- 채팅방 생성 -->
@@ -50,6 +50,7 @@
     <resultMap id="ChatRoomSummaryMap" type="com.cucook.moc.chat.dto.ChatRoomSummaryDTO">
         <id     property="chatRoomId"     column="chat_room_id"/>
         <result property="shoppingPostId" column="shopping_post_id"/>
+        <result property="hostUserId"     column="host_user_id"/>
         <result property="placeName"      column="place_name"/>
         <result property="lastMessage"    column="last_message"/>
         <result property="statusCd"       column="status_cd"/>
@@ -63,6 +64,7 @@
         SELECT
             r.chat_room_id,
             r.shopping_post_id,
+            sp.writer_user_id AS host_user_id,
             sp.place_name,
             -- 마지막 메시지 텍스트
             (
@@ -80,6 +82,7 @@
         JOIN tb_shopping_participant p
           ON p.chat_room_id = r.chat_room_id
         WHERE p.user_id = #{userId}
+          AND p.leave_date IS NULL
         ORDER BY updated_at DESC
     </select>
 
@@ -103,6 +106,20 @@
         SET status_cd = #{statusCd},
             updated_date = SYSTIMESTAMP
         WHERE chat_room_id = #{chatRoomId}
+    </update>
+
+    <!-- 만료된 채팅방 일괄 업데이트 (약속시간 지남 게시글에 매핑된 채팅방) -->
+    <update id="bulkUpdateExpiredRooms">
+        UPDATE tb_shopping_chat_room r
+        SET r.status_cd = 'DONE',
+            r.updated_date = SYSTIMESTAMP
+        WHERE r.status_cd = 'OPEN'
+          AND EXISTS (
+              SELECT 1
+              FROM tb_shopping_post p
+              WHERE p.shopping_post_id = r.shopping_post_id
+                AND p.status_cd = 'DONE'
+          )
     </update>
 
 </mapper>

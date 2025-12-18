@@ -49,30 +49,9 @@ const ParticipantProfileBottomSheet = ({
   };
 
   const handleSubmitReport = async reportData => {
-    try {
-      await reportUser(
-        participant.userId,
-        reportData.reason,
-        reportData.detail,
-      );
-
-      // 성공 알림
-      if (Platform.OS === 'web') {
-        window.alert('신고가 접수되었습니다.');
-      } else {
-        const {Alert} = require('react-native');
-        Alert.alert('신고 완료', '신고가 접수되었습니다.');
-      }
-    } catch (error) {
-      console.error('신고 실패:', error);
-      // 실패 알림
-      if (Platform.OS === 'web') {
-        window.alert('신고 처리 중 오류가 발생했습니다.');
-      } else {
-        const {Alert} = require('react-native');
-        Alert.alert('오류', '신고 처리 중 오류가 발생했습니다.');
-      }
-    }
+    // ✅ ReportModal에서 이미 API 호출을 처리하므로 여기서는 삭제
+    // ReportModal의 onSubmit은 추가 작업이 필요한 경우에만 사용
+    console.log('✅ [ParticipantProfileBottomSheet] 신고 완료 콜백');
   };
 
   const handleViewAllReviews = () => {
@@ -359,7 +338,11 @@ const ParticipantProfileBottomSheet = ({
       <ReportModal
         visible={showReportModal}
         onClose={() => setShowReportModal(false)}
-        reportTarget={participant}
+        reportTarget={{
+          ...participant,
+          type: 'user', // 🔥 신고 타입 추가
+          id: participant?.userId, // 🔥 신고 대상 ID
+        }}
         onSubmit={handleSubmitReport}
       />
     </>

@@ -20,4 +20,7 @@ public interface ChatRoomDAO {
 
     void updateStatus(@Param("chatRoomId") Long chatRoomId,
                       @Param("statusCd") String statusCd);
+
+    // 만료된 채팅방 일괄 업데이트
+    int bulkUpdateExpiredRooms();
 }

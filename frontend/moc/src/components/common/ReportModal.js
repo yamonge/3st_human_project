@@ -1,13 +1,23 @@
-import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, TextInput, Platform} from 'react-native';
+import React, {useState, useRef} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Portal} from '@gorhom/portal';
 import {AlertTriangle, X} from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {reportUser, reportRecipe} from '../../api/report';
 import styles from '../../styles/components/ReportModalStyles';
 
 const ReportModal = ({visible, onClose, reportTarget, onSubmit}) => {
   const [selectedReason, setSelectedReason] = useState('');
-  const [detailContent, setDetailContent] = useState('');
+  const [detailText, setDetailText] = useState('');
+  const detailInputRef = useRef(null);
 
   const reportReasons = [
     {id: 'PROFANITY', label: '욕설 또는 혐오 발언'},
@@ -29,22 +39,86 @@ const ReportModal = ({visible, onClose, reportTarget, onSubmit}) => {
       return;
     }
 
-    if (onSubmit) {
-      await onSubmit({
-        reason: selectedReason,
-        detail: detailContent.trim(),
-      });
-    }
+    try {
+      // 현재 사용자 ID 가져오기
+      const reporterUserId = await AsyncStorage.getItem('userId');
+      if (!reporterUserId) {
+        throw new Error('로그인 정보를 찾을 수 없습니다.');
+      }
 
-    // 초기화
-    setSelectedReason('');
-    setDetailContent('');
-    onClose();
+      // 🔥 reportTarget.type으로 레시피인지 사용자인지 구분
+      if (reportTarget.type === 'recipe') {
+        // 레시피 신고
+        console.log('📝 [레시피 신고] API 호출 파라미터:', {
+          reporterUserId: Number(reporterUserId),
+          recipeId: reportTarget.id,
+          reportReasonCd: selectedReason,
+          content: detailText,
+        });
+        await reportRecipe(
+          Number(reporterUserId),
+          reportTarget.id,
+          selectedReason,
+          detailText,
+        );
+      } else if (reportTarget.type === 'user') {
+        // 사용자 신고
+        console.log('📝 [사용자 신고] API 호출 파라미터:', {
+          reporterUserId: Number(reporterUserId),
+          reportedUserId: reportTarget.id,
+          reportReasonCd: selectedReason,
+          reportComment: detailText,
+        });
+        await reportUser(
+          Number(reporterUserId),
+          reportTarget.id,
+          selectedReason,
+          detailText,
+        );
+      } else {
+        throw new Error('신고 대상 타입이 올바르지 않습니다.');
+      }
+
+      // 성공 알림
+      if (Platform.OS === 'web') {
+        window.alert('신고가 접수되었습니다.');
+      } else {
+        const {Alert} = require('react-native');
+        Alert.alert('완료', '신고가 접수되었습니다.');
+      }
+
+      // 부모 컴포넌트의 onSubmit 콜백 실행 (있는 경우)
+      if (onSubmit) {
+        await onSubmit({
+          reason: selectedReason,
+          detail: detailText.trim(),
+        });
+      }
+
+      // 초기화
+      setSelectedReason('');
+      setDetailText('');
+      onClose();
+    } catch (error) {
+      console.error('신고 처리 실패:', error);
+      if (Platform.OS === 'web') {
+        window.alert('신고 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.');
+      } else {
+        const {Alert} = require('react-native');
+        Alert.alert(
+          '오류',
+          '신고 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.',
+        );
+      }
+    }
   };
 
   const handleCancel = () => {
     setSelectedReason('');
-    setDetailContent('');
+    setDetailText('');
+    if (detailInputRef.current) {
+      detailInputRef.current.clear();
+    }
     onClose();
   };
 
@@ -123,14 +197,17 @@ const ReportModal = ({visible, onClose, reportTarget, onSubmit}) => {
             <View style={styles.detailSection}>
               <Text style={styles.detailTitle}>상세 내용 (선택)</Text>
               <TextInput
+                ref={detailInputRef}
                 style={styles.detailInput}
                 placeholder="추가로 전달하고 싶은 내용을 입력해주세요"
                 placeholderTextColor="rgba(23, 23, 23, 0.5)"
-                value={detailContent}
-                onChangeText={setDetailContent}
+                defaultValue=""
+                onChangeText={setDetailText}
                 multiline
                 maxLength={200}
                 textAlignVertical="top"
+                autoCorrect={false}
+                autoCapitalize="none"
               />
             </View>
 

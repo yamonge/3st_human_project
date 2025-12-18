@@ -91,6 +91,23 @@ export default function PostCreateModal({
       return;
     }
 
+    // 🔥 시간 검증: 현재 시간보다 1시간 이후여야 함
+    const now = new Date().getTime();
+    const meetTime =
+      typeof selectedTime?.timestamp === 'number'
+        ? selectedTime.timestamp
+        : new Date(selectedTime?.timestamp).getTime();
+
+    const oneHourLater = now + 60 * 60 * 1000; // 1시간 = 3600000ms
+
+    if (meetTime < oneHourLater) {
+      Alert.alert(
+        '알림',
+        '만날 시간은 현재 시간으로부터 최소 1시간 이후여야 합니다.',
+      );
+      return;
+    }
+
     if (selectedIngredients.length === 0) {
       Alert.alert('알림', '구매할 재료를 선택해주세요.');
       return;

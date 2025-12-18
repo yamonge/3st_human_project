@@ -124,15 +124,19 @@ const getUserIdOrThrow = async () => {
 
 /**
  * 특정 마트(핀) 기준 게시물 조회
- * 백엔드: GET /api/shopping-posts/place?lat=&lng=
+ * 백엔드: GET /api/shopping-posts/place?lat=&lng=&userId=
  */
 // src/api/map.js
 export const getPostsByLocation = async (storeName, latitude, longitude) => {
+  // 🔥 userId 가져오기
+  const userId = await getUserIdOrThrow();
+
   // storeName은 호환용으로만 받음(요청 params에 넣지 않음)
   return api.get('/shopping-posts/place', {
     params: {
       lat: latitude,
       lng: longitude,
+      userId, // 🔥 userId 추가
     },
   });
 };

@@ -37,8 +37,15 @@ public class ShoppingPostService {
             throw new IllegalArgumentException("meetDateTime은 필수입니다. (epoch millis)");
         }
 
-
         Timestamp meetTs = new Timestamp(dto.getMeetDateTime());
+        
+        // 🔥 시간 검증: 현재 시간보다 1시간 이후여야 함
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Timestamp oneHourLater = new Timestamp(now.getTime() + (60 * 60 * 1000));
+        
+        if (meetTs.before(oneHourLater)) {
+            throw new IllegalArgumentException("만날 시간은 현재 시간으로부터 최소 1시간 이후여야 합니다.");
+        }
 
 
         // 2) 게시글 VO 구성
@@ -95,7 +102,7 @@ public class ShoppingPostService {
      * 특정 마트(핀) 기준 게시글 목록
      */
     @Transactional(readOnly = true)
-    public List<ShoppingPostSummaryDTO> getPostsForPlace(double lat, double lng) {
+    public List<ShoppingPostSummaryDTO> getPostsForPlace(double lat, double lng, Long userId) {
         double latDiff = 0.001; // 약 100m 박스
         double lngDiff = 0.001;
 
@@ -104,7 +111,7 @@ public class ShoppingPostService {
         double lngMin = lng - lngDiff;
         double lngMax = lng + lngDiff;
 
-        return shoppingPostDAO.selectPostsByPlace(lat, lng, latMin, latMax, lngMin, lngMax);
+        return shoppingPostDAO.selectPostsByPlace(lat, lng, latMin, latMax, lngMin, lngMax, userId);
     }
 
     // 게시물 상세정보

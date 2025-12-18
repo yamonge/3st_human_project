@@ -83,8 +83,8 @@
         #{reporterUserId},
         #{reportedUserId},
         #{reportReasonCd},
-        #{reportComment},
-        NVL(#{processingStatusCd}, 'PENDING'), -- NULL일 경우 'PENDING' 기본값
+        #{reportComment, jdbcType=VARCHAR},
+        NVL(#{processingStatusCd, jdbcType=VARCHAR}, 'PENDING'), -- NULL일 경우 'PENDING' 기본값
         #{createdId}
         )
     </insert>

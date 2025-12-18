@@ -73,6 +73,7 @@ export default function MapMainScreen({navigation}) {
   // 게시물 목록 바텀시트
   const [showPostList, setShowPostList] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const postListRef = React.useRef(null); // 🔥 PostListBottomSheet ref 추가
 
   // 채팅방 목록 모달
   const [showChatRoomList, setShowChatRoomList] = useState(false);
@@ -569,6 +570,7 @@ export default function MapMainScreen({navigation}) {
 
       {/* 게시물 목록 바텀시트 */}
       <PostListBottomSheet
+        ref={postListRef}
         visible={showPostList}
         onClose={() => setShowPostList(false)}
         navigation={navigation}
@@ -579,7 +581,13 @@ export default function MapMainScreen({navigation}) {
       {/* 채팅방 목록 모달 */}
       <ChatRoomListModal
         visible={showChatRoomList}
-        onClose={() => setShowChatRoomList(false)}
+        onClose={() => {
+          setShowChatRoomList(false);
+          // 🔥 채팅방 목록 닫을 때 게시물 목록 새로고침 (참여 여부 업데이트)
+          if (postListRef.current?.refreshPosts) {
+            postListRef.current.refreshPosts();
+          }
+        }}
         navigation={navigation}
       />
     </View>
