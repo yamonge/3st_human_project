@@ -1,64 +1,101 @@
 import api from './axiosConfig';
 
 /**
- * 신고 API (공통)
- * - 레시피, 유저 등 다양한 컨텐츠 신고에 사용
+ * 레시피 신고 API
+ * POST /api/v1/users/{reporterUserId}/recipe-reports
  *
- * @param {string} type - 신고 유형 ('recipe', 'user' 등)
- * @param {number} targetId - 신고 대상 ID
- * @param {string} reason - 신고 사유
- * @param {string} [details] - 상세 설명 (선택)
- *
+ * @param {number} reporterUserId - 신고하는 사용자 ID
+ * @param {number} recipeId - 신고할 레시피 ID
+ * @param {string} reportReasonCd - 신고 사유 코드
+ * @param {string} [content] - 상세 내용 (선택)
  * @returns {Promise<Object>} 신고 결과
- * @returns {boolean} success - 성공 여부
- * @returns {string} message - 결과 메시지
  *
  * @example
- * // 레시피 신고
- * await reportContent('recipe', 123, '부적절한 내용', '욕설이 포함되어 있습니다.');
+ * await reportRecipe(1, 123, 'INAPPROPRIATE_CONTENT', '욕설이 포함되어 있습니다.');
  */
-export const reportContent = async (type, targetId, reason, details = '') => {
+export const reportRecipe = async (
+  reporterUserId,
+  recipeId,
+  reportReasonCd,
+  content = '',
+) => {
   try {
-    const response = await api.post('/report', {
-      type,
-      targetId,
-      reason,
-      details,
-    });
-
+    const response = await api.post(
+      `/v1/users/${reporterUserId}/recipe-reports`,
+      {
+        recipeId,
+        reportReasonCd,
+        content: content.trim() || null,
+      },
+    );
     return response.data;
   } catch (error) {
-    console.error('신고 실패:', error);
+    console.error('레시피 신고 실패:', error);
     throw error;
   }
 };
 
 /**
- * 레시피 신고 전용 함수 (간편 사용)
+ * 사용자 신고 API
+ * POST /api/v1/users/{reporterUserId}/user-reports
  *
- * @param {number} recipeId - 레시피 ID
- * @param {string} reason - 신고 사유
- * @param {string} [details] - 상세 설명
- * @returns {Promise<Object>}
+ * @param {number} reporterUserId - 신고하는 사용자 ID
+ * @param {number} reportedUserId - 신고할 사용자 ID
+ * @param {string} reportReasonCd - 신고 사유 코드
+ * @param {string} [reportComment] - 상세 내용 (선택)
+ * @returns {Promise<Object>} 신고 결과
  *
  * @example
- * await reportRecipe(123, '부적절한 내용', '욕설 포함');
+ * await reportUser(1, 456, 'PROFANITY', '욕설 사용');
  */
-export const reportRecipe = async (recipeId, reason, details = '') => {
-  return reportContent('recipe', recipeId, reason, details);
+export const reportUser = async (
+  reporterUserId,
+  reportedUserId,
+  reportReasonCd,
+  reportComment = '',
+) => {
+  try {
+    const response = await api.post(
+      `/v1/users/${reporterUserId}/user-reports`,
+      {
+        reportedUserId,
+        reportReasonCd,
+        reportComment: reportComment.trim() || null,
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error('사용자 신고 실패:', error);
+    throw error;
+  }
 };
 
 /**
- * 사용자 신고 전용 함수 (간편 사용)
- *
- * @param {number} userId - 사용자 ID
- * @param {string} reason - 신고 사유 ('PROFANITY', 'INAPPROPRIATE_BEHAVIOR', 'FRAUD', 'NO_SHOW', 'FAKE_PROFILE', 'OTHER')
- * @param {string} [details] - 상세 설명
- * @returns {Promise<Object>}
- *
- * @example
- * await reportUser(456, 'PROFANITY', '욕설 사용');
+ * 신고한 레시피 목록 조회
+ * GET /api/v1/users/{reporterUserId}/recipe-reports
  */
-export const reportUser = async (userId, reason, details = '') => {
-  return reportContent('user', userId, reason, details);
+export const getMyRecipeReports = async reporterUserId => {
+  try {
+    const response = await api.get(
+      `/v1/users/${reporterUserId}/recipe-reports`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('레시피 신고 목록 조회 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 신고한 사용자 목록 조회
+ * GET /api/v1/users/{reporterUserId}/user-reports
+ */
+export const getMyUserReports = async reporterUserId => {
+  try {
+    const response = await api.get(`/v1/users/${reporterUserId}/user-reports`);
+    return response.data;
+  } catch (error) {
+    console.error('사용자 신고 목록 조회 실패:', error);
+    throw error;
+  }
 };

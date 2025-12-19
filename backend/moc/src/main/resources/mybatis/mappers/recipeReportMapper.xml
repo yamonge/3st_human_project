@@ -83,8 +83,8 @@
         #{recipeId},
         #{reporterUserId},
         #{reportReasonCd},
-        #{content},
-        NVL(#{statusCd}, 'PENDING'), -- NULL일 경우 'PENDING' 기본값
+        #{content, jdbcType=VARCHAR},
+        NVL(#{statusCd, jdbcType=VARCHAR}, 'PENDING'), -- NULL일 경우 'PENDING' 기본값
         #{createdId}
         )
     </insert>

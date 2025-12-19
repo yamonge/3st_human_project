@@ -74,14 +74,16 @@ public class ShoppingPostController {
 
     /**
      * 특정 마트(핀) 기준 게시글 목록
-     * GET /api/shopping-posts/place?lat=37.5&lng=127.0
+     * GET /api/shopping-posts/place?lat=37.5&lng=127.0&userId=1
+     * - axiosConfig가 ?userId= 를 자동으로 붙여줌
      */
     @GetMapping("/place")
     public ResponseEntity<List<ShoppingPostSummaryDTO>> getPostsByPlace(
             @RequestParam("lat") double lat,
-            @RequestParam("lng") double lng
+            @RequestParam("lng") double lng,
+            @RequestParam("userId") Long userId
     ) {
-        List<ShoppingPostSummaryDTO> list = shoppingPostService.getPostsForPlace(lat, lng);
+        List<ShoppingPostSummaryDTO> list = shoppingPostService.getPostsForPlace(lat, lng, userId);
         return ResponseEntity.ok(list);
     }
 }

@@ -45,6 +45,8 @@ const ChatRoomScreen = ({
 
   // 🔥 Zustand Store 연동 - useMemo로 안정적인 selector 제공
   const allMessages = useChatStore(state => state.messages);
+  const updateChatRoom = useChatStore(state => state.updateChatRoom);
+  const removeChatRoom = useChatStore(state => state.removeChatRoom);
   const messages = useMemo(() => {
     if (!chatRoomId) return [];
     return allMessages[chatRoomId] || [];
@@ -56,7 +58,7 @@ const ChatRoomScreen = ({
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
-  const [isRoomOwner, setIsRoomOwner] = useState(true); // 임시: 방장 여부 (실제로는 props나 API에서 받아야 함)
+  const [isRoomOwner, setIsRoomOwner] = useState(false); // 방장 여부 (API 응답에서 설정)
   const [participants, setParticipants] = useState([]);
   const messageInputRef = useRef(null); // 한글 입력 문제 해결을 위한 ref
   const scrollViewRef = useRef(null);
@@ -110,6 +112,8 @@ const ChatRoomScreen = ({
           try {
             await deleteChatRoom(chatRoomId, currentUserId);
             console.log('✅ 채팅방 폐기 완료');
+            // 🔥 Zustand store 상태 업데이트
+            updateChatRoom(chatRoomId, {statusCd: 'DELETED'});
             onClose();
           } catch (error) {
             console.error('❌ 채팅방 폐기 실패:', error);
@@ -130,6 +134,8 @@ const ChatRoomScreen = ({
                 try {
                   await deleteChatRoom(chatRoomId, currentUserId);
                   console.log('✅ 채팅방 폐기 완료');
+                  // 🔥 Zustand store 상태 업데이트
+                  updateChatRoom(chatRoomId, {statusCd: 'DELETED'});
                   onClose();
                 } catch (error) {
                   console.error('❌ 채팅방 폐기 실패:', error);
@@ -148,6 +154,8 @@ const ChatRoomScreen = ({
           try {
             await leaveChatRoom(chatRoomId, currentUserId);
             console.log('✅ 채팅방 나가기 완료');
+            // 🔥 Zustand store에서 제거
+            removeChatRoom(chatRoomId);
             onClose();
           } catch (error) {
             console.error('❌ 채팅방 나가기 실패:', error);
@@ -165,6 +173,8 @@ const ChatRoomScreen = ({
               try {
                 await leaveChatRoom(chatRoomId, currentUserId);
                 console.log('✅ 채팅방 나가기 완료');
+                // 🔥 Zustand store에서 제거
+                removeChatRoom(chatRoomId);
                 onClose();
               } catch (error) {
                 console.error('❌ 채팅방 나가기 실패:', error);
@@ -246,36 +256,19 @@ const ChatRoomScreen = ({
 
   const handleReportUser = participant => {
     // 신고 모달 열기
-    setReportTarget(participant);
+    setReportTarget({
+      ...participant,
+      type: 'user', // 🔥 신고 타입 추가
+      id: participant.userId, // 🔥 신고 대상 ID
+    });
     setShowReportModal(true);
     setShowParticipants(false); // 참여자 목록 닫기
   };
 
   const handleSubmitReport = async reportData => {
-    try {
-      await reportUser(
-        reportTarget.userId,
-        reportData.reason,
-        reportData.detail,
-      );
-
-      // 성공 알림
-      if (Platform.OS === 'web') {
-        window.alert('신고가 접수되었습니다.');
-      } else {
-        const {Alert} = require('react-native');
-        Alert.alert('신고 완료', '신고가 접수되었습니다.');
-      }
-    } catch (error) {
-      console.error('신고 실패:', error);
-      // 실패 알림
-      if (Platform.OS === 'web') {
-        window.alert('신고 처리 중 오류가 발생했습니다.');
-      } else {
-        const {Alert} = require('react-native');
-        Alert.alert('오류', '신고 처리 중 오류가 발생했습니다.');
-      }
-    }
+    // ✅ ReportModal에서 이미 API 호출을 처리하므로 여기서는 삭제
+    // ReportModal의 onSubmit은 추가 작업이 필요한 경우에만 사용
+    console.log('✅ [ChatRoomScreen] 신고 완료 콜백');
   };
 
   // 🔥 채팅방 초기화 및 WebSocket 구독
@@ -299,6 +292,42 @@ const ChatRoomScreen = ({
         setCurrentUserNickname(nickname || '사용자');
       } catch (error) {
         console.error('사용자 정보 로드 실패:', error);
+      }
+    };
+
+    // ✅ WebSocket 연결 확인 및 자동 재연결
+    const ensureWebSocketConnection = async () => {
+      if (!StompClient.isConnected) {
+        console.log('⚠️ [ChatRoomScreen] WebSocket 연결 안 됨. 재연결 시도...');
+        try {
+          const userId = await AsyncStorage.getItem('userId');
+          const nickname = await AsyncStorage.getItem('userNickname');
+
+          if (userId) {
+            await new Promise((resolve, reject) => {
+              StompClient.connect(
+                Number(userId),
+                () => {
+                  console.log('✅ [ChatRoomScreen] WebSocket 재연결 성공!');
+                  store.setConnected(true);
+                  resolve();
+                },
+                error => {
+                  console.error(
+                    '❌ [ChatRoomScreen] WebSocket 재연결 실패:',
+                    error,
+                  );
+                  store.setConnected(false);
+                  reject(error);
+                },
+              );
+            });
+          }
+        } catch (error) {
+          console.error('💥 [ChatRoomScreen] WebSocket 재연결 에러:', error);
+        }
+      } else {
+        console.log('✅ [ChatRoomScreen] WebSocket 이미 연결됨');
       }
     };
 
@@ -339,7 +368,15 @@ const ChatRoomScreen = ({
       }
     };
 
-    // 4. WebSocket 구독 (실시간 메시지 수신)
+    // 4. 초기화 함수 실행
+    const initialize = async () => {
+      await ensureWebSocketConnection(); // WebSocket 재연결 확인
+      await loadUserInfo(); // 사용자 정보 로드
+      await loadPastMessages(); // 과거 메시지 로드
+      await sendJoinNotification(); // 입장 알림
+    };
+
+    // 5. WebSocket 구독 (실시간 메시지 수신)
     const subscription = StompClient.subscribe(chatRoomId, newMessage => {
       console.log('📨 [ChatRoomScreen] 실시간 메시지 수신:', newMessage);
 
@@ -390,13 +427,7 @@ const ChatRoomScreen = ({
       }
     };
 
-    // 초기화 실행
-    const initialize = async () => {
-      await loadUserInfo();
-      await loadPastMessages();
-      await sendJoinNotification(); // 입장 알림 (마지막에 전송)
-    };
-
+    // ✅ 초기화 실행 (위에서 정의한 initialize 함수 호출)
     initialize();
 
     // 클린업 (화면 나갈 때)
@@ -447,13 +478,23 @@ const ChatRoomScreen = ({
           ratingScore: p.ratingScore,
           avatar: '👤', // 기본 아바타 (향후 프로필 이미지로 대체)
           isMe: p.userId === currentUserIdNum,
+          isOwner: p.isOwner, // 방장 여부 (API 응답)
         }));
 
         setParticipants(formattedParticipants);
+
+        // 현재 사용자가 방장인지 확인
+        const currentUser = formattedParticipants.find(p => p.isMe);
+        if (currentUser) {
+          setIsRoomOwner(currentUser.isOwner || false);
+        }
+
         console.log(
           '✅ [ChatRoomScreen] 참여자 목록 로드 완료:',
           formattedParticipants.length,
-          '명',
+          '명 (방장:',
+          currentUser?.isOwner ? 'O' : 'X',
+          ')',
         );
       } catch (error) {
         console.error('❌ [ChatRoomScreen] 참여자 목록 조회 실패:', error);

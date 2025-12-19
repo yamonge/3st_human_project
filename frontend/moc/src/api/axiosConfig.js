@@ -5,8 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // API 기본 URL (백엔드 개발자가 제공하는 주소로 변경 필요)
 const BASE_URL =
   Platform.OS === 'android'
-    ? 'http://192.168.35.21:8090/api'
-    : 'http://192.168.35.21:8090/api';
+    ? 'http://192.168.50.117:8090/api'
+    : 'http://localhost:8090/api';
 
 // axios 인스턴스 생성
 const api = axios.create({
@@ -106,7 +106,7 @@ api.interceptors.response.use(
       );
     }
 
-    console.log('📥 Response Data:', JSON.stringify(response.data, null, 2));
+    console.log('📥 Response Data:', JSON.stringify(response, null, 2));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // 응답 데이터만 반환

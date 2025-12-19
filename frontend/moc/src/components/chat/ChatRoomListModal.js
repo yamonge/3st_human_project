@@ -16,51 +16,12 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getMyChatRooms, deleteChatRoom} from '../../api/chat';
+import {getMyChatRooms, deleteChatRoom, leaveChatRoom} from '../../api/chat';
 import {colors} from '../../styles/common';
 import styles from '../../styles/components/chat/ChatRoomListModalStyles';
 import ChatRoomScreen from './ChatRoomScreen';
+import ReviewWriteModal from './ReviewWriteModal';
 import useChatStore from '../../stores/chatStore';
-
-// 더미 데이터
-const DUMMY_CHAT_ROOMS = [
-  {
-    chatRoomId: 1,
-    placeName: '이마트 쌍용점',
-    lastMessage: '12시 35분에 만나요!',
-    lastSenderNickname: '돌리',
-    unreadCount: 3,
-    statusCd: 'OPEN',
-    updatedAt: new Date(Date.now() - 10 * 60000).toISOString(),
-  },
-  {
-    chatRoomId: 2,
-    placeName: '롯데마트 신촌점',
-    lastMessage: '채소 먼저 사고 과일 볼게요',
-    lastSenderNickname: '또치',
-    unreadCount: 1,
-    statusCd: 'OPEN',
-    updatedAt: new Date(Date.now() - 60 * 60000).toISOString(),
-  },
-  {
-    chatRoomId: 3,
-    placeName: '이마트 월드컵점',
-    lastMessage: '수고하셨습니다~',
-    lastSenderNickname: '나',
-    unreadCount: 0,
-    statusCd: 'DONE',
-    updatedAt: new Date(Date.now() - 24 * 60 * 60000).toISOString(),
-  },
-  {
-    chatRoomId: 4,
-    placeName: '천안 터미널 마트',
-    lastMessage: '죄송합니다 일정이 안 맞아서...',
-    lastSenderNickname: '둘리',
-    unreadCount: 0,
-    statusCd: 'CANCELED',
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60000).toISOString(),
-  },
-];
 
 /**
  * 채팅방 목록 모달
@@ -80,6 +41,10 @@ export default function ChatRoomListModal({
   const [showChatRoom, setShowChatRoom] = useState(false);
   const [selectedChatRoom, setSelectedChatRoom] = useState(null);
   const [userId, setUserId] = useState(null);
+
+  // 🔥 후기 작성 모달 상태
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedReviewRoom, setSelectedReviewRoom] = useState(null);
 
   // ✅ 외부에서 특정 채팅방 ID를 받아 자동으로 열기
   const openChatRoomId = route?.params?.openChatRoomId;
@@ -149,21 +114,25 @@ export default function ChatRoomListModal({
   }, [openChatRoomId, chatRooms, navigation]);
 
   const handleDelete = chatRoomId => {
-    Alert.alert('확인', '채팅방을 삭제하시겠습니까?', [
+    Alert.alert('확인', '목록에서 채팅방을 삭제하시겠습니까?', [
       {text: '취소', style: 'cancel'},
       {
         text: '삭제',
         style: 'destructive',
         onPress: async () => {
           try {
-            console.log('🗑️ [ChatRoomListModal] 채팅방 삭제:', chatRoomId);
-            await deleteChatRoom(chatRoomId);
-            // 🔥 Zustand store에서 제거
+            console.log(
+              '🗑️ [ChatRoomListModal] 목록에서 채팅방 제거:',
+              chatRoomId,
+            );
+            // 🔥 DB에 leave_date 업데이트 (목록에서 영구 숨김)
+            await leaveChatRoom(chatRoomId, userId);
+            // 🔥 Zustand store에서도 제거
             removeChatRoom(chatRoomId);
-            Alert.alert('완료', '채팅방이 삭제되었습니다.');
+            Alert.alert('완료', '목록에서 삭제되었습니다.');
           } catch (error) {
-            console.error('❌ [ChatRoomListModal] 채팅방 삭제 실패:', error);
-            Alert.alert('오류', '채팅방 삭제에 실패했습니다.');
+            console.error('❌ [ChatRoomListModal] 목록 삭제 실패:', error);
+            Alert.alert('오류', '삭제에 실패했습니다.');
           }
         },
       },
@@ -171,12 +140,77 @@ export default function ChatRoomListModal({
   };
 
   const handleReviewPress = chatRoomId => {
-    console.log('후기 작성:', chatRoomId);
-    onClose();
+    console.log('🌟 [후기 작성 버튼 클릭] chatRoomId:', chatRoomId);
+    const chatRoom = chatRooms.find(room => room.chatRoomId === chatRoomId);
+
+    if (!chatRoom) {
+      Alert.alert('오류', '채팅방 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // 후기 작성 모달 열기
+    setSelectedReviewRoom(chatRoom);
+    setShowReviewModal(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedReviewRoom(null);
+  };
+
+  const handleReviewSuccess = async () => {
+    console.log('✅ [후기 작성 완료]');
+
+    // 🔥 후기 작성 후 자동으로 채팅방 목록에서 제거
+    if (selectedReviewRoom) {
+      try {
+        console.log(
+          '🗑️ [자동 삭제] 후기 작성 완료 후 채팅방 제거:',
+          selectedReviewRoom.chatRoomId,
+        );
+        await leaveChatRoom(selectedReviewRoom.chatRoomId, userId);
+        removeChatRoom(selectedReviewRoom.chatRoomId);
+      } catch (error) {
+        console.error('❌ [자동 삭제] 채팅방 제거 실패:', error);
+      }
+    }
+  };
+
+  const handleReviewSkip = async () => {
+    console.log('⏭️ [후기 작성 안 함]');
+
+    // 🔥 후기 작성 안 함 선택 시에도 자동으로 채팅방 목록에서 제거
+    if (selectedReviewRoom) {
+      try {
+        console.log(
+          '🗑️ [자동 삭제] 후기 작성 안 함 후 채팅방 제거:',
+          selectedReviewRoom.chatRoomId,
+        );
+        await leaveChatRoom(selectedReviewRoom.chatRoomId, userId);
+        removeChatRoom(selectedReviewRoom.chatRoomId);
+      } catch (error) {
+        console.error('❌ [자동 삭제] 채팅방 제거 실패:', error);
+      }
+    }
   };
 
   const handleChatRoomPress = chatRoomId => {
     const chatRoom = chatRooms.find(room => room.chatRoomId === chatRoomId);
+
+    // 취소된/삭제된/완료된 채팅방은 입장 불가
+    if (
+      chatRoom.statusCd === 'CANCELED' ||
+      chatRoom.statusCd === 'DELETED' ||
+      chatRoom.statusCd === 'DONE'
+    ) {
+      const message =
+        chatRoom.statusCd === 'DONE'
+          ? '완료된 채팅방은 입장할 수 없습니다.'
+          : '취소된 채팅방은 입장할 수 없습니다.';
+      Alert.alert('알림', message);
+      return;
+    }
+
     setSelectedChatRoom(chatRoom);
     setShowChatRoom(true);
   };
@@ -213,7 +247,7 @@ export default function ChatRoomListModal({
     } = item;
     const isActive = statusCd === 'OPEN';
     const isDone = statusCd === 'DONE';
-    const isCanceled = statusCd === 'CANCELED';
+    const isCanceled = statusCd === 'CANCELED' || statusCd === 'DELETED';
 
     return (
       <TouchableOpacity
@@ -274,10 +308,12 @@ export default function ChatRoomListModal({
 
   const renderHiddenItem = ({item}) => {
     const isDone = item.statusCd === 'DONE';
+    const isHost = item.hostUserId === userId; // 🔥 방장인지 확인
 
     return (
       <View style={styles.hiddenContainer}>
-        {isDone && (
+        {/* 🔥 완료된 채팅방이면서 자기가 방장이 아닐 때만 후기 작성 버튼 표시 */}
+        {isDone && !isHost && (
           <TouchableOpacity
             style={[styles.hiddenButton, styles.reviewHiddenButton]}
             onPress={() => handleReviewPress(item.chatRoomId)}>
@@ -328,17 +364,25 @@ export default function ChatRoomListModal({
             <Text style={styles.emptyText}>참여한 채팅방이 없습니다</Text>
           </View>
         ) : (
-          <SwipeListView
-            data={chatRooms}
-            keyExtractor={item => item.chatRoomId.toString()}
-            renderItem={renderChatRoomCard}
-            renderHiddenItem={renderHiddenItem}
-            rightOpenValue={-160}
-            disableRightSwipe
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-            style={styles.listContainer}
-          />
+          <>
+            <SwipeListView
+              data={chatRooms}
+              keyExtractor={item => item.chatRoomId.toString()}
+              renderItem={renderChatRoomCard}
+              renderHiddenItem={renderHiddenItem}
+              rightOpenValue={-160}
+              disableRightSwipe
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+              style={styles.listContainer}
+            />
+            {/* 하단 힌트 */}
+            <View style={styles.hintContainer}>
+              <Text style={styles.hintText}>
+                💡 카드를 왼쪽으로 밀면 삭제/후기 메뉴가 나타납니다
+              </Text>
+            </View>
+          </>
         )}
       </View>
       <ChatRoomScreen
@@ -347,6 +391,17 @@ export default function ChatRoomListModal({
         chatRoomId={selectedChatRoom?.chatRoomId}
         placeName={selectedChatRoom?.placeName}
         statusCd={selectedChatRoom?.statusCd}
+      />
+
+      {/* 후기 작성 모달 */}
+      <ReviewWriteModal
+        visible={showReviewModal}
+        onClose={handleCloseReviewModal}
+        chatRoomId={selectedReviewRoom?.chatRoomId}
+        shoppingPostId={selectedReviewRoom?.shoppingPostId}
+        placeName={selectedReviewRoom?.placeName}
+        onSuccess={handleReviewSuccess}
+        onSkip={handleReviewSkip}
       />
     </View>
   );

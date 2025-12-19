@@ -266,4 +266,22 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  // 하단 힌트
+  hintContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(21, 93, 252, 0.05)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(21, 93, 252, 0.1)',
+  },
+
+  hintText: {
+    fontSize: 12,
+    fontFamily: 'Noto Sans KR',
+    fontWeight: '400',
+    color: colors.textGray,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
 });

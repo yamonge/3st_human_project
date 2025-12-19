@@ -38,4 +38,7 @@ public class ShoppingPostSummaryDTO {
 
     // ✅ (nearby에서만 의미있게 사용 가능) 거리(m)
     private Double distanceMeters;
+    
+    // ✅ 현재 사용자가 참여 중인지 여부
+    private Boolean isParticipated;
 }

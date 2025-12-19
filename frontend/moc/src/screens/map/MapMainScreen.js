@@ -49,6 +49,8 @@ export default function MapMainScreen({navigation}) {
 
   // 현재 위치
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(true);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   // 검색어
@@ -71,6 +73,7 @@ export default function MapMainScreen({navigation}) {
   // 게시물 목록 바텀시트
   const [showPostList, setShowPostList] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const postListRef = React.useRef(null); // 🔥 PostListBottomSheet ref 추가
 
   // 채팅방 목록 모달
   const [showChatRoomList, setShowChatRoomList] = useState(false);
@@ -82,26 +85,53 @@ export default function MapMainScreen({navigation}) {
   useFocusEffect(
     React.useCallback(() => {
       checkAndRequestPermission();
+      return () => {
+        setShowPermissionModal(false);
+      };
     }, []),
   );
 
   const checkAndRequestPermission = async () => {
-    if (Platform.OS === 'android') {
-      // 권한 요청 (시스템 권한 창 표시)
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
+    try {
+      setIsCheckingPermission(true);
 
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        // 권한 허용 → 현재 위치 가져오기
-        getCurrentLocation();
+      if (Platform.OS === 'android') {
+        // 권한 요청 (시스템 권한 창 표시)
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+
+        console.log('GPS 권한 결과:', granted);
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          // 권한 허용 → 현재 위치 가져오기
+          setHasPermission(true);
+          setShowPermissionModal(false);
+          getCurrentLocation();
+        } else if (
+          granted === PermissionsAndroid.RESULTS.DENIED ||
+          granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
+        ) {
+          // 권한 거부 → 모달 표시
+          setHasPermission(false);
+          setShowPermissionModal(true);
+        } else {
+          // 예상치 못한 결과
+          console.warn('예상치 못한 권한 결과:', granted);
+          setHasPermission(false);
+          setShowPermissionModal(true);
+        }
       } else {
-        // 권한 거부 → 모달 표시
-        setShowPermissionModal(true);
+        // iOS는 바로 위치 가져오기 시도
+        setHasPermission(true);
+        getCurrentLocation();
       }
-    } else {
-      // iOS는 바로 위치 가져오기 시도
-      getCurrentLocation();
+    } catch (error) {
+      console.error('권한 체크 오류:', error);
+      setHasPermission(false);
+      setShowPermissionModal(true);
+    } finally {
+      setIsCheckingPermission(false);
     }
   };
 
@@ -176,25 +206,30 @@ export default function MapMainScreen({navigation}) {
       );
     };
 
-    // 1차: High Accuracy로 시도 (에뮬레이터 위치 주입 시 성공률 높음)
+    // 1차: Network 기반 (빠르고 성공률 높음)
     Geolocation.getCurrentPosition(
       onSuccess,
       err1 => {
-        console.error('1차(HighAccuracy) 실패:', err1);
+        console.error('1차(Network) 실패:', err1);
 
-        // TIMEOUT(3) / POSITION_UNAVAILABLE(2)면 2차 시도
+        // 실패 시 GPS로 2차 시도
         if (err1?.code === 3 || err1?.code === 2) {
+          console.log('2차 시도: GPS 모드');
           Geolocation.getCurrentPosition(onSuccess, onError, {
-            enableHighAccuracy: false,
-            timeout: 30000,
-            maximumAge: 60000,
+            enableHighAccuracy: true, // GPS 사용
+            timeout: 15000, // 15초
+            maximumAge: 60000, // 1분 캐시
           });
           return;
         }
 
         onError(err1);
       },
-      {enableHighAccuracy: true, timeout: 60000, maximumAge: 0},
+      {
+        enableHighAccuracy: false, // Network 우선 (WiFi/기지국)
+        timeout: 10000, // 10초
+        maximumAge: 60000, // 1분 이내 캐시 사용
+      },
     );
   };
 
@@ -359,6 +394,45 @@ export default function MapMainScreen({navigation}) {
     setShowPostList(true);
   };
 
+  // ✅ 권한 체크 중이거나 권한이 없으면 로딩/모달 화면 표시
+  if (isCheckingPermission || !hasPermission) {
+    return (
+      <View style={styles.container}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor="transparent"
+          translucent
+        />
+        {isCheckingPermission && (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <ActivityIndicator size="large" color="#155DFC" />
+          </View>
+        )}
+
+        <PermissionModal
+          visible={showPermissionModal}
+          title="위치 권한 필요"
+          message={
+            '주변 마트를 찾기 위해 위치 권한이 필요합니다.\n설정에서 권한을 허용해주세요.'
+          }
+          onCancel={() => {
+            setShowPermissionModal(false);
+            navigation.goBack();
+          }}
+          onConfirm={() => {
+            setShowPermissionModal(false);
+            navigation.goBack();
+          }}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar
@@ -487,23 +561,6 @@ export default function MapMainScreen({navigation}) {
         )}
       </TouchableOpacity>
 
-      {/* GPS 권한 모달 */}
-      <PermissionModal
-        visible={showPermissionModal}
-        title="위치 권한 필요"
-        message={
-          '주변 마트를 찾기 위해 위치 권한이 필요합니다.\n설정에서 권한을 허용해주세요.'
-        }
-        onCancel={() => {
-          setShowPermissionModal(false);
-          navigation.navigate('Home');
-        }}
-        onConfirm={() => {
-          setShowPermissionModal(false);
-          navigation.navigate('Home');
-        }}
-      />
-
       {/* 필터 모달 */}
       <MapFilterModal
         visible={showFilterModal}
@@ -513,6 +570,7 @@ export default function MapMainScreen({navigation}) {
 
       {/* 게시물 목록 바텀시트 */}
       <PostListBottomSheet
+        ref={postListRef}
         visible={showPostList}
         onClose={() => setShowPostList(false)}
         navigation={navigation}
@@ -523,7 +581,13 @@ export default function MapMainScreen({navigation}) {
       {/* 채팅방 목록 모달 */}
       <ChatRoomListModal
         visible={showChatRoomList}
-        onClose={() => setShowChatRoomList(false)}
+        onClose={() => {
+          setShowChatRoomList(false);
+          // 🔥 채팅방 목록 닫을 때 게시물 목록 새로고침 (참여 여부 업데이트)
+          if (postListRef.current?.refreshPosts) {
+            postListRef.current.refreshPosts();
+          }
+        }}
         navigation={navigation}
       />
     </View>

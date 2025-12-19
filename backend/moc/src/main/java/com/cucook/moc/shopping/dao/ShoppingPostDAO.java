@@ -37,7 +37,8 @@ public interface ShoppingPostDAO {
             @Param("latMin") double latMin,
             @Param("latMax") double latMax,
             @Param("lngMin") double lngMin,
-            @Param("lngMax") double lngMax
+            @Param("lngMax") double lngMax,
+            @Param("userId") Long userId
     );
 
     // 상세보기
@@ -51,5 +52,11 @@ public interface ShoppingPostDAO {
 
     // 게시글 작성자 조회 (방장 권한 검증용)
     Long selectOwnerUserId(@Param("postId") Long postId);
+
+    // 게시글 상태 업데이트
+    int updateStatus(@Param("postId") Long postId, @Param("statusCd") String statusCd);
+
+    // 만료된 게시글 일괄 업데이트
+    int bulkUpdateExpiredPosts();
 }
 

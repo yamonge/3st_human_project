@@ -13,6 +13,9 @@ public interface ShoppingPostJoinDAO {
     // current_person_cnt + 1
     int increaseCurrentPersonCnt(@Param("postId") Long postId);
 
+    // current_person_cnt - 1
+    int decreaseCurrentPersonCnt(@Param("postId") Long postId);
+
     // 게시글에 매핑된 채팅방 ID 조회
     Long selectChatRoomIdByPostId(@Param("postId") Long postId);
 

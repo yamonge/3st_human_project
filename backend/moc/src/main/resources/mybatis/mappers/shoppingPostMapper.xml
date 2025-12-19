@@ -167,11 +167,20 @@
         FROM tb_shopping_post_category spc
         WHERE spc.shopping_post_id = sp.shopping_post_id
         ) AS categoryCodesCsv,
-        0 AS distanceMeters
+        0 AS distanceMeters,
+        CASE WHEN EXISTS (
+            SELECT 1
+            FROM tb_shopping_chat_room r
+            JOIN tb_shopping_participant p ON r.chat_room_id = p.chat_room_id
+            WHERE r.shopping_post_id = sp.shopping_post_id
+              AND p.user_id = #{userId}
+              AND p.leave_date IS NULL
+        ) THEN 1 ELSE 0 END AS isParticipated
         FROM tb_shopping_post sp
         LEFT JOIN tb_user u ON u.user_id = sp.writer_user_id
         WHERE sp.latitude BETWEEN #{latMin} AND #{latMax}
         AND sp.longitude BETWEEN #{lngMin} AND #{lngMax}
+        AND sp.status_cd = 'OPEN'
         ORDER BY sp.created_date DESC
     </select>
 
@@ -232,4 +241,21 @@
         FROM tb_shopping_post
         WHERE shopping_post_id = #{postId}
     </select>
+
+    <!-- 게시글 상태 업데이트 -->
+    <update id="updateStatus">
+        UPDATE tb_shopping_post
+        SET status_cd = #{statusCd},
+            updated_date = SYSTIMESTAMP
+        WHERE shopping_post_id = #{postId}
+    </update>
+
+    <!-- 만료된 게시글 일괄 업데이트 (약속시간 지남) -->
+    <update id="bulkUpdateExpiredPosts">
+        UPDATE tb_shopping_post
+        SET status_cd = 'DONE',
+            updated_date = SYSTIMESTAMP
+        WHERE meet_datetime &lt; SYSTIMESTAMP
+          AND status_cd = 'OPEN'
+    </update>
 </mapper>

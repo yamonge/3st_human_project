@@ -81,11 +81,11 @@ public interface UserReviewDAO {
      * `UserReviewMapper.xml`의 `<delete id="deleteUserReview">`와 매핑됩니다.
      * (관리자 또는 후기 작성자가 자신의 후기를 삭제할 때 사용)
      *
-     * @param reviewId 삭제할 후기 ID
+     * @param userReviewId 삭제할 후기 ID
      * @param writerUserId 삭제를 요청하는 사용자의 ID (권한 확인용)
      * @return 삭제된 레코드 수
      */
-    int deleteUserReview(@Param("reviewId") Long reviewId, @Param("writerUserId") Long writerUserId);
+    int deleteUserReview(@Param("userReviewId") Long userReviewId, @Param("writerUserId") Long writerUserId);
 
     void insert(UserReviewVO vo);
 
