@@ -18,6 +18,7 @@ import com.cucook.moc.user.dto.UserReviewDTO;
 import com.cucook.moc.user.dto.request.*;
 import com.cucook.moc.user.vo.PasswordResetTokenVO;
 import com.cucook.moc.user.vo.UserReviewVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,6 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserDAO userDAO;
@@ -42,22 +44,28 @@ public class UserServiceImpl implements UserService {
     private final UserReviewDAO userReviewDAO;
     private final ShoppingPostDAO shoppingPostDAO;
     private final ChatParticipantDAO chatParticipantDAO;
+    
+    // 관리자 권한 판정
+    @Override
+    public CheckAdminResponseDTO checkAdmin(Long userId) {
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "USER_ID_REQUIRED");
+        }
 
-    public UserServiceImpl(UserDAO userDAO,
-                           PasswordResetTokenDAO passwordResetTokenDAO,
-                           BCryptPasswordEncoder passwordEncoder,
-                           MailService mailService,
-                           UserReviewDAO userReviewDAO,
-                           ShoppingPostDAO shoppingPostDAO,
-                           ChatParticipantDAO chatParticipantDAO) {
-        this.userDAO = userDAO;
-        this.passwordEncoder = passwordEncoder;
-        this.mailService = mailService;
-        this.passwordResetTokenDAO = passwordResetTokenDAO;
+        UserVO user = userDAO.selectById(userId);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND");
+        }
 
-        this.userReviewDAO = userReviewDAO;
-        this.shoppingPostDAO = shoppingPostDAO;
-        this.chatParticipantDAO = chatParticipantDAO;
+        String userType = user.getUserType();     // 'Y' or 'N'
+        String status = user.getUserStatus();     // ACTIVE/SUSPENDED/WITHDRAW
+
+        // 관리자 판정 기준(원하시는 정책에 맞게 최소한만 적용)
+        // - user_type='Y' 이면 관리자
+        // - WITHDRAW이면 관리자여도 의미 없으므로 false 처리(선택 사항)
+        boolean isAdmin = "Y".equalsIgnoreCase(userType) && !"WITHDRAW".equalsIgnoreCase(status);
+
+        return new CheckAdminResponseDTO(isAdmin, userType, status);
     }
 
     @Override
@@ -118,28 +126,60 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        // 3. 상태 체크
-        if ("SUSPENDED".equalsIgnoreCase(user.getUserStatus())) {
-            // 251217 수정 -  정지 계정 로그인 차단
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "정지된 계정입니다.");
-        }
+        // 3. 상태 체크 (탈퇴 우선)
         if ("WITHDRAW".equalsIgnoreCase(user.getUserStatus())) {
-            // 251217 추가 -  탈퇴 계정 로그인 차단
             throw new ResponseStatusException(HttpStatus.GONE, "탈퇴한 계정입니다.");
+        }
+
+        // ✅ 3-1. 정지 계정 처리 (기간/영구/만료 자동복구)
+        if ("SUSPENDED".equalsIgnoreCase(user.getUserStatus())) {
+
+            // 핵심: SUSPENDED일 때만 suspended_until 확인
+            java.sql.Timestamp suspendedUntil = user.getSuspendedUntil(); // UserVO에 있어야 함
+
+            // (1) suspended_until NULL => 영구정지
+            if (suspendedUntil == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "정지된 계정입니다. (영구정지)");
+            }
+
+            // (2) 만료 여부 체크
+            java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+
+            // now >= suspendedUntil 이면 만료 → 자동 복구 후 진행
+            if (!now.before(suspendedUntil)) {
+                // DB 상태를 ACTIVE로 복구
+                int restored = userDAO.restoreExpiredSuspensionToActive(user.getUserId());
+                // 복구가 됐든 안됐든(동시성) 재조회로 상태 확정하는 게 가장 안전
+                user = userDAO.findByUserEmail(request.getUserEmail());
+
+                // 재조회 결과가 null이면 비정상 상황이므로 방어
+                if (user == null) {
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "로그인 처리 중 오류가 발생했습니다.");
+                }
+
+                // 혹시 복구가 안됐으면(예: update 조건 불일치) 안전하게 차단
+                if ("SUSPENDED".equalsIgnoreCase(user.getUserStatus())) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "정지된 계정입니다.");
+                }
+            } else {
+                // (3) 아직 기간이 남아있음 => 차단
+                // 필요하면 suspendedUntil 날짜를 메시지에 포함 가능(프론트에서 문구 분기할 때 도움)
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "정지된 계정입니다.");
+            }
         }
 
         // 4. 마지막 로그인 시간 업데이트
         userDAO.updateLastLoginDate(user.getUserId());
 
         // 5. VO → 응답 DTO 매핑
-        return LoginResponseDTO.builder()
-                .userId(user.getUserId())
-                .userEmail(user.getUserEmail())
-                .userName(user.getUserName())
-                .userNickname(user.getUserNickname())
-                .userType(user.getUserType())
-                .userStatus(user.getUserStatus())
-                .build();
+        LoginResponseDTO response = new LoginResponseDTO();
+        response.setUserId(user.getUserId());
+        response.setUserEmail(user.getUserEmail());
+        response.setUserName(user.getUserName());
+        response.setUserNickname(user.getUserNickname());
+        response.setUserType(user.getUserType());
+        response.setUserStatus(user.getUserStatus());
+        return response;
     }
 
     @Override
@@ -307,6 +347,7 @@ public class UserServiceImpl implements UserService {
                 request.getDeviceVersion()
         );
     }
+    
     // 유저 프로필 정보
     @Transactional(readOnly = true)
     public UserProfileDTO getMyProfile(Long userId) {
@@ -418,7 +459,7 @@ public class UserServiceImpl implements UserService {
         dto.setRole("Y".equalsIgnoreCase(user.getUserType()) ? "admin" : "user");
         return dto;
     }
-
+    // 설정 - 프로필 수정
     @Override
     public UserSettingsInfoResponseDTO updateMyProfile(Long userId, UpdateProfileRequestDTO request) {
         if (request == null) {
@@ -455,7 +496,7 @@ public class UserServiceImpl implements UserService {
         // ✅ [추가] 업데이트 후 최신값 반환
         return getSettingsUserInfo(userId);
     }
-
+    // 설정 - 비밀번호 변경
     @Override
     public void changePassword(Long userId, ChangePasswordRequestDTO request) {
         if (request == null || request.getCurrentPassword() == null || request.getNewPassword() == null) {
@@ -477,7 +518,7 @@ public class UserServiceImpl implements UserService {
         // 기존 DAO 메소드 재사용 (이미 존재) :contentReference[oaicite:6]{index=6}
         userDAO.updatePassword(userId, encoded);
     }
-
+    // 설정 - 회원탈퇴
     @Override
     public void withdrawUser(Long userId) {
         UserVO user = userDAO.selectById(userId);

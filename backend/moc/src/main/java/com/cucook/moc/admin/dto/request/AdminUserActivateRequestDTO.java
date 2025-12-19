@@ -13,7 +13,6 @@ import lombok.*;
 @ToString
 public class AdminUserActivateRequestDTO {
 
-    private Long userId;
     private Long adminUserId;
 }
 

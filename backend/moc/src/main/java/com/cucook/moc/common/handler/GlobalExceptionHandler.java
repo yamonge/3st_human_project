@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +44,18 @@ public class GlobalExceptionHandler {
         response.put("success", false);
         response.put("error", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    // ✅ 251218 yun.junseo6365 추가: ResponseStatusException은 status 그대로 내려준다
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatusException(ResponseStatusException e) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+
+        String message = e.getReason() != null ? e.getReason() : "요청 처리 중 오류가 발생했습니다.";
+        response.put("message", message);
+
+        return ResponseEntity.status(e.getStatusCode()).body(response);
     }
 
     /**

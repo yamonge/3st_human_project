@@ -17,6 +17,7 @@ import {
 } from '../../utils/notificationService';
 import useChatStore from '../../stores/chatStore';
 import StompClient from '../../utils/StompClient';
+import {getRecipeBoardList} from '../../api/recipeBoard';
 
 /**
  * 메인 홈 화면
@@ -94,42 +95,25 @@ export default function HomeScreen({navigation}) {
     });
   }, []);
 
-  // 인기 레시피 데이터 (임시 - 추후 API 연동)
-  const [popularRecipes, setPopularRecipes] = useState([
-    {
-      id: 1,
-      title: '팬케이크',
-      author: '베이킹마스터',
-      cookingTime: 15,
-      difficulty: '하',
-      ingredients: ['밀가루', '계란', '우유', '설탕'],
-      imageUrl: '',
-      likeCount: 1205,
-      isLiked: false,
-    },
-    {
-      id: 2,
-      title: '팬케이크',
-      author: '베이킹마스터',
-      cookingTime: 15,
-      difficulty: '하',
-      ingredients: ['밀가루', '계란', '우유', '설탕'],
-      imageUrl: '',
-      likeCount: 998,
-      isLiked: false,
-    },
-    {
-      id: 3,
-      title: '팬케이크',
-      author: '베이킹마스터',
-      cookingTime: 15,
-      difficulty: '하',
-      ingredients: ['밀가루', '계란', '우유', '설탕'],
-      imageUrl: '',
-      likeCount: 856,
-      isLiked: false,
-    },
-  ]);
+  const [popularRecipes, setPopularRecipes] = useState([]);
+
+  useEffect(() => {
+    fetchPopularRecipes();
+  }, []);
+
+  const fetchPopularRecipes = async () => {
+    try {
+      const res = await getRecipeBoardList({
+        sort: 'LIKE',
+        page: 1,
+        size: 3,
+      });
+      console.log('인기 레시피 데이터:', res);
+      setPopularRecipes(res.items);
+    } catch (e) {
+      console.error('인기 레시피 조회 실패', e);
+    }
+  };
 
   // 같이 장보기 이동
   const handleShoppingPress = () => {
@@ -178,13 +162,11 @@ export default function HomeScreen({navigation}) {
   const handleLikeToggle = recipeId => {
     setPopularRecipes(prev =>
       prev.map(recipe =>
-        recipe.id === recipeId
+        recipe.recipeId === recipeId
           ? {
               ...recipe,
-              isLiked: !recipe.isLiked,
-              likeCount: recipe.isLiked
-                ? recipe.likeCount - 1
-                : recipe.likeCount + 1,
+              likedByMe: !recipe.likedByMe,
+              likeCnt: recipe.likeCnt ? recipe.likeCnt - 1 : recipe.likeCnt + 1,
             }
           : recipe,
       ),
@@ -251,11 +233,11 @@ export default function HomeScreen({navigation}) {
 
             {popularRecipes.map((recipe, index) => (
               <PopularRecipeCard
-                key={recipe.id}
+                key={recipe.recipeId}
                 recipe={recipe}
                 rank={index + 1}
                 onPress={() => handleRecipePress(recipe)}
-                onLike={() => handleLikeToggle(recipe.id)}
+                onLike={() => handleLikeToggle(recipe.recipeId)}
               />
             ))}
           </View>

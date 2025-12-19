@@ -50,10 +50,17 @@ public class UserIngredientServiceImpl implements UserIngredientService {
         UserIngredientVO vo = new UserIngredientVO();
         vo.setUserId(userId); // 현재 로그인한 사용자 ID 설정
         vo.setIngredientName(requestDTO.getIngredientName());
-        vo.setQuantityDesc(requestDTO.getQuantityDesc());
+        vo.setQuantityDesc(
+                Optional.ofNullable(requestDTO.getQuantityDesc())
+                        .filter(v -> !v.isBlank())
+                        .orElse("1개")
+        );
         vo.setCategoryCd(requestDTO.getCategoryCd());
         vo.setUsedFlag(requestDTO.getUsedFlag() != null ? requestDTO.getUsedFlag() : "N"); // 기본값 'N'
-        vo.setMemo(requestDTO.getMemo());
+        vo.setMemo(
+                Optional.ofNullable(requestDTO.getMemo())
+                        .orElse("")
+        );
         vo.setCreatedId(userId); // 생성자 ID 설정
 
         // 3. DB에 저장

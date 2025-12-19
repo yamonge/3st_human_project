@@ -16,6 +16,7 @@
         <result property="userType"              column="user_type"/>
         <result property="userStatus"            column="user_status"/>
         <result property="suspendedReason"       column="suspended_reason"/>
+        <result property="suspendedUntil"        column="suspended_until"/>
         <result property="reportedCnt"           column="reported_cnt"/>
         <result property="shoppingCompletedCnt"  column="shopping_completed_cnt"/>
         <result property="shoppingParticipatedCnt" column="shopping_participated_cnt"/>
@@ -193,4 +194,18 @@
         updated_date = #{updatedDate}
         WHERE user_id = #{userId}
     </update>
+
+    <!-- 이용 기간 정지 유저 기간정지 만료 후 자동 복구 -->
+    <update id="restoreExpiredSuspensionToActive" parameterType="long">
+        UPDATE tb_user
+        SET
+        user_status = 'ACTIVE',
+        suspended_until = NULL,
+        suspended_reason = NULL
+        WHERE user_id = #{userId}
+        AND user_status = 'SUSPENDED'
+        AND suspended_until IS NOT NULL
+        AND suspended_until &lt;= SYSTIMESTAMP
+    </update>
+
 </mapper>

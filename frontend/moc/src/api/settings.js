@@ -22,24 +22,19 @@ export const getUserInfo = async () => {
   }
 };
 
-/**
- * 관리자 권한 확인
- * @returns {Promise<boolean>}
- */
-export const checkAdminStatus = async () => {
-  try {
-    // TODO: 백엔드 API 연동 시 주석 해제
-    // const response = await api.get('/users/check-admin');
-    // return response.data.isAdmin;
-
-    // 임시: AsyncStorage에서 가져오기
-    const userRole = await AsyncStorage.getItem('userRole');
-    return userRole;
-  } catch (error) {
-    console.error('관리자 권한 확인 실패:', error);
-    return false;
-  }
-};
+// /**
+//  * 관리자 권한 확인
+//  * @returns {Promise<boolean>}
+//  */
+// export const checkAdminStatus = async () => {
+//   try {
+//     const response = await api.get('/users/check-admin');
+//     return response.isAdmin;
+//   } catch (error) {
+//     console.error('관리자 권한 확인 실패:', error);
+//     return false;
+//   }
+// };
 
 /**
  * 프로필 수정

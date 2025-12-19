@@ -2,6 +2,7 @@ package com.cucook.moc.admin.controller;
 
 import com.cucook.moc.admin.dto.request.*;
 import com.cucook.moc.admin.dto.response.AdminUserListItemResponseDTO;
+import com.cucook.moc.admin.dto.response.AdminUserListResponseDTO;
 import com.cucook.moc.admin.service.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,57 +20,54 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
 
     /**
-     * 회원 목록 조회 (cursor 기반)
+     * 회원 목록 조회
+     * GET /api/admin/users?userId=관리자ID&status=ALL|ACTIVE|SUSPENDED&keyword=&lastUserId=&limit=
      */
     @GetMapping
-    public List<AdminUserListItemResponseDTO> getUserList(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "ALL") String status,
-            @RequestParam(required = false) Long lastUserId,
-            @RequestParam(defaultValue = "20") Integer limit
+    public AdminUserListResponseDTO getUserList(
+            @RequestParam("userId") Long adminUserId,
+            @ModelAttribute AdminUserSearchRequestDTO request
     ) {
-        AdminUserSearchRequestDTO searchDTO = new AdminUserSearchRequestDTO();
-        searchDTO.setKeyword(keyword);
-        searchDTO.setStatus(status);
-        searchDTO.setLastUserId(lastUserId);
-        searchDTO.setLimit(limit);
-
-        return adminUserService.getAdminUserList(searchDTO);
+        return adminUserService.getUserList(adminUserId, request);
     }
 
     /**
-     * 계정 정지
+     * 회원 정지
+     * POST /api/admin/users/{targetUserId}/suspend?userId=관리자ID
      */
-    @PostMapping("/{userId}/suspend")
+    @PostMapping("/{targetUserId}/suspend")
     public void suspendUser(
-            @PathVariable Long userId,
-            @RequestBody AdminUserSuspendRequestDTO requestDTO
+            @RequestParam("userId") Long adminUserId,
+            @PathVariable("targetUserId") Long targetUserId,
+            @RequestBody AdminUserSuspendRequestDTO request
     ) {
-        requestDTO.setUserId(userId);
-        adminUserService.suspendUser(requestDTO);
+        adminUserService.suspendUser(adminUserId, targetUserId, request);
     }
 
     /**
-     * 계정 정지 해제(활성화)
+     * 회원 활성화(정지 해제)
+     * POST /api/admin/users/{targetUserId}/activate?userId=관리자ID
      */
-    @PostMapping("/{userId}/activate")
+    @PostMapping("/{targetUserId}/activate")
     public void activateUser(
-            @PathVariable Long userId,
-            @RequestBody AdminUserActivateRequestDTO requestDTO
+            @RequestParam("userId") Long adminUserId,
+            @PathVariable("targetUserId") Long targetUserId,
+            @RequestBody AdminUserActivateRequestDTO request
     ) {
-        requestDTO.setUserId(userId);
-        adminUserService.activateUser(requestDTO);
+        adminUserService.activateUser(adminUserId, targetUserId, request);
     }
 
+
     /**
-     * 회원 탈퇴 처리
+     * 회원 탈퇴(소프트 삭제)
+     * POST /api/admin/users/{targetUserId}/withdraw?userId=관리자ID
      */
-    @PostMapping("/{userId}/withdraw")
+    @PostMapping("/{targetUserId}/withdraw")
     public void withdrawUser(
-            @PathVariable Long userId,
-            @RequestBody AdminUserWithdrawRequestDTO requestDTO
+            @RequestParam("userId") Long adminUserId,
+            @PathVariable("targetUserId") Long targetUserId,
+            @RequestBody AdminUserWithdrawRequestDTO request
     ) {
-        requestDTO.setUserId(userId);
-        adminUserService.withdrawUser(requestDTO);
+        adminUserService.withdrawUser(adminUserId, targetUserId, request);
     }
 }

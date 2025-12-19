@@ -7,7 +7,6 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Modal,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {ArrowLeft, Search, ChevronDown} from 'lucide-react-native';
@@ -18,170 +17,130 @@ import SuspendDurationModal from '../../components/admin/SuspendDurationModal';
 import ReportDetailModal from '../../components/admin/ReportDetailModal';
 
 /**
- * 신고 관리 화면
- *
- * 구조:
- * - 상단 헤더: 뒤로가기 + "신고 관리" 타이틀
- * - 검색 바: 신고자 또는 피신고자 검색
- * - 필터 탭
- *   - 신고 대상: 전체, 게시물, 사용자
- *   - 신고 유형: 전체, 노쇼, 욕설, 허위
- *   - 처리 상태: 전체, 미처리, 처리완료
- * - 신고 목록: 신고 카드 리스트
- *   - 유형, 상태, 출처, 날짜, 신고자 → 피신고자, 내용
- *   - 액션 버튼: 경고 발송, 계정 정지
+ * 신고 관리 화면 (B안)
+ * - 서버에서 "전체 목록" 1회 수신(fetchReports)
+ * - 검색/필터는 프론트에서만 처리(applyFilters)
+ * - 더미데이터 완전 제거
  */
 export default function ReportManagementScreen({navigation}) {
-  const [reports, setReports] = useState([]);
+  const [allReports, setAllReports] = useState([]); // ✅ 원본 전체
+  const [reports, setReports] = useState([]); // ✅ 필터/검색 적용 결과
   const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReportType, setSelectedReportType] = useState(''); // '', 'all', 'post', 'user'
   const [selectedType, setSelectedType] = useState(''); // '', 'all', 'noshow', 'abuse', 'fake'
   const [selectedStatus, setSelectedStatus] = useState(''); // '', 'all', 'pending', 'resolved'
+
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDurationModal, setShowDurationModal] = useState(false);
+
   const [detailModal, setDetailModal] = useState({
     visible: false,
     report: null,
   });
+
   const [showReportTypeDropdown, setShowReportTypeDropdown] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
+  // ✅ 마운트 시 1회: 서버에서 전체 목록 조회
   useEffect(() => {
-    loadReports();
+    fetchReports();
+  }, []);
+
+  // ✅ 필터 변경 시: 프론트에서만 필터 적용
+  useEffect(() => {
+    applyFilters();
   }, [selectedReportType, selectedType, selectedStatus]);
 
-  // 신고 목록 로드
-  const loadReports = async () => {
+  /**
+   * 서버에서 전체 목록 조회 (B안)
+   * - 필터/검색 없이 전체를 가져온 뒤 allReports에 저장
+   * - 현재 필터/검색 기준으로 즉시 reports에도 반영
+   */
+  const fetchReports = async () => {
     try {
       setLoading(true);
 
-      // TODO: 실제 API 연동 (주석 해제)
-      // const params = {
-      //   reportType: selectedReportType === 'all' ? null : selectedReportType,
-      //   type: selectedType === 'all' ? null : selectedType,
-      //   status: selectedStatus === 'all' ? null : selectedStatus,
-      //   search: searchQuery,
-      // };
-      // const response = await getReportList(params);
-      // setReports(response.reports || []);
+      const response = await getReportList({
+        reportType: null,
+        type: null,
+        status: null,
+        search: '',
+      });
+      const list = response?.reports || [];
+      setAllReports(list);
 
-      // 임시 더미 데이터
-      const dummyReports = [
-        {
-          id: 1,
-          reportType: 'user', // 'post' or 'user'
-          source: 'shopping_together', // 'recipe_board' or 'shopping_together'
-          type: 'noshow',
-          status: 'pending',
-          date: '2024.11.28',
-          reporter: '홍길동',
-          reported: '김철수',
-          reportedUserId: 2,
-          description: '공동구매 약속 시간에 나타나지 않음',
-          details: '11월 28일 오후 3시 약속에 30분 이상 지각',
-        },
-        {
-          id: 2,
-          reportType: 'user',
-          source: 'shopping_together',
-          type: 'abuse',
-          status: 'pending',
-          date: '2024.11.27',
-          reporter: '이영희',
-          reported: '박민수',
-          reportedUserId: 4,
-          description: '채팅에서 욕설 사용',
-          details: '채팅방에서 반복적으로 욕설과 비방',
-        },
-        {
-          id: 3,
-          reportType: 'post',
-          source: 'recipe_board',
-          postId: 'RCP-12345',
-          type: 'fake',
-          status: 'resolved',
-          date: '2024.11.26',
-          reporter: '최수진',
-          reported: '정현우',
-          reportedUserId: 5,
-          description: '허위 상품 정보 게시',
-          details: '레시피와 무관한 광고성 게시물',
-        },
-        {
-          id: 4,
-          reportType: 'post',
-          source: 'recipe_board',
-          postId: 'RCP-12346',
-          type: 'abuse',
-          status: 'pending',
-          date: '2024.11.25',
-          reporter: '강민지',
-          reported: '이태민',
-          reportedUserId: 6,
-          description: '부적절한 이미지 포함',
-          details: '음식과 무관한 선정적 이미지 게시',
-        },
-      ];
-
-      // 필터 적용
-      let filteredReports = dummyReports;
-      if (selectedReportType && selectedReportType !== 'all') {
-        filteredReports = filteredReports.filter(
-          r => r.reportType === selectedReportType,
-        );
-      }
-      if (selectedType && selectedType !== 'all') {
-        filteredReports = filteredReports.filter(r => r.type === selectedType);
-      }
-      if (selectedStatus && selectedStatus !== 'all') {
-        filteredReports = filteredReports.filter(
-          r => r.status === selectedStatus,
-        );
-      }
-
-      // 검색 적용
-      if (searchQuery.trim()) {
-        filteredReports = filteredReports.filter(
-          r =>
-            r.reporter.includes(searchQuery) ||
-            r.reported.includes(searchQuery),
-        );
-      }
-
-      setReports(filteredReports);
+      // 현재 필터/검색을 즉시 반영
+      setReports(applyFiltersTo(list));
     } catch (error) {
       console.error('신고 목록 로드 실패:', error);
+      setAllReports([]);
+      setReports([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 검색
+  /**
+   * 필터/검색 적용(순수 함수)
+   * @param {Array} baseList 원본 리스트
+   */
+  const applyFiltersTo = baseList => {
+    let filtered = Array.isArray(baseList) ? baseList : [];
+
+    // 필터 적용
+    if (selectedReportType && selectedReportType !== 'all') {
+      filtered = filtered.filter(r => r.reportType === selectedReportType);
+    }
+    if (selectedType && selectedType !== 'all') {
+      filtered = filtered.filter(r => r.type === selectedType);
+    }
+    if (selectedStatus && selectedStatus !== 'all') {
+      filtered = filtered.filter(r => r.status === selectedStatus);
+    }
+
+    // 검색 적용(신고자/피신고자 닉네임)
+    const q = (searchQuery || '').trim();
+    if (q) {
+      filtered = filtered.filter(r => {
+        const reporter = r.reporter || '';
+        const reported = r.reported || '';
+        return reporter.includes(q) || reported.includes(q);
+      });
+    }
+
+    return filtered;
+  };
+
+  /**
+   * 현재 allReports에 대해 필터/검색 적용 후 reports 갱신
+   */
+  const applyFilters = () => {
+    setReports(applyFiltersTo(allReports));
+  };
+
+  // 검색(엔터/아이콘) -> 프론트 필터만 적용
   const handleSearch = () => {
-    loadReports();
+    applyFilters();
   };
 
   // 필터 변경
   const handleReportTypeFilterChange = reportType => {
     setSelectedReportType(reportType);
   };
-
   const handleTypeFilterChange = type => {
     setSelectedType(type);
   };
-
   const handleStatusFilterChange = status => {
     setSelectedStatus(status);
   };
 
-  // 신고 상세보기 모달 열기
+  // 신고 상세보기 모달 열기/닫기
   const handleOpenDetailModal = report => {
     setDetailModal({visible: true, report});
   };
-
-  // 신고 상세보기 모달 닫기
   const handleCloseDetailModal = () => {
     setDetailModal({visible: false, report: null});
   };
@@ -197,14 +156,15 @@ export default function ReportManagementScreen({navigation}) {
           text: '발송',
           onPress: async () => {
             try {
-              // TODO: 실제 API 연동 (주석 해제)
-              // await sendWarning(report.id, {
-              //   userId: report.reportedUserId,
-              //   reason: report.description,
-              // });
+              await sendWarning(report.id, {
+                userId: report.reportedUserId,
+                reason: report.description,
+              });
 
               Alert.alert('완료', '경고가 발송되었습니다.');
-              loadReports();
+
+              // ✅ 서버 데이터 최신화 (처리완료 상태 반영)
+              await fetchReports();
             } catch (error) {
               console.error('경고 발송 실패:', error);
               Alert.alert('오류', '경고 발송에 실패했습니다.');
@@ -238,16 +198,17 @@ export default function ReportManagementScreen({navigation}) {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: 실제 API 연동 (주석 해제)
-              // await suspendUserByReport(selectedReport.id, {
-              //   userId: selectedReport.reportedUserId,
-              //   duration: duration === 'permanent' ? 999999 : duration,
-              //   reason: selectedReport.description,
-              // });
+              await suspendUserByReport(selectedReport.id, {
+                userId: selectedReport.reportedUserId,
+                duration: duration === 'permanent' ? 999999 : duration,
+                reason: selectedReport.description,
+              });
 
               Alert.alert('완료', `계정이 ${durationText}되었습니다.`);
               setSelectedReport(null);
-              loadReports();
+
+              // ✅ 서버 데이터 최신화 (처리완료 상태 반영)
+              await fetchReports();
             } catch (error) {
               console.error('계정 정지 실패:', error);
               Alert.alert('오류', '계정 정지에 실패했습니다.');
@@ -280,48 +241,6 @@ export default function ReportManagementScreen({navigation}) {
   // 출처 한글 변환
   const getSourceLabel = source => {
     return source === 'recipe_board' ? '레시피 게시판' : '같이 장보기';
-  };
-
-  // 드롭다운 라벨 가져오기
-  const getReportTypeLabel = value => {
-    switch (value) {
-      case 'all':
-        return '전체';
-      case 'post':
-        return '게시물';
-      case 'user':
-        return '사용자';
-      default:
-        return '대상';
-    }
-  };
-
-  const getTypeFilterLabel = value => {
-    switch (value) {
-      case 'all':
-        return '전체';
-      case 'noshow':
-        return '노쇼';
-      case 'abuse':
-        return '욕설';
-      case 'fake':
-        return '허위';
-      default:
-        return '유형';
-    }
-  };
-
-  const getStatusFilterLabel = value => {
-    switch (value) {
-      case 'all':
-        return '전체';
-      case 'pending':
-        return '미처리';
-      case 'resolved':
-        return '처리완료';
-      default:
-        return '상태';
-    }
   };
 
   // 커스텀 드롭다운 컴포넌트

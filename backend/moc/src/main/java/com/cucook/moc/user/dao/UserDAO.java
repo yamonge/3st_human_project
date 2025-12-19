@@ -69,4 +69,12 @@ public interface UserDAO {
             @Param("updatedId") Long updatedId,
             @Param("updatedDate") Timestamp updatedDate
     );
+
+    /**
+     * 기간정지 만료 자동 복구
+     * - user_status='SUSPENDED'
+     * - suspended_until IS NOT NULL
+     * - suspended_until <= SYSTIMESTAMP
+     */
+    int restoreExpiredSuspensionToActive(@Param("userId") Long userId);
 }

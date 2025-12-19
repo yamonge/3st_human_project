@@ -18,6 +18,7 @@ import RecipeListItem from '../../components/recipeboard/RecipeListItem';
 import styles from '../../styles/screens/recipeboard/RecipeBoardStyles';
 import headerClipboardImg from '../../assets/images/main/mianBoard.png';
 import {getRecipeBoardList} from '../../api/recipeBoard';
+import {useFocusEffect} from '@react-navigation/native';
 
 /* =========================
    프론트 → 백엔드 코드 매핑
@@ -44,7 +45,6 @@ const TIME_TO_MIN_MAP = {
 };
 
 const RecipeBoardScreen = ({navigation}) => {
-  console.log('🔥 RecipeBoardScreen 렌더 시작');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState(null);
@@ -110,9 +110,16 @@ const RecipeBoardScreen = ({navigation}) => {
   };
 
   /* 최초 진입 */
-  useEffect(() => {
-    fetchRecipeBoard();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      // 화면 포커스될 때마다 실행
+      setSearchQuery('');
+      setSelectedStyle(null);
+      setSelectedDifficulty(null);
+      setSelectedTime(null);
+      fetchRecipeBoard();
+    }, []),
+  );
 
   /* =========================
       검색
@@ -130,12 +137,14 @@ const RecipeBoardScreen = ({navigation}) => {
     time: ['10분 이내', '30분 이내', '1시간 이내', '1시간 이상'],
   };
 
-  const openFilterSheet = type => {
-    setCurrentFilterType(type);
+  const openFilterSheet = Type => {
+    setCurrentFilterType(Type);
     setIsModalVisible(true);
     Animated.spring(slideAnim, {
       toValue: 0,
       useNativeDriver: true,
+      tension: 65,
+      friction: 11,
     }).start();
   };
 
@@ -144,7 +153,9 @@ const RecipeBoardScreen = ({navigation}) => {
       toValue: 300,
       duration: 250,
       useNativeDriver: true,
-    }).start(() => setIsModalVisible(false));
+    }).start(() => {
+      setTimeout(() => setIsModalVisible(false), 0);
+    });
   };
 
   const handleFilterSelect = value => {
@@ -153,7 +164,6 @@ const RecipeBoardScreen = ({navigation}) => {
     if (currentFilterType === 'time') setSelectedTime(value);
 
     closeFilterSheet();
-    fetchRecipeBoard();
   };
 
   const getFilterTitle = () => {
@@ -161,6 +171,23 @@ const RecipeBoardScreen = ({navigation}) => {
     if (currentFilterType === 'difficulty') return '난이도';
     if (currentFilterType === 'time') return '조리시간';
     return '';
+  };
+
+  const getCurrentValue = () => {
+    switch (currentFilterType) {
+      case 'style':
+        return selectedStyle;
+      case 'difficulty':
+        return selectedDifficulty;
+      case 'time':
+        return selectedTime;
+      default:
+        return null;
+    }
+  };
+
+  const getCurrentOptions = () => {
+    return filterOptions[currentFilterType] || [];
   };
 
   /* =========================
@@ -191,85 +218,186 @@ const RecipeBoardScreen = ({navigation}) => {
     <View style={styles.container}>
       <LinearGradient
         colors={['#FBB2B2', '#F55E5E', '#FF9494']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        angle={155}
         style={styles.headerGradient}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 헤더 */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>레시피 게시판</Text>
-          <Text style={styles.headerSubtitle}>공유된 레시피를 확인하세요!</Text>
+          <View style={styles.headerContent}>
+            {/* 제목 */}
+            <View style={{paddingLeft: 0}}>
+              <Text style={styles.headerTitle}>레시피 게시판</Text>
+              <Text style={styles.headerSubtitle}>
+                공유된 레시피를 확인하세요!
+              </Text>
+            </View>
 
-          {/* 검색 */}
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="검색어를 입력해주세요."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-            />
-            <TouchableOpacity onPress={handleSearch}>
-              <Search size={18} />
-            </TouchableOpacity>
-          </View>
+            {/* 검색 */}
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="검색어를 입력해주세요."
+                placeholderTextColor="#A1A1A1"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+              />
+              <TouchableOpacity
+                style={styles.searchButton}
+                onPress={handleSearch}>
+                <LinearGradient
+                  colors={['#00D3F2', '#2B7FFF']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.searchButton}>
+                  <Search size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
 
-          {/* 필터 */}
-          <View style={styles.filterContainer}>
-            <TouchableOpacity onPress={() => openFilterSheet('style')}>
-              <Text>{selectedStyle || '요리스타일'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => openFilterSheet('difficulty')}>
-              <Text>{selectedDifficulty || '난이도'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => openFilterSheet('time')}>
-              <Text>{selectedTime || '조리시간'}</Text>
-            </TouchableOpacity>
+            {/* 필터 */}
+            {/* 필터 칩 */}
+            <View style={styles.filterContainer}>
+              <TouchableOpacity
+                style={styles.filterChip}
+                onPress={() => openFilterSheet('style')}>
+                <Text style={styles.filterChipText}>
+                  {selectedStyle || '요리스타일'}
+                </Text>
+                <ChevronDown size={14} color="#404040" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.filterChip}
+                onPress={() => openFilterSheet('difficulty')}>
+                <Text style={styles.filterChipText}>
+                  {selectedDifficulty || '난이도'}
+                </Text>
+                <ChevronDown size={14} color="#404040" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.filterChip}
+                onPress={() => openFilterSheet('time')}>
+                <Text style={styles.filterChipText}>
+                  {selectedTime || '조리시간'}
+                </Text>
+                <ChevronDown size={14} color="#404040" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
-        <Image source={headerClipboardImg} style={styles.headerImage} />
+        <Image
+          source={headerClipboardImg}
+          style={styles.headerImage}
+          resizeMode="contain"
+        />
 
-        {/* 인기 레시피 */}
-        {popularRecipes.length > 0 && (
-          <FlatList
-            horizontal
-            data={popularRecipes}
-            keyExtractor={item => item.recipeId.toString()}
-            renderItem={({item}) => (
-              <RecipeCard
-                recipe={item}
-                onPress={() => handleRecipePress(item.recipeId)}
+        {/* 메인 콘텐츠 */}
+        <View style={styles.contentContainer}>
+          {/* 인기 레시피 섹션 */}
+          <View style={styles.popularSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>인기 레시피</Text>
+              <View style={styles.sectionDots}>
+                <View style={styles.dot} />
+                <View style={styles.dot} />
+                <View style={styles.dotLong} />
+              </View>
+            </View>
+            {popularRecipes.length > 0 ? (
+              <FlatList
+                data={popularRecipes}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                pagingEnabled={true}
+                decelerationRate="fast"
+                keyExtractor={item => item.recipeId.toString()}
+                renderItem={({item}) => (
+                  <View style={{width: 320, padding: 5}}>
+                    <RecipeCard
+                      recipe={item}
+                      onPress={() => handleRecipePress(item.recipeId)}
+                    />
+                  </View>
+                )}
               />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>인기 레시피가 없습니다.</Text>
+              </View>
             )}
-          />
-        )}
+          </View>
 
-        {/* 전체 레시피 */}
-        {allRecipes.map(recipe => (
-          <RecipeListItem
-            key={recipe.recipeId}
-            recipe={recipe}
-            onPress={() => handleRecipePress(recipe.recipeId)}
-          />
-        ))}
+          {/* 전체 레시피 섹션 */}
+          <View style={styles.allRecipesSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>전체 레시피</Text>
+            </View>
+
+            {allRecipes.length > 0 ? (
+              <View style={styles.allRecipesList}>
+                {allRecipes.map(recipe => (
+                  <RecipeListItem
+                    key={recipe.recipeId}
+                    recipe={recipe}
+                    onPress={() => handleRecipePress(recipe.recipeId)}
+                  />
+                ))}
+              </View>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>레시피가 없습니다.</Text>
+              </View>
+            )}
+          </View>
+        </View>
       </ScrollView>
 
       {/* 필터 바텀시트 */}
       <Portal>
         {isModalVisible && (
-          <Animated.View style={{transform: [{translateY: slideAnim}]}}>
-            <Text>{getFilterTitle()}</Text>
-            {filterOptions[currentFilterType]?.map(option => (
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{translateY: slideAnim}],
+              },
+            ]}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{getFilterTitle()}</Text>
               <TouchableOpacity
-                key={option}
-                onPress={() => handleFilterSelect(option)}>
-                <Text>{option}</Text>
+                style={styles.closeButton}
+                onPress={closeFilterSheet}>
+                <X size={24} color="#404040" strokeWidth={2} />
               </TouchableOpacity>
-            ))}
-            <TouchableOpacity onPress={closeFilterSheet}>
-              <X size={24} />
-            </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {getCurrentOptions().map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.filterOption,
+                    getCurrentValue() === option && styles.filterOptionSelected,
+                  ]}
+                  onPress={() => handleFilterSelect(option)}>
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      getCurrentValue() === option &&
+                        styles.filterOptionTextSelected,
+                    ]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </Animated.View>
         )}
       </Portal>

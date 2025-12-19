@@ -2,7 +2,7 @@ package com.cucook.moc.admin.dto.request;
 
 import lombok.*;
 
-/**
+/*
  * 관리자 회원 목록 검색 조건 DTO
  */
 @Getter
@@ -13,10 +13,10 @@ import lombok.*;
 @ToString
 public class AdminUserSearchRequestDTO {
 
-    /** 이메일 또는 닉네임 검색 키워드 */
+    /* 이메일 또는 닉네임 검색 키워드 */
     private String keyword;
 
-    /** ACTIVE / SUSPENDED / WITHDRAW / ALL */
+    /* ACTIVE / SUSPENDED / WITHDRAW */
     private String status;
 
     // 마지막으로 받은 user_id (처음 요청 시 null)
