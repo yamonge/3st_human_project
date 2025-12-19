@@ -1,26 +1,18 @@
 package com.cucook.moc.admin.dto.response;
 
-import lombok.*;
-import java.sql.Timestamp;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * 레시피(게시글) 목록 응답 DTO
+ * PostManagementScreen 더미 데이터 구조와 동일하게 맞춤
+ * - id, title, owner, date, isHidden
  */
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@ToString
 public class AdminRecipeListItemResponseDTO {
-
-    private Long recipeId;
+    private Long id;
     private String title;
-    private String ownerNickname;
-
-    /** tb_recipe.is_public 값 그대로 (Y/N) */
-    private String isPublic;
-
-    private Integer reportCnt;
-    private Timestamp createdDate;
+    private String owner;
+    private String date;      // "yyyy.MM.dd"
+    private Boolean isHidden; // true면 숨김
 }

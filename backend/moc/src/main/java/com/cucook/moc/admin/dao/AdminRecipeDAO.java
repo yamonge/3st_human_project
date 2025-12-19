@@ -17,8 +17,12 @@ public interface AdminRecipeDAO {
 
     int updateRecipeVisibility(
             @Param("recipeId") Long recipeId,
-            @Param("isPublic") String isPublic
+            @Param("isPublic") String isPublic,
+            @Param("adminUserId") Long adminUserId
     );
 
-    int softDeleteRecipe(@Param("recipeId") Long recipeId);
+    int softDeleteRecipe(
+            @Param("recipeId") Long recipeId,
+            @Param("adminUserId") Long adminUserId
+    );
 }

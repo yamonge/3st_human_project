@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -14,17 +14,6 @@ import {colors} from '../../styles/common';
 import {getPostList, deletePost, togglePostVisibility} from '../../api/admin';
 import IngredientModal from '../../components/common/IngredientModal';
 
-/**
- * 게시글 관리 화면
- *
- * 구조:
- * - 상단 헤더: 뒤로가기 + "게시글 관리" 타이틀
- * - 검색 바: 제목 또는 작성자 검색
- * - 필터 탭: 전체, 공개, 숨김
- * - 게시글 목록: 게시글 카드 리스트
- *   - 제목, 상태 배지, 소유자, 날짜
- *   - 액션 버튼: 숨김/공개, 삭제
- */
 export default function PostManagementScreen({navigation}) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,132 +21,72 @@ export default function PostManagementScreen({navigation}) {
   const [selectedFilter, setSelectedFilter] = useState('all'); // 'all', 'public', 'hidden'
   const [deleteModal, setDeleteModal] = useState({visible: false, post: null});
 
-  useEffect(() => {
-    loadPosts();
-  }, [selectedFilter]);
-
-  // 게시글 목록 로드
-  const loadPosts = async () => {
+  // 게시글 목록 로드 (API 기반)
+  const loadPosts = useCallback(async () => {
     try {
       setLoading(true);
 
-      // TODO: 실제 API 연동 (주석 해제)
-      // const params = {
-      //   status: selectedFilter === 'all' ? null : selectedFilter,
-      //   search: searchQuery,
-      // };
-      // const response = await getPostList(params);
-      // setPosts(response.posts || []);
+      const trimmedSearch = searchQuery.trim();
 
-      // 임시 더미 데이터
-      const dummyPosts = [
-        {
-          id: 1,
-          title: '제육볶음',
-          owner: '홍길동',
-          date: '2024.11.28',
-          isHidden: false,
-        },
-        {
-          id: 2,
-          title: '떡볶이',
-          owner: '김철수',
-          date: '2024.11.27',
-          isHidden: false,
-        },
-        {
-          id: 3,
-          title: '볶음밥',
-          owner: '이영희',
-          date: '2024.11.26',
-          isHidden: true,
-        },
-        {
-          id: 4,
-          title: '김치찌개',
-          owner: '박민수',
-          date: '2024.11.25',
-          isHidden: false,
-        },
-        {
-          id: 5,
-          title: '된장찌개',
-          owner: '최지우',
-          date: '2024.11.24',
-          isHidden: true,
-        },
-      ];
+      const params = {
+        status: selectedFilter === 'all' ? null : selectedFilter,
+        search: trimmedSearch.length > 0 ? trimmedSearch : null,
+      };
 
-      // 필터 적용
-      let filteredPosts = dummyPosts;
-      if (selectedFilter === 'public') {
-        filteredPosts = dummyPosts.filter(p => !p.isHidden);
-      } else if (selectedFilter === 'hidden') {
-        filteredPosts = dummyPosts.filter(p => p.isHidden);
-      }
-
-      // 검색 적용 (제목, 작성자, 게시글 ID)
-      if (searchQuery.trim()) {
-        filteredPosts = filteredPosts.filter(
-          p =>
-            p.title.includes(searchQuery) ||
-            p.owner.includes(searchQuery) ||
-            p.id.toString().includes(searchQuery),
-        );
-      }
-
-      setPosts(filteredPosts);
+      const response = await getPostList(params);
+      setPosts(response?.posts || []);
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error);
+      setPosts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedFilter, searchQuery]);
 
-  // 검색
+  /**
+   * ✅ 실시간 검색 + 필터 적용
+   * - searchQuery 변경 시마다 바로 호출하면 API 과다 호출 → debounce(300ms)
+   * - selectedFilter 변경도 동일 로직에서 처리
+   */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadPosts();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [loadPosts]);
+
+  // 검색 버튼/엔터: 즉시 실행(대기 없이)
   const handleSearch = () => {
     loadPosts();
   };
 
-  // 필터 변경
   const handleFilterChange = filter => {
     setSelectedFilter(filter);
   };
 
-  // 숨김/공개 토글
   const handleToggleVisibility = async post => {
     try {
-      // TODO: 실제 API 연동 (주석 해제)
-      // await togglePostVisibility(post.id, !post.isHidden);
-
-      console.log(
-        `게시글 ${post.title} ${post.isHidden ? '공개' : '숨김'} 처리`,
-      );
+      await togglePostVisibility(post.id, !post.isHidden);
       loadPosts();
     } catch (error) {
       console.error('게시글 숨김/공개 실패:', error);
     }
   };
 
-  // 삭제 모달 열기
   const handleOpenDeleteModal = post => {
     setDeleteModal({visible: true, post});
   };
 
-  // 삭제 모달 닫기
   const handleCloseDeleteModal = () => {
     setDeleteModal({visible: false, post: null});
   };
 
-  // 삭제 확인
   const handleConfirmDelete = async () => {
     if (!deleteModal.post) return;
 
     try {
-      // TODO: 실제 API 연동 (주석 해제)
-      // await deletePost(deleteModal.post.id);
-
-      console.log(`게시글 ${deleteModal.post.title} 삭제`);
+      await deletePost(deleteModal.post.id);
       handleCloseDeleteModal();
       loadPosts();
     } catch (error) {
@@ -165,7 +94,6 @@ export default function PostManagementScreen({navigation}) {
     }
   };
 
-  // 필터 버튼 렌더링
   const FilterButton = ({label, value}) => (
     <TouchableOpacity
       style={[
@@ -184,11 +112,9 @@ export default function PostManagementScreen({navigation}) {
     </TouchableOpacity>
   );
 
-  // 게시글 카드 렌더링
   const PostCard = ({post}) => {
     return (
       <View style={styles.postCard}>
-        {/* 상단: 제목, 상태 배지 */}
         <View style={styles.cardHeader}>
           <Text style={styles.postTitle}>{post.title}</Text>
           <View
@@ -210,15 +136,12 @@ export default function PostManagementScreen({navigation}) {
           </View>
         </View>
 
-        {/* 중간: 소유자, 날짜 */}
         <View style={styles.cardInfo}>
           <Text style={styles.ownerText}>소유자: {post.owner}</Text>
           <Text style={styles.dateText}>{post.date}</Text>
         </View>
 
-        {/* 하단: 액션 버튼 */}
         <View style={styles.actionButtons}>
-          {/* 숨김/공개 버튼 */}
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleToggleVisibility(post)}
@@ -241,7 +164,6 @@ export default function PostManagementScreen({navigation}) {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* 삭제 버튼 */}
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleOpenDeleteModal(post)}
@@ -263,7 +185,6 @@ export default function PostManagementScreen({navigation}) {
 
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -273,9 +194,7 @@ export default function PostManagementScreen({navigation}) {
         <Text style={styles.headerTitle}>게시글 관리</Text>
       </View>
 
-      {/* 검색 및 필터 영역 */}
       <View style={styles.searchSection}>
-        {/* 검색 바 */}
         <View style={styles.searchBar}>
           <Search size={20} color="#9ca3af" style={styles.searchIcon} />
           <TextInput
@@ -283,13 +202,12 @@ export default function PostManagementScreen({navigation}) {
             placeholder="제목, 작성자, 게시글 ID 검색"
             placeholderTextColor="rgba(10, 10, 10, 0.5)"
             value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
+            onChangeText={setSearchQuery} // ✅ 입력 즉시 state 갱신 → debounce effect로 자동 검색
+            onSubmitEditing={handleSearch} // ✅ 엔터 누르면 즉시 검색(대기 없음)
             returnKeyType="search"
           />
         </View>
 
-        {/* 필터 버튼 */}
         <View style={styles.filterRow}>
           <FilterButton label="전체" value="all" />
           <FilterButton label="공개" value="public" />
@@ -297,7 +215,6 @@ export default function PostManagementScreen({navigation}) {
         </View>
       </View>
 
-      {/* 게시글 리스트 */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -315,7 +232,6 @@ export default function PostManagementScreen({navigation}) {
         )}
       </ScrollView>
 
-      {/* 삭제 확인 모달 */}
       <IngredientModal
         visible={deleteModal.visible}
         type="delete"
