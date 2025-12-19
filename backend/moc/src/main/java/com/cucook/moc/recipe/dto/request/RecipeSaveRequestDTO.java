@@ -13,6 +13,7 @@ public class RecipeSaveRequestDTO {
 
     private String title;
     private String summary;
+    private String thumbnailUrl;
     private String difficultyCd;
     private Integer cookTimeMin;
     private String cuisineStyleCd;

@@ -51,6 +51,8 @@ const normalizeRecipe = recipe => {
  * @example
  * // 전체 레시피 조회
  */
+
+
 export const getRecipeBoardList = async ({
   search,
   cuisineStyleCd,

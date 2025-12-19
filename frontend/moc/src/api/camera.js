@@ -209,10 +209,11 @@ export const saveIngredients = async (userId, ingredientNames) => {
 export const saveRecipe = async (userId, recipe) => {
   try {
     console.log('📤 레시피 저장 API 호출', {userId, recipe});
-
+    console.log('🔥 saveRecipe 호출 직전 recipe', recipe);
     const response = await axios.post(`/v1/users/${userId}/recipes`, {
       title: recipe.title,
       summary: recipe.summary,
+      thumbnailUrl: recipe.thumbnailUrl,
       difficultyCd: recipe.difficultyCd,
       cookTimeMin: recipe.cookTimeMin,
       cuisineStyleCd: recipe.cuisineStyleCd,

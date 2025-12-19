@@ -426,7 +426,7 @@ public class RecipeServiceImpl implements RecipeService {
         recipeVO.setSourceType("AI_GENERATED");
         recipeVO.setTitle(dto.getTitle());
         recipeVO.setSummary(dto.getSummary());
-        recipeVO.setThumbnailUrl(null);
+        recipeVO.setThumbnailUrl(dto.getThumbnailUrl());
         recipeVO.setDifficultyCd(dto.getDifficultyCd());
         recipeVO.setCookTimeMin(dto.getCookTimeMin());
         recipeVO.setCuisineStyleCd(dto.getCuisineStyleCd());
@@ -459,7 +459,7 @@ public class RecipeServiceImpl implements RecipeService {
                 vo.setQuantityDesc(ing.getQuantityDesc());
                 vo.setIsOwnedDefault("N");
                 vo.setCreatedId(userId);
-
+                System.out.println("🔥 saveRecipe thumbnailUrl = " + dto.getThumbnailUrl());
                 recipeIngredientService.saveRecipeIngredient(vo);
             }
         }

@@ -153,9 +153,10 @@ export default function HomeScreen({navigation}) {
 
   // 인기 레시피 카드 클릭
   const handleRecipePress = recipe => {
-    // TODO: 레시피 상세보기 이동
-    Alert.alert('레시피 상세', `${recipe.title} 상세보기로 이동합니다.`);
-    // navigation.navigate('RecipeDetail', { recipeId: recipe.id });
+    navigation.navigate('RecipeBoardDetail', {
+      recipeId: recipe,
+      from: 'recipeboard',
+    });
   };
 
   // 좋아요 토글
@@ -236,7 +237,7 @@ export default function HomeScreen({navigation}) {
                 key={recipe.recipeId}
                 recipe={recipe}
                 rank={index + 1}
-                onPress={() => handleRecipePress(recipe)}
+                onPress={() => handleRecipePress(recipe.recipeId)}
                 onLike={() => handleLikeToggle(recipe.recipeId)}
               />
             ))}
