@@ -66,22 +66,28 @@ const ChatRoomScreen = ({
   const [currentUserNickname, setCurrentUserNickname] = useState(null);
 
   const handleSend = text => {
-    // ✅ Semi-controlled: onSubmitEditing에서 전달된 text 또는 message state 사용
-    const messageText = text || message || '';
+    // ✅ 타입 안전성 보장 (한글 분해 문제 해결 + 에러 방지)
+    let messageText = '';
 
-    if (messageText && messageText.trim() && chatRoomId && currentUserId) {
+    if (typeof text === 'string') {
+      messageText = text.trim();
+    } else if (typeof message === 'string') {
+      messageText = message.trim();
+    }
+
+    if (messageText && chatRoomId && currentUserId) {
       // 🔥 WebSocket으로 메시지 전송
       StompClient.sendMessage({
         chatRoomId,
         senderUserId: currentUserId,
         senderNickname: currentUserNickname,
-        messageText: messageText.trim(),
+        messageText: messageText,
       });
 
       // 입력창 초기화
+      setMessage('');
       if (messageInputRef.current) {
         messageInputRef.current.clear();
-        setMessage(''); // 상태도 초기화
       }
 
       // 메시지 전송 후 스크롤을 맨 아래로
@@ -342,18 +348,22 @@ const ChatRoomScreen = ({
         const currentUserIdNum = Number(userId);
 
         // 메시지 변환 (API 형식 → 화면 표시 형식)
-        const formattedMessages = data.map(msg => ({
-          messageId: msg.messageId,
-          sender: msg.senderNickname,
-          text: msg.messageText,
-          time: new Date(msg.createdAt).toLocaleTimeString('ko-KR', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          }),
-          isMe: msg.senderUserId === currentUserIdNum,
-          createdAt: msg.createdAt,
-        }));
+        const formattedMessages = data
+          .map(msg => ({
+            messageId: msg.messageId,
+            sender: msg.senderNickname,
+            text: msg.messageText,
+            time: new Date(msg.createdAt).toLocaleTimeString('ko-KR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }),
+            isMe: msg.senderUserId === currentUserIdNum,
+            messageTypeCd: msg.messageTypeCd,
+            isSystem: msg.messageTypeCd === 'SYSTEM',
+            createdAt: msg.createdAt,
+          }))
+          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // 🔥 시간순 정렬 (오래된 것부터)
 
         store.setMessages(chatRoomId, formattedMessages);
         console.log(
@@ -580,13 +590,16 @@ const ChatRoomScreen = ({
           style={styles.messageArea}
           contentContainerStyle={[
             styles.messageContent,
-            {paddingBottom: keyboardHeight + 16},
+            {paddingBottom: Math.max(keyboardHeight, 80) + 100}, // 🔥 충분한 여백 확보
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() =>
-            scrollViewRef.current?.scrollToEnd({animated: true})
-          }>
+          onContentSizeChange={() => {
+            // 새 메시지가 추가되면 자동으로 맨 아래로 스크롤
+            setTimeout(() => {
+              scrollViewRef.current?.scrollToEnd({animated: true});
+            }, 100);
+          }}>
           {messages.map((msg, index) => renderMessage(msg, index))}
         </ScrollView>
 
@@ -667,7 +680,10 @@ const ChatRoomScreen = ({
               onChangeText={setMessage}
               multiline={false}
               returnKeyType="send"
-              onSubmitEditing={e => handleSend(e.nativeEvent.text)}
+              onSubmitEditing={e => {
+                const text = e?.nativeEvent?.text || '';
+                handleSend(text);
+              }}
               blurOnSubmit={false}
               autoCorrect={false}
               autoCapitalize="none"
@@ -675,7 +691,7 @@ const ChatRoomScreen = ({
           </View>
           <TouchableOpacity
             style={styles.sendButton}
-            onPress={handleSend}
+            onPress={() => handleSend(message)}
             activeOpacity={0.8}>
             <Text style={styles.sendIcon}>➤</Text>
           </TouchableOpacity>

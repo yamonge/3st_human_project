@@ -73,6 +73,9 @@
             user_nickname,
             user_password,
             user_birth_date,
+            fcm_token,
+            device_os,
+            device_version,
             user_type,
             user_status,
             reported_cnt,
@@ -87,6 +90,9 @@
             #{userNickname},
             #{userPassword},
             #{userBirthDate, jdbcType=DATE},
+            #{fcmToken, jdbcType=VARCHAR},
+            #{deviceOs, jdbcType=VARCHAR},
+            #{deviceVersion, jdbcType=VARCHAR},
             #{userType},
             #{userStatus},
             #{reportedCnt},
@@ -139,10 +145,10 @@
     <update id="updateFcmToken"
             parameterType="map">
         UPDATE tb_user
-        SET fcm_token      = #{fcmToken},
-        device_os      = #{deviceOs},
-        device_version = #{deviceVersion},
-        updated_date   = SYSTIMESTAMP
+        SET fcm_token      = #{fcmToken, jdbcType=VARCHAR},
+        device_os      = #{deviceOs, jdbcType=VARCHAR},
+        device_version = #{deviceVersion, jdbcType=VARCHAR},
+        updated_date   = SYSTIMESTAMP,
         updated_id     = #{userId}
         WHERE user_id = #{userId}
     </update>

@@ -68,7 +68,10 @@ public class UserReviewServiceImpl implements UserReviewService {
             throw new RuntimeException("사용자 후기 저장에 실패했습니다.");
         }
 
-        // 4. 저장된 VO를 기반으로 Response DTO 생성 및 반환
+        // 4. 🔥 평균 평점 업데이트 (대상 사용자의 rating_score)
+        userDAO.updateRatingScoreByAvg(requestDTO.getTargetUserId());
+
+        // 5. 저장된 VO를 기반으로 Response DTO 생성 및 반환
         ReviewedUserDetailDTO writerDetail = getReviewedUserDetailDTO(writerUserId); // 작성자 정보 조회
         return UserReviewResponseDTO.from(vo, writerDetail); // 편의 메서드 사용
     }

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {StatusBar} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -6,9 +6,15 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {PortalProvider} from '@gorhom/portal';
+import messaging from '@react-native-firebase/messaging';
 import MetaballNavigation from './src/navigation/MetaballNavigation';
 import StompClient from './src/utils/StompClient';
 import useChatStore from './src/stores/chatStore';
+import {
+  initNotification,
+  displayFCMNotification,
+  setupFCM,
+} from './src/utils/notificationService';
 
 // 온보딩 & 인증 화면
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
@@ -320,10 +326,78 @@ function MainTabNavigator() {
 function App() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(null);
+  const navigationRef = useRef(null);
 
   useEffect(() => {
     checkFirstLaunch();
+    initializeFCM();
   }, []);
+
+  // FCM 초기화 및 푸시 알림 리스너 설정
+  const initializeFCM = async () => {
+    try {
+      // Notifee 초기화
+      await initNotification();
+
+      // FCM 설정
+      await setupFCM();
+
+      // 🔥 포그라운드 메시지 수신 (앱 실행 중)
+      const unsubscribeForeground = messaging().onMessage(
+        async remoteMessage => {
+          console.log('[FCM 포그라운드 메시지 수신]', remoteMessage);
+          // 로컬 알림으로 표시
+          await displayFCMNotification(remoteMessage);
+        },
+      );
+
+      // 🔥 백그라운드에서 알림 클릭 (앱 실행됨)
+      messaging().onNotificationOpenedApp(remoteMessage => {
+        console.log('[FCM 백그라운드 알림 클릭]', remoteMessage);
+        handleNotificationClick(remoteMessage);
+      });
+
+      // 🔥 앱이 종료된 상태에서 알림 클릭
+      messaging()
+        .getInitialNotification()
+        .then(remoteMessage => {
+          if (remoteMessage) {
+            console.log('[FCM 종료 상태 알림 클릭]', remoteMessage);
+            handleNotificationClick(remoteMessage);
+          }
+        });
+
+      return () => {
+        unsubscribeForeground();
+      };
+    } catch (error) {
+      console.error('[FCM 초기화 실패]', error);
+    }
+  };
+
+  // 알림 클릭 처리 (채팅방으로 이동)
+  const handleNotificationClick = remoteMessage => {
+    try {
+      const {data} = remoteMessage;
+
+      // TODO: 알림 데이터에 따라 적절한 화면으로 이동
+      // 예: chatRoomId가 있으면 채팅방으로 이동
+      if (data?.chatRoomId && navigationRef.current) {
+        // 메인 화면으로 먼저 이동 후 채팅방 열기
+        navigationRef.current.navigate('MainApp', {
+          screen: 'Map',
+          params: {
+            openChatRoom: true,
+            chatRoomId: data.chatRoomId,
+          },
+        });
+      }
+
+      console.log('[알림 클릭 처리 완료]', data);
+    } catch (error) {
+      console.error('[알림 클릭 처리 실패]', error);
+    }
+  };
 
   // 최초 실행 여부 및 로그인 상태 체크
   const checkFirstLaunch = async () => {
@@ -359,7 +433,7 @@ function App() {
           backgroundColor="transparent"
           translucent
         />
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <Stack.Navigator
             initialRouteName={getInitialRouteName()}
             screenOptions={{

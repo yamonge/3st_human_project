@@ -93,6 +93,7 @@ public class UserServiceImpl implements UserService {
                 .userNickname(request.getUserNickname())
                 .userBirthDate(request.getUserBirthDate())
                 .userPassword(passwordEncoder.encode(request.getUserPassword()))
+                .fcmToken(request.getFcmToken())  // FCM Token 추가
                 .userType("N")
                 .userStatus("ACTIVE")
                 .reportedCnt(0)
@@ -170,6 +171,16 @@ public class UserServiceImpl implements UserService {
 
         // 4. 마지막 로그인 시간 업데이트
         userDAO.updateLastLoginDate(user.getUserId());
+
+        // 4-1. FCM Token 업데이트 (로그인 시)
+        if (request.getFcmToken() != null && !request.getFcmToken().isEmpty()) {
+            userDAO.updateFcmToken(
+                    user.getUserId(),
+                    request.getFcmToken(),
+                    null,  // deviceOs는 필요시 추가
+                    null   // deviceVersion은 필요시 추가
+            );
+        }
 
         // 5. VO → 응답 DTO 매핑
         LoginResponseDTO response = new LoginResponseDTO();
