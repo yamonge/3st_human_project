@@ -230,6 +230,7 @@ export default function RecipeDetailScreen({route, navigation}) {
       const result = await saveRecipe(Number(userId), {
         title: recipe.title,
         summary: recipe.summary,
+        thumbnailUrl: recipe.thumbnailUrl,
         difficultyCd: recipe.difficultyCd,
         cookTimeMin: recipe.cookTimeMin,
         cuisineStyleCd: recipe.cuisineStyleCd,
@@ -348,9 +349,9 @@ export default function RecipeDetailScreen({route, navigation}) {
           showsVerticalScrollIndicator={false}>
           {/* 레시피 이미지 (최상단) */}
           <View style={styles.recipeImageContainer}>
-            {recipe.imageUrl ? (
+            {recipe.thumbnailUrl ? (
               <Image
-                source={{uri: recipe.imageUrl}}
+                source={{uri: recipe.thumbnailUrl}}
                 style={styles.recipeImage}
                 resizeMode="cover"
               />

@@ -221,9 +221,9 @@ export default function RecommendedRecipesScreen({route, navigation}) {
               style={styles.recipeCard}>
               {/* 레시피 이미지 또는 플레이스홀더 */}
               <View style={styles.recipeImageContainer}>
-                {recipe.imageUrl ? (
+                {recipe.thumbnailUrl ? (
                   <Image
-                    source={{uri: recipe.imageUrl}}
+                    source={{uri: recipe.thumbnailUrl}}
                     style={styles.recipeImage}
                     resizeMode="cover"
                   />
@@ -242,7 +242,7 @@ export default function RecommendedRecipesScreen({route, navigation}) {
 
                 <View style={styles.recipeMetadata}>
                   <Text style={styles.recipeDifficulty}>
-                    {getDifficultyText(recipe.difficultyCd)}
+                    {recipe.difficultyText}
                   </Text>
                   <View style={styles.recipeDivider} />
                   <Text style={styles.recipeTime}>{recipe.cookTimeMin}분</Text>

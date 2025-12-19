@@ -10,7 +10,7 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {ArrowLeft, Star, Calendar, Heart} from 'lucide-react-native';
-// import {getReceivedReviews} from '../../api/mypage';
+import {getReceivedReviews} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/ReceivedReviewsStyles';
 import {colors} from '../../styles/common';
 
@@ -22,8 +22,9 @@ import {colors} from '../../styles/common';
  * - 평균 별점 및 총 개수 표시
  * - 후기별 닉네임, 별점, 날짜, 내용 표시
  */
-export default function ReceivedReviewsScreen({navigation}) {
+export default function ReceivedReviewsScreen({route, navigation}) {
   const [reviews, setReviews] = useState([]);
+  const {userId} = route.params;
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalCount: 0,
@@ -39,56 +40,34 @@ export default function ReceivedReviewsScreen({navigation}) {
     try {
       setLoading(true);
 
-      // TODO: 실제 API 연동 (주석 해제)
-      // const response = await getReceivedReviews();
-      // setReviews(response.reviews);
-      // setStats({
-      //   totalCount: response.totalCount,
-      //   averageRating: response.averageRating,
-      // });
+      const response = await getReceivedReviews(userId);
+      if (!response || typeof response !== 'object') {
+        setReviews([]);
+        setStats({totalCount: 0, averageRating: 0});
+        return;
+      }
+      // 백엔드 응답 → 프론트 UI용으로 매핑
+      const mappedReviews = response.receivedReviews.map(review => ({
+        id: review.reviewId,
+        nickname: review.writer?.nickname ?? '알 수 없음',
+        rating: review.rating,
+        content: review.userReviewComment,
+        createdAt: review.createdDateFormatted,
+      }));
 
-      // 임시 더미 데이터
-      const dummyData = {
-        reviews: [
-          {
-            id: 1,
-            nickname: '희동이',
-            rating: 4,
-            content:
-              '함께 장보기 좋았어요! 친절하시고\n시간 약속도 잘 지켜주셨습니다.',
-            createdAt: '2024.11.20',
-          },
-          {
-            id: 2,
-            nickname: '도우너',
-            rating: 5,
-            content:
-              '덕분에 무거운 짐도 나눠 들 수 있었어요.\n다음에도 같이 하고 싶네요!',
-            createdAt: '2024.11.18',
-          },
-          {
-            id: 3,
-            nickname: '또치',
-            rating: 5,
-            content: '좋은 경험이었습니다. 소통이 원활했어요.',
-            createdAt: '2024.11.15',
-          },
-          {
-            id: 4,
-            nickname: '둘리',
-            rating: 5,
-            content: '매너가 좋으시고 시간 약속도 잘 지키셨어요.\n추천합니다!',
-            createdAt: '2024.11.10',
-          },
-        ],
-        totalCount: 4,
-        averageRating: 4.8,
-      };
+      // 평균 별점 계산 (백엔드에 없음)
+      const averageRating =
+        mappedReviews.length === 0
+          ? 0
+          : (
+              mappedReviews.reduce((sum, r) => sum + r.rating, 0) /
+              mappedReviews.length
+            ).toFixed(1);
 
-      setReviews(dummyData.reviews);
+      setReviews(mappedReviews);
       setStats({
-        totalCount: dummyData.totalCount,
-        averageRating: dummyData.averageRating,
+        totalCount: response.totalCount,
+        averageRating,
       });
     } catch (error) {
       console.error('후기 불러오기 실패:', error);

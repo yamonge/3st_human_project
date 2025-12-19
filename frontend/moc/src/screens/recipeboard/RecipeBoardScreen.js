@@ -24,11 +24,11 @@ import {useFocusEffect} from '@react-navigation/native';
    프론트 → 백엔드 코드 매핑
 ========================= */
 const STYLE_CODE_MAP = {
-  한식: 'KOREAN',
-  중식: 'CHINESE',
-  일식: 'JAPANESE',
-  양식: 'WESTERN',
-  퓨전: 'FUSION',
+  한식: 'KOR',
+  중식: 'CHN',
+  일식: 'JPN',
+  양식: 'WES',
+  퓨전: 'ETC',
 };
 
 const DIFFICULTY_CODE_MAP = {
@@ -120,6 +120,10 @@ const RecipeBoardScreen = ({navigation}) => {
       fetchRecipeBoard();
     }, []),
   );
+
+  // useEffect(() => {
+  //   fetchRecipeBoard();
+  // }, [selectedStyle, selectedDifficulty, selectedTime]);
 
   /* =========================
       검색

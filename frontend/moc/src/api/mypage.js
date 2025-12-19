@@ -140,10 +140,17 @@ export const getMenuCounts = async () => {
  * @returns {number} response.totalCount - 전체 후기 개수
  * @returns {number} response.averageRating - 평균 별점
  */
-export const getReceivedReviews = async () => {
+export const getReceivedReviews = async userId => {
   try {
-    const response = await api.get('/mypage/reviews/received');
-    return response.data;
+    const data = await api.get(`/v1/users/${userId}/reviews/received`);
+    if (!data || data === '') {
+      return {
+        receivedReviews: [],
+        totalCount: 0,
+        averageRating: 0,
+      };
+    }
+    return data;
   } catch (error) {
     console.error('받은 후기 조회 실패:', error);
     throw error;
@@ -170,9 +177,7 @@ export const getSavedRecipes = async userId => {
 
     console.log('📡 getSavedRecipes 호출, userId:', userId);
 
-    const data = await api.get(
-      `/v1/users/${userId}/bookmarks`
-    );
+    const data = await api.get(`/v1/users/${userId}/bookmarks`);
 
     console.log('✅ 저장된 레시피 응답:', data);
 

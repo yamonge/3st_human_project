@@ -21,6 +21,7 @@ import styles from '../../styles/screens/mypage/ProfileScreenStyles';
  * - 하단: 6개 메뉴 카드 그리드 (2x3)
  */
 export default function ProfileScreen({navigation}) {
+  const [userId, setUserId] = useState(null);
   const [userInfo, setUserInfo] = useState({
     nickname: '',
     email: '',
@@ -47,10 +48,12 @@ export default function ProfileScreen({navigation}) {
   // 사용자 정보 로드
   const loadUserInfo = async () => {
     try {
+      const storedUserId = await AsyncStorage.getItem('userId');
       const nickname = await AsyncStorage.getItem('userNickname');
       const email = await AsyncStorage.getItem('userEmail');
       const profileImage = await AsyncStorage.getItem('profileImage');
 
+      setUserId(storedUserId ? Number(storedUserId) : null);
       // ✅ 조건 걸지 말고 항상 set (이전 값이 남는 문제 방지)
       setUserInfo({
         nickname: nickname || '둘리',
@@ -155,7 +158,7 @@ export default function ProfileScreen({navigation}) {
     if (item.screen === 'IngredientManagement') {
       navigation.navigate('IngredientManagement');
     } else if (item.screen === 'ReceivedReviews') {
-      navigation.navigate('ReceivedReviews');
+      navigation.navigate('ReceivedReviews', {userId});
     } else if (item.screen === 'SavedRecipes') {
       navigation.navigate('SavedRecipes');
     } else if (item.screen === 'SharedRecipes') {

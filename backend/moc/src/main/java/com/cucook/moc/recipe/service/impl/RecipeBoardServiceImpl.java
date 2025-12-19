@@ -104,6 +104,7 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         vo.setRecipeId(dto.getRecipeId());
         vo.setTitle(dto.getTitle());
         vo.setSummary(dto.getSummary());
+        vo.setThumbnailUrl(dto.getThumbnailUrl());
         vo.setLikedByMe(dto.getLikedByMe());
         vo.setAuthorNickname(dto.getAuthorNickname());
         vo.setAuthorProfileImageUrl(dto.getAuthorProfileImageUrl());

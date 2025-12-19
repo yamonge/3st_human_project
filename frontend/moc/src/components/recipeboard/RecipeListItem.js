@@ -31,11 +31,12 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
       <View style={styles.imageContainer}>
         <Image
           source={
-            recipe.image
-              ? {uri: recipe.image}
+            recipe.thumbnailUrl
+              ? {uri: recipe.thumbnailUrl}
               : require('../../assets/images/noImage.png')
           }
           style={styles.recipeImage}
+          resizeMode="cover"
         />
       </View>
 

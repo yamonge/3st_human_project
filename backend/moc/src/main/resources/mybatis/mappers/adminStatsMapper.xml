@@ -3,11 +3,12 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.cucook.moc.admin.dao.AdminStatsDAO">
 
-    <!-- 탈퇴(WITHDRAW) 제외 전체 회원 수 -->
+    <!-- 탈퇴(WITHDRAW), 관리자 제외 전체 회원 수 -->
     <select id="countNonWithdrawUsers" resultType="int">
         SELECT COUNT(*)
         FROM tb_user
         WHERE NVL(UPPER(user_status), 'ACTIVE') != 'WITHDRAW'
+        AND UPPER(user_type) != 'Y'
     </select>
 
     <!-- 미처리 신고 수 (유저 신고: tb_user_report 기준) -->

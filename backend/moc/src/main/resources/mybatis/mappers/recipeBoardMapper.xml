@@ -187,70 +187,103 @@
             resultMap="RecipeBoardListItemMap">
 
         SELECT
-            /* ===== Recipe 기본 정보 ===== */
-            R.RECIPE_ID,
-            R.TITLE,
-            R.SUMMARY,
-            R.THUMBNAIL_URL,
-            R.DIFFICULTY_CD,
-            R.COOK_TIME_MIN,
-            R.CUISINE_STYLE_CD,
-            R.CATEGORY,
-            R.VIEW_CNT,
-            R.LIKE_CNT,
-            R.CREATED_DATE,
-            R.OWNER_USER_ID,
+        /* ===== Recipe 기본 정보 ===== */
+        R.RECIPE_ID,
+        R.TITLE,
+        R.SUMMARY,
+        R.THUMBNAIL_URL,
+        R.DIFFICULTY_CD,
+        R.COOK_TIME_MIN,
+        R.CUISINE_STYLE_CD,
+        R.CATEGORY,
+        R.VIEW_CNT,
+        R.LIKE_CNT,
+        R.CREATED_DATE,
+        R.OWNER_USER_ID,
 
-            /* ===== 작성자 정보 ===== */
-            U.USER_NICKNAME,
-            U.USER_PROFILE_IMAGE_URL,
+        /* ===== 작성자 정보 ===== */
+        U.USER_NICKNAME,
+        U.USER_PROFILE_IMAGE_URL,
 
-            /* ===== 로그인 유저 기준 좋아요 여부 ===== */
-            CASE
-                WHEN EXISTS (
-                    SELECT 1
-                    FROM TB_RECIPE_LIKE L
-                    WHERE L.RECIPE_ID = R.RECIPE_ID
-                      AND L.USER_ID = #{loginUserId}
-                ) THEN 1
-                ELSE 0
-                END AS liked_by_me,
+        /* ===== 로그인 유저 기준 좋아요 여부 ===== */
+        CASE
+        WHEN EXISTS (
+        SELECT 1
+        FROM TB_RECIPE_LIKE L
+        WHERE L.RECIPE_ID = R.RECIPE_ID
+        AND L.USER_ID = #{loginUserId}
+        ) THEN 1
+        ELSE 0
+        END AS liked_by_me,
 
-            /* ===== 재료 문자열 집계 ===== */
-            LISTAGG(
-                    I.INGREDIENT_NAME || '::' || NVL(I.QUANTITY_DESC, ''),
-                    '||'
-            ) WITHIN GROUP (ORDER BY I.RECIPE_INGREDIENT_ID) AS ingredientsString
+        /* ===== 재료 문자열 집계 ===== */
+        LISTAGG(
+        I.INGREDIENT_NAME || '::' || NVL(I.QUANTITY_DESC, ''),
+        '||'
+        ) WITHIN GROUP (ORDER BY I.RECIPE_INGREDIENT_ID) AS ingredientsString
 
         FROM TB_RECIPE R
-                 JOIN TB_USER U
-                      ON U.USER_ID = R.OWNER_USER_ID
-                 LEFT JOIN TB_RECIPE_INGREDIENT I
-                           ON I.RECIPE_ID = R.RECIPE_ID
+        JOIN TB_USER U
+        ON U.USER_ID = R.OWNER_USER_ID
+        LEFT JOIN TB_RECIPE_INGREDIENT I
+        ON I.RECIPE_ID = R.RECIPE_ID
 
         WHERE R.IS_PUBLIC = 'Y'
-          AND R.IS_DELETED = 'N'
+        AND R.IS_DELETED = 'N'
+
+        <!-- 🔍 검색어 (제목 / 요약 / 재료명) -->
+        <if test="search != null and search != ''">
+            AND (
+            LOWER(R.TITLE) LIKE '%' || LOWER(#{search}) || '%'
+            OR LOWER(R.SUMMARY) LIKE '%' || LOWER(#{search}) || '%'
+            OR LOWER(I.INGREDIENT_NAME) LIKE '%' || LOWER(#{search}) || '%'
+            )
+        </if>
+
+        <!-- 🍽 요리 스타일 -->
+        <if test="cuisineStyleCd != null and cuisineStyleCd != ''">
+            AND R.CUISINE_STYLE_CD = #{cuisineStyleCd}
+        </if>
+
+        <!-- ⭐ 난이도 -->
+        <if test="difficultyCd != null and difficultyCd != ''">
+            AND R.DIFFICULTY_CD = #{difficultyCd}
+        </if>
+
+        <!-- ⏱ 조리 시간 -->
+        <if test="maxCookTimeMin != null">
+            AND R.COOK_TIME_MIN <![CDATA[ <= ]]> #{maxCookTimeMin}
+        </if>
 
         GROUP BY
-            R.RECIPE_ID,
-            R.TITLE,
-            R.SUMMARY,
-            R.THUMBNAIL_URL,
-            R.DIFFICULTY_CD,
-            R.COOK_TIME_MIN,
-            R.CUISINE_STYLE_CD,
-            R.CATEGORY,
-            R.VIEW_CNT,
-            R.LIKE_CNT,
-            R.CREATED_DATE,
-            R.OWNER_USER_ID,
-            U.USER_NICKNAME,
-            U.USER_PROFILE_IMAGE_URL
+        R.RECIPE_ID,
+        R.TITLE,
+        R.SUMMARY,
+        R.THUMBNAIL_URL,
+        R.DIFFICULTY_CD,
+        R.COOK_TIME_MIN,
+        R.CUISINE_STYLE_CD,
+        R.CATEGORY,
+        R.VIEW_CNT,
+        R.LIKE_CNT,
+        R.CREATED_DATE,
+        R.OWNER_USER_ID,
+        U.USER_NICKNAME,
+        U.USER_PROFILE_IMAGE_URL
 
-        ORDER BY R.CREATED_DATE DESC
+        <choose>
+            <when test="sort != null and sort == 'POPULAR'">
+                ORDER BY R.LIKE_CNT DESC,
+                R.VIEW_CNT DESC,
+                R.CREATED_DATE DESC
+            </when>
+            <otherwise>
+                ORDER BY R.CREATED_DATE DESC
+            </otherwise>
+        </choose>
 
         OFFSET #{offset} ROWS
-            FETCH NEXT #{limit} ROWS ONLY
+        FETCH NEXT #{limit} ROWS ONLY
 
     </select>
 

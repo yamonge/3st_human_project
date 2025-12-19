@@ -65,6 +65,21 @@ export default StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  recipeImageContainer: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 24,
+    marginBottom: 16,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  recipeImage: {
+    width: '100%',
+    height: '100%',
+  },
 
   scrollContent: {paddingHorizontal: 16, paddingTop: 24},
 
