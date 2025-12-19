@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cucook.moc.user.dao.MyPageDAO">
+
+    <!-- 재료 관리 -->
+    <select id="countUserIngredients" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_USER_INGREDIENT
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <!-- 저장한 게시글 -->
+    <select id="countSavedRecipes" resultType="int">
+        SELECT
+            (
+                SELECT COUNT(*)
+                FROM TB_RECIPE
+                WHERE OWNER_USER_ID = #{userId}
+                  AND IS_DELETED = 'N'
+            )
+                +
+            (
+                SELECT COUNT(*)
+                FROM TB_RECIPE_LIKE
+                WHERE USER_ID = #{userId}
+            )
+        FROM DUAL
+    </select>
+
+    <!-- 공유한 게시글 -->
+    <select id="countSharedRecipes" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_RECIPE
+        WHERE OWNER_USER_ID = #{userId}
+          AND IS_PUBLIC = 'Y'
+          AND IS_DELETED = 'N'
+    </select>
+
+    <!-- 받은 후기 -->
+    <select id="countReceivedReviews" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_USER_REVIEW
+        WHERE TARGET_USER_ID = #{userId}
+    </select>
+
+    <!-- 내가 한 신고 -->
+    <select id="countMyReports" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_USER_REPORT
+        WHERE REPORTER_USER_ID = #{userId}
+    </select>
+
+</mapper>
