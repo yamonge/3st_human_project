@@ -75,10 +75,10 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
 
         {/* 재료 칩 */}
         <View style={styles.ingredientsContainer}>
-          {recipe.ingredients &&
-            recipe.ingredients.slice(0, 3).map((ingredient, index) => (
+          {Array.isArray(recipe.ingredients) &&
+            recipe.ingredients.slice(0, 3).map((item, index) => (
               <View key={index} style={styles.ingredientChip}>
-                <Text style={styles.ingredientText}>{ingredient.name}</Text>
+                <Text style={styles.ingredientText}>{item.ingredientName}</Text>
               </View>
             ))}
           {recipe.ingredients && recipe.ingredients.length > 3 && (

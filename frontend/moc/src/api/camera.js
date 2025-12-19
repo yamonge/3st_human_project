@@ -1,5 +1,4 @@
 import axios from './axiosConfig';
-
 /**
  * 재료 인식 API (에러 처리 포함)
  * 촬영한 이미지를 백엔드로 전송하여 AI 재료 인식 수행

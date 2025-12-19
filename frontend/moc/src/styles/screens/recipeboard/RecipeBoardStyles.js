@@ -34,6 +34,7 @@ export default StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     lineHeight: 36,
+    marginLeft: 10,
     color: colors.white,
   },
   headerSubtitle: {
@@ -41,6 +42,7 @@ export default StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     lineHeight: 18,
+    marginLeft: 10,
     color: 'rgba(255, 255, 255, 0.9)',
   },
 
@@ -95,6 +97,8 @@ export default StyleSheet.create({
     gap: 10,
   },
   filterChip: {
+    minWidth: 100,
+    justifyContent: 'center',
     height: 35,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 2,
