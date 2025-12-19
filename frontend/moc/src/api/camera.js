@@ -13,6 +13,34 @@ import axios from './axiosConfig';
  *   console.error(result.error);
  * }
  */
+
+// ✅ 레시피 응답 공통 정규화 (항상 최상단에! import문 바로 밑)
+const normalizeRecipe = recipe => {
+  if (!recipe) return recipe;
+
+  const r = {...recipe};
+
+  // 안드로이드 에뮬레이터 localhost 보정
+  if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
+    r.thumbnailUrl = r.thumbnailUrl.replace(
+      'http://localhost:8090',
+      'http://10.0.2.2:8090',
+    );
+  }
+
+  // 난이도 한글화 (화면 공통 사용)
+  r.difficultyText =
+    r.difficultyCd === 'EASY'
+      ? '쉬움'
+      : r.difficultyCd === 'NORMAL'
+      ? '보통'
+      : r.difficultyCd === 'HARD'
+      ? '어려움'
+      : r.difficultyCd;
+
+  return r;
+};
+
 export const recognizeIngredients = async photoPath => {
   try {
     console.log('📤 OCR API 호출:', photoPath);
@@ -108,8 +136,9 @@ export const recommendRecipes = async (userId, ingredients, filters) => {
     // ✅ axios interceptor 기준
     console.log('🌐 response =', response);
 
+    //////이 함수를 사용하는 부분////////////
     const recipes = Array.isArray(response.recommendedRecipes)
-      ? response.recommendedRecipes
+      ? response.recommendedRecipes.map(normalizeRecipe)
       : [];
 
     return {
