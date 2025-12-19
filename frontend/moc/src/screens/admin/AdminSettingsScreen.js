@@ -1,4 +1,5 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useCallback} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {View, Text, TouchableOpacity, ScrollView, Image} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {
@@ -28,17 +29,22 @@ export default function AdminSettingsScreen({navigation}) {
     pendingReports: 0,
   });
 
-  useEffect(() => {
-    loadAdminStats();
-  }, []);
+ // ✅ 화면 포커스될 때마다 재조회
+  useFocusEffect(
+    useCallback(() => {
+      loadAdminStats();
+      // cleanup 필요 없으면 return 생략
+      return () => {};
+    }, []),
+  );
 
   // 관리자 통계 로드
   const loadAdminStats = async () => {
     try {
       const data = await getAdminStats();
       setStats({
-        totalUsers: data.totalUsers || 0,
-        pendingReports: data.pendingReports || 0,
+        totalUsers: data?.totalUsers || 0,
+        pendingReports: data?.pendingReports || 0,
       });
     } catch (error) {
       console.error('관리자 통계 로드 실패:', error);
