@@ -121,10 +121,10 @@ export const getUserProfile = async () => {
  * 마이페이지 메뉴 카운트 조회
  * @returns {Promise} 메뉴별 카운트 정보
  */
-export const getMenuCounts = async () => {
+export const getMenuCounts = async userId => {
   try {
-    const response = await api.get('/mypage/counts');
-    return response.data;
+    const data = await api.get(`/v1/users/${userId}/mypage/counts`);
+    return data;
   } catch (error) {
     console.error('메뉴 카운트 조회 실패:', error);
     throw error;

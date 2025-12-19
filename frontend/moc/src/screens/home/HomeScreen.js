@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Alert,
   InteractionManager,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MenuCard from '../../components/home/MenuCard';
 import PopularRecipeCard from '../../components/home/PopularRecipeCard';
@@ -35,53 +36,47 @@ export default function HomeScreen({navigation}) {
   const setCurrentUser = useChatStore(state => state.setCurrentUser);
 
   // 🔥 WebSocket 연결 초기화 (홈 화면 진입 시)
-  useEffect(() => {
-    const initializeWebSocket = async () => {
-      try {
-        // 사용자 정보 로드
-        const userId = await AsyncStorage.getItem('userId');
-        const nickname = await AsyncStorage.getItem('userNickname');
+  useFocusEffect(
+    useCallback(() => {
+      const initializeHome = async () => {
+        try {
+          // 🔹 사용자 정보 로드
+          const userId = await AsyncStorage.getItem('userId');
+          const nickname = await AsyncStorage.getItem('userNickname');
 
-        if (!userId) {
-          console.log(
-            '⚠️ [HomeScreen] 사용자 정보 없음 - WebSocket 연결 건너뜀',
+          if (!userId) {
+            console.log('⚠️ [HomeScreen] 사용자 정보 없음');
+            return;
+          }
+
+          // 🔹 상단 인삿말용
+          setUserName(nickname || '사용자');
+
+          // 🔹 Zustand Store에 사용자 정보 저장
+          setCurrentUser({
+            userId: Number(userId),
+            nickname: nickname || '사용자',
+          });
+
+          // 🔹 WebSocket 연결 (이미 연결돼 있으면 중복 방지 권장)
+          StompClient.connect(
+            Number(userId),
+            () => {
+              console.log('✅ [HomeScreen] WebSocket 연결 성공!');
+              setConnected(true);
+            },
+            error => {
+              console.error('❌ [HomeScreen] WebSocket 연결 실패:', error);
+              setConnected(false);
+            },
           );
-          return;
+        } catch (error) {
+          console.error('💥 [HomeScreen] 초기화 에러:', error);
         }
-
-        console.log('🔌 [HomeScreen] WebSocket 연결 시작...', {
-          userId,
-          nickname,
-        });
-
-        // Zustand Store에 사용자 정보 저장
-        setCurrentUser({
-          userId: Number(userId),
-          nickname: nickname || '사용자',
-        });
-
-        // WebSocket 연결
-        StompClient.connect(
-          Number(userId),
-          () => {
-            console.log('✅ [HomeScreen] WebSocket 연결 성공!');
-            setConnected(true);
-          },
-          error => {
-            console.error('❌ [HomeScreen] WebSocket 연결 실패:', error);
-            setConnected(false);
-          },
-        );
-      } catch (error) {
-        console.error('💥 [HomeScreen] WebSocket 초기화 에러:', error);
-      }
-    };
-
-    initializeWebSocket();
-
-    // ✅ WebSocket은 앱 전체에서 공유되므로 언마운트 시에도 연결 유지
-    // cleanup 함수 제거 - 연결을 끊지 않음!
-  }, []);
+      };
+      initializeHome();
+    }, []),
+  );
 
   // 알림 초기화 및 권한 요청 (홈 화면 렌더링 완료 후)
   useEffect(() => {

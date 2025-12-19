@@ -12,6 +12,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MenuCard from '../../components/mypage/MenuCard';
 import styles from '../../styles/screens/mypage/ProfileScreenStyles';
+import {getMenuCounts} from '../../api/mypage';
 
 /**
  * 마이페이지 메인 화면
@@ -29,20 +30,26 @@ export default function ProfileScreen({navigation}) {
   });
 
   const [menuCounts, setMenuCounts] = useState({
-    ingredients: 6,
-    savedRecipes: 8,
-    sharedRecipes: 3,
-    reviews: 4,
+    ingredients: 0,
+    savedRecipes: 0,
+    sharedRecipes: 0,
+    reviews: 0,
     reports: 0,
   });
+  // ✅ 화면 최초 로드 시 사용자 정보 로딩
+  useFocusEffect(
+    useCallback(() => {
+      loadUserInfo();
+    }, []),
+  );
 
   // ✅ 화면이 다시 보일 때(포커스될 때)마다 최신 값 재로딩
   useFocusEffect(
     useCallback(() => {
-      loadUserInfo();
-      // 메뉴카운트도 최신화가 필요하면 같이 호출
-      // loadMenuCounts();
-    }, []),
+      if (userId) {
+        loadMenuCounts();
+      }
+    }, [userId]),
   );
 
   // 사용자 정보 로드
@@ -65,11 +72,21 @@ export default function ProfileScreen({navigation}) {
     }
   };
 
-  // 메뉴 카운트 로드 (추후 API 연동)
+  // 메뉴 카운트 로드
   const loadMenuCounts = async () => {
-    // TODO: API 연동
-    // const counts = await fetchMenuCounts();
-    // setMenuCounts(counts);
+    try {
+      const data = await getMenuCounts(userId);
+      console.log('📦 menuCounts response:', data);
+      setMenuCounts({
+        ingredients: data.ingredientCount,
+        savedRecipes: data.savedRecipeCount,
+        sharedRecipes: data.sharedRecipeCount,
+        reviews: data.receivedReviewCount,
+        reports: data.reportCount,
+      });
+    } catch (error) {
+      console.error('메뉴 카운트 로드 실패:', error);
+    }
   };
 
   // 로그아웃 처리
