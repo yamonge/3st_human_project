@@ -1,11 +1,13 @@
 import notifee, {TriggerType, AndroidImportance} from '@notifee/react-native';
 import {Platform, PermissionsAndroid} from 'react-native';
 import {differenceInMinutes, parseISO} from 'date-fns';
+import messaging from '@react-native-firebase/messaging';
 
 /**
  * Notifee 알림 서비스
  * - 로컬 알림 초기화 및 관리
  * - 약속 30분 전 알림 스케줄링
+ * - FCM 푸시 알림 수신 및 표시
  */
 
 /**
@@ -131,5 +133,58 @@ export const cancelMeetingNotification = async postId => {
     console.log('[알림 취소 완료]', notificationId);
   } catch (error) {
     console.error('[알림 취소 실패]', error);
+  }
+};
+
+/**
+ * FCM 푸시 알림을 로컬 알림으로 표시 (앱 실행 중)
+ * @param {Object} remoteMessage - FCM 메시지 객체
+ */
+export const displayFCMNotification = async remoteMessage => {
+  try {
+    await notifee.displayNotification({
+      title: remoteMessage.notification?.title || '알림',
+      body: remoteMessage.notification?.body || '',
+      android: {
+        channelId: 'shopping-reminder',
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        },
+        // FCM 데이터를 전달하여 클릭 시 사용
+        data: remoteMessage.data,
+      },
+      ios: {
+        sound: 'default',
+      },
+      data: remoteMessage.data, // 클릭 이벤트에서 사용할 데이터
+    });
+
+    console.log('[FCM 알림 표시 완료]', remoteMessage.notification?.title);
+  } catch (error) {
+    console.error('[FCM 알림 표시 실패]', error);
+  }
+};
+
+/**
+ * FCM 초기 설정
+ */
+export const setupFCM = async () => {
+  try {
+    // 알림 권한 요청
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) {
+      console.warn('[FCM] 알림 권한이 없습니다.');
+      return;
+    }
+
+    // FCM Token 확인
+    const fcmToken = await messaging().getToken();
+    console.log('[FCM Token]', fcmToken);
+
+    return fcmToken;
+  } catch (error) {
+    console.error('[FCM 초기화 실패]', error);
+    return null;
   }
 };
