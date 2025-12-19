@@ -21,9 +21,9 @@ const onboardingData = [
   },
   {
     id: '2',
-    title: '함께 소핑하고 절약해보세요!',
+    title: '함께 쇼핑하고 절약해보세요!',
     description:
-      '같이 장보기 기능을 통해\n제철음식 하고 원하는 물품을 구입하세요!',
+      '같이 장보기 기능을 통해\n원하는 물품을 구매하고 식비를 절약 해보세요!',
     animation: require('../../assets/animations/onboarding2.json'),
   },
   {

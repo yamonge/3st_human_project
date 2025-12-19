@@ -61,7 +61,6 @@ const mapTypeToReasonCd = type => {
   return String(type).toUpperCase();
 };
 
-
 // ===== 관리자 통계 =====
 
 /**
@@ -289,7 +288,7 @@ export const suspendUserByReport = async (reportId, data) => {
  */
 export const getPostList = async params => {
   try {
-    const response = await api.get('/admin/posts', {params});
+    const response = await api.get('/admin/posts', withAdminMeta({params}));
     return response;
   } catch (error) {
     console.error('게시글 목록 조회 실패:', error);
@@ -297,14 +296,13 @@ export const getPostList = async params => {
   }
 };
 
-/**
- * 게시글 삭제
- * @param {number} postId - 게시글 ID
- * @returns {Promise<Object>}
- */
+// 게시글 삭제(소프트 삭제)
 export const deletePost = async postId => {
   try {
-    const response = await api.delete(`/admin/posts/${postId}`);
+    const response = await api.delete(
+      `/admin/posts/${postId}`,
+      withAdminMeta(),
+    );
     return response;
   } catch (error) {
     console.error('게시글 삭제 실패:', error);
@@ -312,17 +310,14 @@ export const deletePost = async postId => {
   }
 };
 
-/**
- * 게시글 숨김/복원
- * @param {number} postId - 게시글 ID
- * @param {boolean} hidden - 숨김 여부
- * @returns {Promise<Object>}
- */
+// 게시글 숨김/복원
 export const togglePostVisibility = async (postId, hidden) => {
   try {
-    const response = await api.patch(`/admin/posts/${postId}/visibility`, {
-      hidden,
-    });
+    const response = await api.patch(
+      `/admin/posts/${postId}/visibility`,
+      {hidden},
+      withAdminMeta(),
+    );
     return response;
   } catch (error) {
     console.error('게시글 숨김/복원 실패:', error);
