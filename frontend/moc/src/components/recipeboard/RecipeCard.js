@@ -28,11 +28,12 @@ const RecipeCard = ({recipe, onPress}) => {
       <View style={styles.imageContainer}>
         <Image
           source={
-            recipe.image
-              ? {uri: recipe.image}
+            recipe.thumbnailUrl
+              ? {uri: recipe.thumbnailUrl}
               : require('../../assets/images/noImage.png')
           }
           style={styles.recipeImage}
+          resizeMode="cover"
         />
 
         {/* 좋아요 아이콘 (표시만) */}

@@ -79,7 +79,10 @@ const loadRecipes = async () => {
 
   // 레시피 카드 클릭 핸들러
   const handleRecipePress = recipeId => {
-    navigation.navigate('RecipeDetail', {recipeId});
+    navigation.navigate('RecipeBoardDetail', {
+      recipeId: recipeId,
+      from: 'recipeboard',
+    });
   };
 
 

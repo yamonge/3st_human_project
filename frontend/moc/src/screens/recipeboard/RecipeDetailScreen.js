@@ -6,12 +6,19 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
-import {Heart, ChevronLeft, Flag} from 'lucide-react-native';
 import styles from '../../styles/screens/recipeboard/RecipeDetailStyles';
 import {getRecipeBoardDetail, toggleRecipeLike} from '../../api/recipeBoard';
+import {
+  ChevronLeft,
+  Flag,
+  Heart,
+  Camera as CameraIcon,
+  Check,
+} from 'lucide-react-native';
 // import {reportRecipe} from '../../api/report';
 
 /**
@@ -22,7 +29,7 @@ import {getRecipeBoardDetail, toggleRecipeLike} from '../../api/recipeBoard';
  */
 export default function RecipeDetailScreen({route, navigation}) {
   const [userId, setUserId] = useState(null);
-  const {recipeId, recipe: initialRecipe} = route.params || {};
+  const {recipeId, recipe: initialRecipe, from} = route.params || {};
   const [recipe, setRecipe] = useState(initialRecipe);
   const [liked, setLiked] = useState(!!initialRecipe?.isLiked);
   const [likeCount, setLikeCount] = useState(initialRecipe?.likeCount || 0);
@@ -102,28 +109,28 @@ export default function RecipeDetailScreen({route, navigation}) {
   };
 
   // 좋아요 토글 핸들러
-const handleLikeToggle = async () => {
-  try {
-    if (!userId) {
-      console.warn('❌ userId 없음');
-      return;
+  const handleLikeToggle = async () => {
+    try {
+      if (!userId) {
+        console.warn('❌ userId 없음');
+        return;
+      }
+      const rid = recipe?.recipeId ?? recipeId;
+      if (!rid) {
+        console.warn('❌ recipeId 없음');
+        return;
+      }
+
+      const isLiked = await toggleRecipeLike(rid, userId);
+
+      setLiked(isLiked);
+      setLikeCount(prev => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
+
+      console.log('✅ 좋아요 토글 성공:', {userId, recipeId: rid, isLiked});
+    } catch (error) {
+      console.error('❌ 좋아요 토글 실패:', error);
     }
-    const rid = recipe?.recipeId ?? recipeId;
-    if (!rid) {
-      console.warn('❌ recipeId 없음');
-      return;
-    }
-
-    const isLiked = await toggleRecipeLike(rid, userId);
-
-    setLiked(isLiked);
-    setLikeCount(prev => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
-
-    console.log('✅ 좋아요 토글 성공:', { userId, recipeId: rid, isLiked });
-  } catch (error) {
-    console.error('❌ 좋아요 토글 실패:', error);
-  }
-};
+  };
 
   // 신고하기 핸들러
   const handleReport = () => {
@@ -192,7 +199,11 @@ const handleLikeToggle = async () => {
           <View style={styles.headerLeft}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.navigate('RecipeBoard')}>
+              onPress={() =>
+                from === 'recipeboard'
+                  ? navigation.navigate('RecipeBoard')
+                  : navigation.navigate('SharedRecipes')
+              }>
               <ChevronLeft size={24} color="#F55E5E" />
             </TouchableOpacity>
             <View>
@@ -227,6 +238,22 @@ const handleLikeToggle = async () => {
       <ScrollView
         style={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
+        {/* 레시피 이미지 (최상단) */}
+        <View style={styles.recipeImageContainer}>
+          {recipe.thumbnailUrl ? (
+            <Image
+              source={{uri: recipe.thumbnailUrl}}
+              style={styles.recipeImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <CameraIcon
+              color="#D1D5DB"
+              size={64}
+              style={styles.recipePlaceholderIcon}
+            />
+          )}
+        </View>
         {/* 필요한 재료 */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>필요한 재료</Text>
