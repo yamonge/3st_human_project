@@ -81,7 +81,10 @@ export default StyleSheet.create({
     height: '100%',
   },
 
-  scrollContent: {paddingHorizontal: 16, paddingTop: 24, marginBottom: 100},
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 24,
+  },
 
   card: {
     backgroundColor: '#FFFFFF',

@@ -24,7 +24,7 @@ const normalizeRecipe = recipe => {
   if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
     r.thumbnailUrl = r.thumbnailUrl.replace(
       'http://localhost:8090',
-      'http://10.0.2.2:8090',
+      'http://192.168.50.117:8090',
     );
   }
 

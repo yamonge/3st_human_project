@@ -15,6 +15,7 @@ import {homeStyles} from '../../styles/screens/home/homeStyles';
 import {
   initNotification,
   requestNotificationPermission,
+  setupFCM,
 } from '../../utils/notificationService';
 import useChatStore from '../../stores/chatStore';
 import StompClient from '../../utils/StompClient';
@@ -78,14 +79,15 @@ export default function HomeScreen({navigation}) {
     }, []),
   );
 
-  // 알림 초기화 및 권한 요청 (홈 화면 렌더링 완료 후)
+  // 알림 권한 요청 (홈 화면 렌더링 완료 후)
   useEffect(() => {
     // requestAnimationFrame: 다음 프레임에서 실행 (렌더링 완료 보장)
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         // 2프레임 대기 후 실행 (확실한 렌더링 완료)
-        initNotification();
-        requestNotificationPermission();
+        await initNotification();
+        await setupFCM(); // FCM 권한 요청 및 토큰 생성
+        await requestNotificationPermission();
       });
     });
   }, []);
@@ -129,9 +131,11 @@ export default function HomeScreen({navigation}) {
         });
         break;
       case 'search':
-        // TODO: 마이크 플로우 이동
-        Alert.alert('레시피 찾기', '음성인식 플로우로 이동합니다.');
-        // navigation.navigate('Voice');
+        // Voice 화면으로 이동
+        navigation.reset({
+          index: 0,
+          routes: [{name: 'Voice'}],
+        });
         break;
       case 'board':
         // 레시피 게시판 이동

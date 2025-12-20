@@ -1,4 +1,5 @@
 import api from './axiosConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ✅ 레시피 공통 정규화 함수 (여기 딱 1번만)
 const normalizeRecipe = recipe => {
@@ -52,7 +53,6 @@ const normalizeRecipe = recipe => {
  * // 전체 레시피 조회
  */
 
-
 export const getRecipeBoardList = async ({
   search,
   cuisineStyleCd,
@@ -63,8 +63,12 @@ export const getRecipeBoardList = async ({
   size = 10,
 } = {}) => {
   try {
+    // ✅ 현재 로그인한 사용자 ID 가져오기
+    const userId = await AsyncStorage.getItem('userId');
+
     const response = await api.get('/v1/recipes/board', {
       params: {
+        loginUserId: userId ? Number(userId) : undefined, // ✅ 백엔드에 전달
         search,
         cuisineStyleCd,
         difficultyCd,
@@ -139,7 +143,7 @@ export const toggleRecipeLike = async (recipeId, userId) => {
       recipeId: recipeId,
     });
     console.log('📦 좋아요 토글 API raw response:', response);
-    return response.data;
+    return response; // ✅ interceptor가 이미 .data를 리턴함
   } catch (error) {
     console.error('좋아요 토글 실패:', error);
     throw error;

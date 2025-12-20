@@ -112,6 +112,7 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         vo.setCuisineStyleCd(dto.getCuisineStyleCd());
         vo.setCategory(dto.getCategory());
         vo.setViewCnt(Integer.valueOf(dto.getViewCnt()));
+        vo.setLikeCnt(dto.getLikeCnt()); // ✅ likeCnt 추가
         vo.setLikedByMe(Integer.valueOf(dto.getLikedByMe()));
         vo.setOwnerUserId(Long.valueOf(dto.getOwnerUserId()));
         vo.setCreatedDate(dto.getCreatedDate());

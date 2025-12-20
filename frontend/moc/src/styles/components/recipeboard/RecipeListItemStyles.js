@@ -141,7 +141,6 @@ export default StyleSheet.create({
 
   // 우측 좋아요 영역
   likeContainer: {
-    justifyContent: 'space-between',
     alignItems: 'center',
     width: 32,
   },
