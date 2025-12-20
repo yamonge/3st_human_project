@@ -3,10 +3,16 @@ package com.cucook.moc.chat.service;
 import com.cucook.moc.chat.dao.ChatRoomDAO;
 import com.cucook.moc.chat.dao.ChatParticipantDAO;
 import com.cucook.moc.chat.dto.ChatRoomSummaryDTO;
+import com.cucook.moc.chat.dto.ChatMessageDTO;
 import com.cucook.moc.chat.vo.ChatRoomVO;
 import com.cucook.moc.shopping.dao.ShoppingPostDAO;
 import com.cucook.moc.shopping.dao.ShoppingPostJoinDAO;
+import com.cucook.moc.shopping.vo.ShoppingPostVO;
+import com.cucook.moc.user.dao.UserDAO;
+import com.cucook.moc.user.vo.UserVO;
+import com.cucook.moc.common.FirebaseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +39,15 @@ public class ShoppingChatRoomService {
 
     @Autowired
     private ShoppingPostJoinDAO shoppingPostJoinDAO;
+
+    @Autowired
+    private UserDAO userDAO;
+
+    @Autowired
+    private FirebaseService firebaseService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     /**
      * 게시글에 대응되는 채팅방 생성 + 작성자 참여
@@ -141,6 +156,13 @@ public class ShoppingChatRoomService {
             throw new IllegalStateException("채팅방 삭제 권한이 없습니다.");
         }
 
+        // 장소명 조회 (알림용)
+        ShoppingPostVO post = shoppingPostDAO.selectById(room.getShoppingPostId());
+        String placeName = post != null ? post.getPlaceName() : "장보기";
+
+        // 🔥 1) 모든 참여자 강퇴 (leave_date 업데이트)
+        chatParticipantDAO.bulkUpdateLeaveDate(chatRoomId);
+
         // 채팅방 상태를 DELETED로 변경
         chatRoomDAO.updateStatus(chatRoomId, "DELETED");
 
@@ -148,6 +170,41 @@ public class ShoppingChatRoomService {
         if (room.getShoppingPostId() != null) {
             shoppingPostDAO.updateStatus(room.getShoppingPostId(), "CANCELED");
             System.out.println("[게시글 상태 변경] postId: " + room.getShoppingPostId() + " -> CANCELED");
+        }
+
+        // 🔥 2) Firebase 푸시 알림 전송 (방장 제외)
+        try {
+            List<Long> participantIds = chatParticipantDAO.selectUserIdsByRoom(chatRoomId);
+            List<Long> targetUserIds = participantIds.stream()
+                    .filter(id -> !id.equals(requestUserId))
+                    .collect(java.util.stream.Collectors.toList());
+
+            if (!targetUserIds.isEmpty()) {
+                List<String> fcmTokens = userDAO.selectFcmTokensByUserIds(targetUserIds);
+                if (!fcmTokens.isEmpty()) {
+                    firebaseService.sendPushNotificationMulti(
+                            fcmTokens,
+                            "⚠️ 채팅방 폐기 알림",
+                            "'" + placeName + "' 모임이 취소되었습니다."
+                    );
+                    System.out.println("✅ 방 삭제 알림 전송 완료: " + fcmTokens.size() + "명");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ 방 삭제 알림 전송 실패: " + e.getMessage());
+        }
+
+        // 🔥 3) WebSocket 시스템 메시지 (채팅방 안에 있는 사용자 강제 종료)
+        try {
+            ChatMessageDTO systemMsg = ChatMessageDTO.systemMessage(
+                    "방장이 채팅방을 폐기했습니다.",
+                    "ROOM_KICKED"
+            );
+            String destination = "/topic/room/" + chatRoomId;
+            messagingTemplate.convertAndSend(destination, systemMsg);
+            System.out.println("✅ 방 삭제 WebSocket 메시지 전송 완료");
+        } catch (Exception e) {
+            System.err.println("⚠️ 방 삭제 WebSocket 메시지 전송 실패: " + e.getMessage());
         }
     }
 
@@ -176,5 +233,34 @@ public class ShoppingChatRoomService {
 
         // 참여자 제거
         chatParticipantDAO.updateLeaveDate(chatRoomId, kickUserId);
+
+        // 🔥 1) Firebase 푸시 알림 전송 (강퇴당한 사람에게만)
+        try {
+            UserVO kickedUser = userDAO.selectById(kickUserId);
+            if (kickedUser != null && kickedUser.getFcmToken() != null && !kickedUser.getFcmToken().isEmpty()) {
+                firebaseService.sendPushNotification(
+                        kickedUser.getFcmToken(),
+                        "⚠️ 채팅방 강퇴 알림",
+                        "방장에 의해 채팅방에서 강퇴되었습니다."
+                );
+                System.out.println("✅ 강퇴 알림 전송 완료: " + kickedUser.getUserNickname());
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ 강퇴 알림 전송 실패: " + e.getMessage());
+        }
+
+        // 🔥 2) WebSocket 시스템 메시지 (강퇴당한 사람 화면 강제 종료)
+        try {
+            ChatMessageDTO kickMsg = ChatMessageDTO.kickMessage(
+                    "방장에 의해 강퇴되었습니다.",
+                    "USER_KICKED",
+                    kickUserId
+            );
+            String destination = "/topic/room/" + chatRoomId;
+            messagingTemplate.convertAndSend(destination, kickMsg);
+            System.out.println("✅ 강퇴 WebSocket 메시지 전송 완료");
+        } catch (Exception e) {
+            System.err.println("⚠️ 강퇴 WebSocket 메시지 전송 실패: " + e.getMessage());
+        }
     }
 }

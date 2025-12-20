@@ -387,23 +387,25 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
 
-        // 2) 참석률 계산 (완료 / 참여 * 100)
+        // 2) 실시간으로 완료한 모임 수와 참여한 모임 수 조회
+        Integer completed = userDAO.countCompletedMeetings(targetUserId);
+        Integer participated = userDAO.countTotalMeetings(targetUserId);
+
+        // 3) 참석률 계산 (완료 / 참여 * 100)
         Integer attendanceRate = 0;
-        Integer participated = user.getShoppingParticipatedCnt();
-        Integer completed = user.getShoppingCompletedCnt();
         if (participated != null && participated > 0) {
             attendanceRate = (int) Math.round((completed.doubleValue() / participated.doubleValue()) * 100);
         }
 
-        // 3) 후기 개수 조회
+        // 4) 후기 개수 조회
         int reviewCount = userReviewDAO.countReceivedUserReviewsByUserId(targetUserId);
 
-        // 4) 공개용 프로필 DTO 구성
+        // 5) 공개용 프로필 DTO 구성
         return PublicProfileDTO.builder()
                 .userId(user.getUserId())
                 .userNickname(user.getUserNickname())
                 .ratingScore(user.getRatingScore())
-                .shoppingCompletedCnt(user.getShoppingCompletedCnt())
+                .shoppingCompletedCnt(completed)  // ✅ 실시간 조회값 사용
                 .attendanceRate(attendanceRate)
                 .createdDate(user.getCreatedDate())
                 .reviewCnt(reviewCount)

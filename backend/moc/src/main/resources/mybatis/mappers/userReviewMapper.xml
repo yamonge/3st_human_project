@@ -159,7 +159,7 @@
             u.user_nickname AS writerNickname,
             ur.shopping_post_id AS shoppingPostId,
             ur.rating,
-            ur.user_review_comment AS userReviewComment,
+            ur.user_review_comment AS "comment",
             ur.created_date AS createdDate
         FROM
             tb_user_review ur

@@ -258,14 +258,6 @@ const ParticipantProfileBottomSheet = ({
                   </View>
                   <Text style={styles.nickname}>{profileData.nickname}</Text>
                   <Text style={styles.joinDate}>{profileData.joinDate}</Text>
-                  <View style={styles.ratingContainer}>
-                    <View style={styles.starsContainer}>
-                      {renderStars(profileData.rating)}
-                    </View>
-                    <Text style={styles.ratingText}>
-                      {profileData.rating} ({profileData.reviewCount}개 후기)
-                    </Text>
-                  </View>
                 </View>
 
                 {/* 통계 */}
@@ -278,11 +270,18 @@ const ParticipantProfileBottomSheet = ({
                     <Text style={styles.statLabel}>완료한 모임</Text>
                   </View>
                   <View style={styles.statCard}>
-                    <Users size={28} color="#A855F7" strokeWidth={2} />
+                    <Star
+                      size={28}
+                      fill="#FFD700"
+                      color="#FFD700"
+                      strokeWidth={2}
+                    />
                     <Text style={styles.statValue}>
-                      {profileData.attendanceRate}%
+                      {profileData.rating.toFixed(1)}
                     </Text>
-                    <Text style={styles.statLabel}>참석률</Text>
+                    <Text style={styles.statLabel}>
+                      리뷰 ({profileData.reviewCount}개)
+                    </Text>
                   </View>
                 </View>
 

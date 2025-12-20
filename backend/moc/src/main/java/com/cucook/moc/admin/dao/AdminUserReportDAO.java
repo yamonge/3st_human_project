@@ -16,6 +16,11 @@ public interface AdminUserReportDAO {
 
     List<AdminUserReportVO> selectUserReportList(AdminUserReportSearchRequestDTO searchDTO);
 
+    /**
+     * 신고 ID로 신고 정보 조회 (알림 전송용)
+     */
+    AdminUserReportVO selectUserReportById(@Param("userReportId") Long userReportId);
+
     int updateUserReportStatus(
             @Param("userReportId") Long userReportId,
             @Param("statusCd") String statusCd,

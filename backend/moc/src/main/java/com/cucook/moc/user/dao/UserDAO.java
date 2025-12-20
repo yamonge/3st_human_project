@@ -49,6 +49,9 @@ public interface UserDAO {
     // userId로 회원 한 명 조회 (마이페이지용)
     UserVO selectById(@Param("userId") Long userId);
     
+    // 여러 사용자의 FCM Token 조회 (알림 전송용)
+    java.util.List<String> selectFcmTokensByUserIds(@Param("userIds") java.util.List<Long> userIds);
+    
     // 같이 장보기에 대한 유저 평점 평균
     void updateRatingScoreByAvg(@Param("targetUserId") Long targetUserId);
 
@@ -77,4 +80,16 @@ public interface UserDAO {
      * - suspended_until <= SYSTIMESTAMP
      */
     int restoreExpiredSuspensionToActive(@Param("userId") Long userId);
+
+    /**
+     * 특정 사용자가 완료한 모임 수 실시간 조회
+     * (tb_shopping_post.status_cd = 'DONE')
+     */
+    int countCompletedMeetings(@Param("userId") Long userId);
+
+    /**
+     * 특정 사용자가 참여한 전체 모임 수 실시간 조회
+     * (나간 방 제외)
+     */
+    int countTotalMeetings(@Param("userId") Long userId);
 }

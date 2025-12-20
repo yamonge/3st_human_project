@@ -14,7 +14,8 @@ import PostFilterModal from './PostFilterModal';
 import PostCreateModal from './PostCreateModal';
 import ChatRoomScreen from '../chat/ChatRoomScreen';
 import {getPostsByLocation, joinPost} from '../../api/map';
-import authAPI from '../../api/auth';
+import {scheduleMeetingNotification} from '../../utils/notificationService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from '../../styles/components/map/PostListBottomSheetStyles';
 import {colors} from '../../styles/common';
 
@@ -68,8 +69,8 @@ const PostListBottomSheet = forwardRef(
     useEffect(() => {
       const loadCurrentUser = async () => {
         try {
-          const response = await authAPI.getCurrentUser();
-          setCurrentUserId(response.user?.userId || response.userId);
+          const userId = await AsyncStorage.getItem('userId');
+          setCurrentUserId(Number(userId));
         } catch (error) {
           console.error('[현재 사용자 로드 실패]', error);
         }
@@ -451,6 +452,21 @@ const PostListBottomSheet = forwardRef(
 
         // 🔥 참여 성공 후 게시물 목록 새로고침 (인원수 + isParticipated 업데이트)
         await loadPosts();
+
+        // 🔔 약속 30분 전 알림 예약
+        try {
+          if (post.meetDatetime) {
+            await scheduleMeetingNotification(
+              post.id,
+              post.storeName,
+              post.meetTime,
+              new Date(post.meetDatetime),
+            );
+            console.log('✅ 약속 30분 전 알림 예약 완료');
+          }
+        } catch (notifError) {
+          console.error('⚠️ 알림 예약 실패 (참여는 성공):', notifError);
+        }
 
         // 바텀시트 닫기
         console.log('[바텀시트] 닫기 시작');

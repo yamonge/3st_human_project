@@ -47,7 +47,7 @@ export default function ReviewWriteModal({
     loadUserId();
   }, []);
 
-  // 방장 정보 로드 (채팅방 참여자 목록에서 첫 번째 사용자 = 방장)
+  // 방장 정보 로드 (채팅방 참여자 목록에서 isOwner가 true인 사용자 = 방장)
   useEffect(() => {
     const loadHostInfo = async () => {
       if (!chatRoomId || !visible) return;
@@ -57,10 +57,25 @@ export default function ReviewWriteModal({
         const participants = await getChatRoomParticipants(chatRoomId);
 
         if (participants && participants.length > 0) {
-          // 첫 번째 참여자가 방장 (게시글 작성자)
-          const host = participants[0];
-          setHostUserId(host.userId);
-          console.log('✅ [ReviewWriteModal] 방장 ID:', host.userId);
+          // 🔥 isOwner가 true인 참여자 찾기 (방장 = 게시글 작성자)
+          const host = participants.find(
+            p => p.isOwner === true || p.isOwner === 1,
+          );
+
+          if (host) {
+            setHostUserId(host.userId);
+            console.log(
+              '✅ [ReviewWriteModal] 방장 ID:',
+              host.userId,
+              '닉네임:',
+              host.nickname,
+            );
+          } else {
+            console.warn(
+              '⚠️ [ReviewWriteModal] 방장을 찾을 수 없습니다. 첫 번째 참여자를 방장으로 설정합니다.',
+            );
+            setHostUserId(participants[0].userId);
+          }
         } else {
           console.warn('⚠️ [ReviewWriteModal] 참여자 목록이 비어있습니다.');
         }

@@ -232,7 +232,7 @@
         updated_id         AS updatedId,
         updated_date       AS updatedDate
         FROM tb_shopping_post
-        WHERE shopping_post_id = #{shoppingPostId}
+        WHERE shopping_post_id = #{postId}
     </select>
 
     <!-- 게시글 작성자 조회 (방장 권한 검증용) -->

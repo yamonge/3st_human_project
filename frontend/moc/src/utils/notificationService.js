@@ -93,6 +93,11 @@ export const scheduleMeetingNotification = async (
         id: `meeting-${postId}`, // 고유 ID (취소 시 사용)
         title: '🛒 장보기 30분 전!',
         body: `${storeName}에서 ${meetTimeString}에 만나요!`,
+        data: {
+          chatRoomId: String(postId), // 🔥 채팅방 ID 추가
+          storeName: storeName,
+          type: 'MEETING',
+        },
         android: {
           channelId: 'shopping-reminder',
           importance: AndroidImportance.HIGH,
