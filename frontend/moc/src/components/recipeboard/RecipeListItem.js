@@ -102,7 +102,7 @@ const RecipeListItem = ({recipe, onPress, hideLike = false}) => {
               fill={recipe.likedByMe ? '#FF2056' : 'none'}
             />
           </View>
-          <Text style={styles.likeCount}>{recipe.likeCount || 0}</Text>
+          <Text style={styles.likeCount}>{recipe.likeCnt || 0}</Text>
         </View>
       )}
     </TouchableOpacity>

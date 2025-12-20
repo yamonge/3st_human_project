@@ -25,6 +25,10 @@ import FindAccountScreen from './src/screens/user/FindAccountScreen';
 // 메인 화면
 import HomeScreen from './src/screens/home/HomeScreen';
 
+// 음성 인식 화면
+import VoiceScreen from './src/screens/voice/VoiceScreen';
+import YoutubeShortsScreen from './src/screens/voice/YoutubeShortsScreen';
+
 // 카메라 플로우
 import CameraCaptureScreen from './src/screens/camera/CameraCaptureScreen';
 import IngredientResultScreen from './src/screens/camera/IngredientResultScreen';
@@ -103,7 +107,20 @@ function MainTabNavigator() {
           tabBarButton: () => null, // 탭 바 완전히 숨김
         }}
       />
-      <Tab.Screen name="Voice" component={''} />
+      <Tab.Screen
+        name="Voice"
+        component={VoiceScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="YoutubeShortsScreen"
+        component={YoutubeShortsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
       <Tab.Screen name="Recipe" component={RecipeSelectionScreen} />
       <Tab.Screen name="Receipt" component={ReceiptSelectionScreen} />
       <Tab.Screen name="Map" component={MapMainScreen} />
@@ -339,8 +356,7 @@ function App() {
       // Notifee 초기화
       await initNotification();
 
-      // FCM 설정
-      await setupFCM();
+      // ⚠️ 권한 요청은 HomeScreen에서 실행 (setupFCM 제거)
 
       // 🔥 포그라운드 메시지 수신 (앱 실행 중)
       const unsubscribeForeground = messaging().onMessage(

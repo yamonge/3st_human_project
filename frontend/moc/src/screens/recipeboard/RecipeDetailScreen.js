@@ -19,7 +19,7 @@ import {
   Camera as CameraIcon,
   Check,
 } from 'lucide-react-native';
-// import {reportRecipe} from '../../api/report';
+import ReportModal from '../../components/common/ReportModal';
 
 /**
  * 레시피 게시판 상세 화면
@@ -35,6 +35,7 @@ export default function RecipeDetailScreen({route, navigation}) {
   const [likeCount, setLikeCount] = useState(initialRecipe?.likeCount || 0);
   const [loading, setLoading] = useState(false);
   const [isMyRecipe, setIsMyRecipe] = useState(false); // 내 글 여부
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
 
   const headerColors = ['#FBB2B2', '#F55E5E']; // 게시판 전용 그라디엘트
   const stepNumberColors = ['#00D3F2', '#2B7FFF']; // 조리 순서 번호 그라디엘트
@@ -134,31 +135,25 @@ export default function RecipeDetailScreen({route, navigation}) {
 
   // 신고하기 핸들러
   const handleReport = () => {
-    Alert.alert(
-      '신고하기',
-      '이 레시피를 신고하시겠습니까?',
-      [
-        {text: '취소', style: 'cancel'},
-        {
-          text: '신고',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // await reportRecipe(recipe.id, '부적절한 내용', '사용자 신고');
-              // Alert.alert('완료', '신고가 접수되었습니다.');
+    setIsReportModalVisible(true);
+  };
 
-              // 더미 동작 (API 연동 전)
-              console.log('신고 API 호출:', recipe?.id);
-              Alert.alert('완료', '신고가 접수되었습니다.');
-            } catch (error) {
-              console.error('신고 실패:', error);
-              Alert.alert('오류', '신고 처리에 실패했습니다.');
-            }
-          },
-        },
-      ],
-      {cancelable: true},
-    );
+  // 신고 모달 닫기
+  const handleReportModalClose = () => {
+    setIsReportModalVisible(false);
+  };
+
+  // 신고 제출 완료 후 처리
+  const handleReportSubmit = async () => {
+    // ReportModal 내부에서 이미 API 호출 완료
+    setIsReportModalVisible(false);
+  };
+
+  // reportTarget 객체 생성
+  const reportTarget = {
+    type: 'recipe',
+    id: recipe?.recipeId || recipeId,
+    name: recipe?.title || '알 수 없음',
   };
 
   if (loading) {
@@ -237,6 +232,7 @@ export default function RecipeDetailScreen({route, navigation}) {
       {/* 컨텐츠 */}
       <ScrollView
         style={styles.scrollContent}
+        contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
         {/* 레시피 이미지 (최상단) */}
         <View style={styles.recipeImageContainer}>
@@ -300,6 +296,14 @@ export default function RecipeDetailScreen({route, navigation}) {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* 신고 모달 */}
+      <ReportModal
+        visible={isReportModalVisible}
+        onClose={handleReportModalClose}
+        reportTarget={reportTarget}
+        onSubmit={handleReportSubmit}
+      />
     </View>
   );
 }

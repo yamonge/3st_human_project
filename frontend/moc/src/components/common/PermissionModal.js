@@ -1,6 +1,7 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, Modal, Linking} from 'react-native';
+import {View, Text, TouchableOpacity, Linking} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {Portal} from '@gorhom/portal';
 import styles from '../../styles/components/PermissionModalStyles';
 
 const PermissionModal = ({
@@ -22,12 +23,10 @@ const PermissionModal = ({
     }
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onCancel}>
+    <Portal>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>{title}</Text>
@@ -50,7 +49,7 @@ const PermissionModal = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </Portal>
   );
 };
 
