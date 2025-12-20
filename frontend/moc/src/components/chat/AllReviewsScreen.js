@@ -159,7 +159,9 @@ const AllReviewsScreen = ({visible, onClose, participant}) => {
         <View style={styles.ratingSection}>
           <View style={styles.ratingContent}>
             <View style={styles.ratingTop}>
-              <Text style={styles.ratingNumber}>{reviewData.rating}</Text>
+              <Text style={styles.ratingNumber}>
+                {reviewData.rating.toFixed(1)}
+              </Text>
               <View style={styles.ratingStars}>
                 {renderStars(reviewData.rating)}
               </View>

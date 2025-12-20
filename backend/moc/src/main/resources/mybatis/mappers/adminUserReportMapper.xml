@@ -49,6 +49,22 @@
         FETCH FIRST #{limit} ROWS ONLY
     </select>
 
+    <!-- 신고 ID로 신고 정보 조회 (알림 전송용) -->
+    <select id="selectUserReportById"
+            parameterType="long"
+            resultType="com.cucook.moc.admin.vo.AdminUserReportVO">
+        SELECT
+            r.user_report_id        AS userReportId,
+            r.report_reason_cd      AS reportReasonCd,
+            r.processing_status_cd  AS processingStatusCd,
+            r.reporter_user_id      AS reporterUserId,
+            r.reported_user_id      AS reportedUserId,
+            r.report_comment        AS reportComment,
+            r.created_date          AS createdDate
+        FROM tb_user_report r
+        WHERE r.user_report_id = #{userReportId}
+    </select>
+
     <!-- 유저 신고 처리 상태 업데이트 -->
     <update id="updateUserReportStatus">
         UPDATE tb_user_report

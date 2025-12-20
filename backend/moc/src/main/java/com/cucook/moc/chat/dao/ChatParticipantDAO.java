@@ -23,7 +23,13 @@ public interface ChatParticipantDAO {
     boolean existsByPostAndUser(@Param("shoppingPostId") Long shoppingPostId,
                                 @Param("userId") Long userId);
 
+    // 채팅방 참여자 UserId 목록 조회 (발신자 제외용)
+    List<Long> selectUserIdsByRoom(@Param("chatRoomId") Long chatRoomId);
+
     // 참여자 나가기 (퇴장 시간 업데이트)
     void updateLeaveDate(@Param("chatRoomId") Long chatRoomId,
                         @Param("userId") Long userId);
+
+    // 전체 참여자 강퇴 (방 삭제 시)
+    void bulkUpdateLeaveDate(@Param("chatRoomId") Long chatRoomId);
 }

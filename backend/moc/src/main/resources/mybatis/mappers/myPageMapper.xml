@@ -53,4 +53,25 @@
         WHERE REPORTER_USER_ID = #{userId}
     </select>
 
+    <!-- 완료된 모임 수 (status_cd = 'DONE'인 참여 게시물) -->
+    <select id="countCompletedMeetings" resultType="int">
+        SELECT COUNT(DISTINCT sp.shopping_post_id)
+        FROM tb_shopping_participant p
+        JOIN tb_shopping_chat_room r ON p.chat_room_id = r.chat_room_id
+        JOIN tb_shopping_post sp ON r.shopping_post_id = sp.shopping_post_id
+        WHERE p.user_id = #{userId}
+          AND sp.status_cd = 'DONE'
+          AND p.leave_date IS NULL
+    </select>
+
+    <!-- 전체 참여한 모임 수 (나간 방 제외) -->
+    <select id="countTotalMeetings" resultType="int">
+        SELECT COUNT(DISTINCT sp.shopping_post_id)
+        FROM tb_shopping_participant p
+        JOIN tb_shopping_chat_room r ON p.chat_room_id = r.chat_room_id
+        JOIN tb_shopping_post sp ON r.shopping_post_id = sp.shopping_post_id
+        WHERE p.user_id = #{userId}
+          AND p.leave_date IS NULL
+    </select>
+
 </mapper>

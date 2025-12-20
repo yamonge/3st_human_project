@@ -79,13 +79,20 @@ public class ShoppingPostJoinService {
                     postVO.getPlaceName() != null ? postVO.getPlaceName() : "장보기"
                 );
                 
-                firebaseService.sendPushNotification(
+                // 🔥 Data payload 추가 (화면 이동용)
+                java.util.Map<String, String> data = new java.util.HashMap<>();
+                data.put("chatRoomId", String.valueOf(chatRoomId));
+                data.put("storeName", postVO.getPlaceName() != null ? postVO.getPlaceName() : "장보기");
+                data.put("type", "JOIN");
+                
+                firebaseService.sendPushNotificationWithData(
                     writerUser.getFcmToken(), 
                     title, 
-                    body
+                    body,
+                    data
                 );
                 
-                System.out.println("✅ 푸시 알림 전송 완료: " + writerUser.getUserNickname() + "에게 전송");
+                System.out.println("✅ 푸시 알림 전송 완료: " + writerUser.getUserNickname() + "에게 전송 (chatRoomId: " + chatRoomId + ")");
             }
         } catch (Exception e) {
             // 알림 전송 실패해도 참여 로직은 성공으로 처리

@@ -21,4 +21,33 @@ public class ChatMessageDTO {
     private String messageText;
     private Timestamp sentDate;      // 서버에서 세팅
     private Timestamp createdAt;     // ✅ 프론트 요구: ISO 8601 형식
+    private String action;           // ✅ 시스템 메시지 액션 (ROOM_KICKED, USER_KICKED)
+    private Long targetUserId;       // ✅ 강퇴 대상 userId
+
+    /**
+     * 시스템 메시지 생성 헬퍼 메서드
+     */
+    public static ChatMessageDTO systemMessage(String messageText, String action) {
+        return ChatMessageDTO.builder()
+                .messageTypeCd("SYSTEM")
+                .messageText(messageText)
+                .action(action)
+                .sentDate(new Timestamp(System.currentTimeMillis()))
+                .createdAt(new Timestamp(System.currentTimeMillis()))
+                .build();
+    }
+
+    /**
+     * 강퇴 시스템 메시지 생성 헬퍼 메서드
+     */
+    public static ChatMessageDTO kickMessage(String messageText, String action, Long targetUserId) {
+        return ChatMessageDTO.builder()
+                .messageTypeCd("SYSTEM")
+                .messageText(messageText)
+                .action(action)
+                .targetUserId(targetUserId)
+                .sentDate(new Timestamp(System.currentTimeMillis()))
+                .createdAt(new Timestamp(System.currentTimeMillis()))
+                .build();
+    }
 }

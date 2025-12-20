@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
+  Alert,
 } from 'react-native';
 import {Portal} from '@gorhom/portal';
 import {
@@ -389,6 +390,26 @@ const ChatRoomScreen = ({
     // 5. WebSocket 구독 (실시간 메시지 수신)
     const subscription = StompClient.subscribe(chatRoomId, newMessage => {
       console.log('📨 [ChatRoomScreen] 실시간 메시지 수신:', newMessage);
+
+      // 🔥 강퇴 메시지 처리 (화면 강제 종료)
+      if (newMessage.action === 'ROOM_KICKED') {
+        // 방 전체 폐기
+        Alert.alert('알림', '방장이 채팅방을 폐기했습니다.', [
+          {text: '확인', onPress: () => onClose()},
+        ]);
+        return;
+      }
+
+      if (
+        newMessage.action === 'USER_KICKED' &&
+        newMessage.targetUserId === currentUserId
+      ) {
+        // 개인 강퇴
+        Alert.alert('알림', '방장에 의해 강퇴되었습니다.', [
+          {text: '확인', onPress: () => onClose()},
+        ]);
+        return;
+      }
 
       // ✅ Zustand store에서 currentUser 가져오기 (최신 값 보장)
       const currentUser = useChatStore.getState().currentUser;
