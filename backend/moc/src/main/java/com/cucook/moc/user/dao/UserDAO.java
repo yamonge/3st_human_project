@@ -2,6 +2,7 @@ package com.cucook.moc.user.dao;
 
 import java.sql.Timestamp;
 
+import com.cucook.moc.user.dto.ReviewedUserDetailDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -48,6 +49,8 @@ public interface UserDAO {
 
     // userId로 회원 한 명 조회 (마이페이지용)
     UserVO selectById(@Param("userId") Long userId);
+
+    ReviewedUserDetailDTO selectReviewedUserDetail(Long userId);
     
     // 여러 사용자의 FCM Token 조회 (알림 전송용)
     java.util.List<String> selectFcmTokensByUserIds(@Param("userIds") java.util.List<Long> userIds);

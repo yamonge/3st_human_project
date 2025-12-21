@@ -20,15 +20,12 @@ export const reportRecipe = async (
   content = '',
 ) => {
   try {
-    const response = await api.post(
-      `/v1/users/${reporterUserId}/recipe-reports`,
-      {
-        recipeId,
-        reportReasonCd,
-        content: content.trim() || null,
-      },
-    );
-    return response.data;
+    const data = await api.post(`/v1/users/${reporterUserId}/recipe-reports`, {
+      recipeId,
+      reportReasonCd,
+      content: content.trim() || null,
+    });
+    return data;
   } catch (error) {
     console.error('레시피 신고 실패:', error);
     throw error;
@@ -55,15 +52,12 @@ export const reportUser = async (
   reportComment = '',
 ) => {
   try {
-    const response = await api.post(
-      `/v1/users/${reporterUserId}/user-reports`,
-      {
-        reportedUserId,
-        reportReasonCd,
-        reportComment: reportComment.trim() || null,
-      },
-    );
-    return response.data;
+    const data = await api.post(`/v1/users/${reporterUserId}/user-reports`, {
+      reportedUserId,
+      reportReasonCd,
+      reportComment: reportComment.trim() || null,
+    });
+    return data;
   } catch (error) {
     console.error('사용자 신고 실패:', error);
     throw error;
@@ -76,10 +70,8 @@ export const reportUser = async (
  */
 export const getMyRecipeReports = async reporterUserId => {
   try {
-    const response = await api.get(
-      `/v1/users/${reporterUserId}/recipe-reports`,
-    );
-    return response.data;
+    const data = await api.get(`/v1/users/${reporterUserId}/recipe-reports`);
+    return data;
   } catch (error) {
     console.error('레시피 신고 목록 조회 실패:', error);
     throw error;
@@ -92,8 +84,8 @@ export const getMyRecipeReports = async reporterUserId => {
  */
 export const getMyUserReports = async reporterUserId => {
   try {
-    const response = await api.get(`/v1/users/${reporterUserId}/user-reports`);
-    return response.data;
+    const data = await api.get(`/v1/users/${reporterUserId}/user-reports`);
+    return data;
   } catch (error) {
     console.error('사용자 신고 목록 조회 실패:', error);
     throw error;

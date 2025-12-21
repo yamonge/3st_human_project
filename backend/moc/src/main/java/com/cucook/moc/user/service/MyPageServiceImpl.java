@@ -1,10 +1,13 @@
-package com.cucook.moc.user.service.impl;
+package com.cucook.moc.user.service;
 
 import com.cucook.moc.user.dao.MyPageDAO;
 import com.cucook.moc.user.dto.response.MyPageCountResponseDTO;
+import com.cucook.moc.user.dto.response.MyPageReportItemDTO;
 import com.cucook.moc.user.service.MyPageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,5 +38,9 @@ public class MyPageServiceImpl implements MyPageService {
                 completedCount,
                 attendanceRate
         );
+    }
+    @Override
+    public List<MyPageReportItemDTO> getMyReportHistory(Long userId) {
+        return myPageDAO.selectMyReportHistory(userId);
     }
 }

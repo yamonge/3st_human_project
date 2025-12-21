@@ -74,4 +74,52 @@
           AND p.leave_date IS NULL
     </select>
 
+    <select id="selectMyReportHistory"
+            resultType="com.cucook.moc.user.dto.response.MyPageReportItemDTO">
+
+        /* =========================
+           레시피 신고
+           ========================= */
+        SELECT
+            'RECIPE' AS reportType,
+            RR.RECIPE_REPORT_ID AS reportId,
+
+            R.TITLE AS title,
+            U.USER_NICKNAME AS targetName,
+
+            RR.REPORT_REASON_CD AS reportReasonCd,
+            RR.CONTENT AS reportContent,
+            RR.STATUS_CD AS statusCd,
+            RR.CREATED_DATE AS createdDate
+        FROM TB_RECIPE_REPORT RR
+                 JOIN TB_RECIPE R
+                      ON R.RECIPE_ID = RR.RECIPE_ID
+                 JOIN TB_USER U
+                      ON U.USER_ID = R.OWNER_USER_ID
+        WHERE RR.REPORTER_USER_ID = #{userId}
+
+        UNION ALL
+
+        /* =========================
+           사용자 신고
+           ========================= */
+        SELECT
+            'USER' AS reportType,
+            UR.USER_REPORT_ID AS reportId,
+
+            U.USER_NICKNAME AS title,
+            U.USER_NICKNAME AS targetName,
+
+            UR.REPORT_REASON_CD AS reportReasonCd,
+            UR.REPORT_COMMENT AS reportContent,
+            UR.PROCESSING_STATUS_CD AS statusCd,
+            UR.CREATED_DATE AS createdDate
+        FROM TB_USER_REPORT UR
+                 JOIN TB_USER U
+                      ON U.USER_ID = UR.REPORTED_USER_ID
+        WHERE UR.REPORTER_USER_ID = #{userId}
+
+        ORDER BY createdDate DESC
+    </select>
+
 </mapper>
