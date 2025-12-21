@@ -48,9 +48,17 @@
 
     <!-- 내가 한 신고 -->
     <select id="countMyReports" resultType="int">
-        SELECT COUNT(*)
-        FROM TB_USER_REPORT
-        WHERE REPORTER_USER_ID = #{userId}
+        SELECT COUNT(*) FROM (
+                                 SELECT RECIPE_REPORT_ID
+                                 FROM TB_RECIPE_REPORT
+                                 WHERE REPORTER_USER_ID = #{userId}
+
+                                 UNION ALL
+
+                                 SELECT USER_REPORT_ID
+                                 FROM TB_USER_REPORT
+                                 WHERE REPORTER_USER_ID = #{userId}
+                             )
     </select>
 
     <!-- 완료된 모임 수 (status_cd = 'DONE'인 참여 게시물) -->
@@ -92,10 +100,10 @@
             RR.STATUS_CD AS statusCd,
             RR.CREATED_DATE AS createdDate
         FROM TB_RECIPE_REPORT RR
-                 JOIN TB_RECIPE R
-                      ON R.RECIPE_ID = RR.RECIPE_ID
-                 JOIN TB_USER U
-                      ON U.USER_ID = R.OWNER_USER_ID
+                 LEFT JOIN TB_RECIPE R
+                           ON R.RECIPE_ID = RR.RECIPE_ID
+                 LEFT JOIN TB_USER U
+                           ON U.USER_ID = R.OWNER_USER_ID
         WHERE RR.REPORTER_USER_ID = #{userId}
 
         UNION ALL
@@ -115,8 +123,8 @@
             UR.PROCESSING_STATUS_CD AS statusCd,
             UR.CREATED_DATE AS createdDate
         FROM TB_USER_REPORT UR
-                 JOIN TB_USER U
-                      ON U.USER_ID = UR.REPORTED_USER_ID
+                 LEFT JOIN TB_USER U
+                           ON U.USER_ID = UR.REPORTED_USER_ID
         WHERE UR.REPORTER_USER_ID = #{userId}
 
         ORDER BY createdDate DESC
