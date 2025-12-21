@@ -227,17 +227,28 @@ export const getSharedRecipes = async userId => {
 // ==================== 신고 내역 ====================
 
 /**
- * 신고 내역 목록 조회
- * @returns {Promise} 신고 내역 목록 및 총 개수
- * @returns {Object} response.reports - 신고 내역 목록
- * @returns {number} response.totalCount - 전체 개수
+ * 마이페이지 - 내가 한 신고 내역 조회
  */
-export const getReportHistory = async () => {
+export const getReportHistory = async userId => {
   try {
-    const response = await api.get('/mypage/reports');
-    return response.data;
+    if (!userId) {
+      throw new Error('userId 없음');
+    }
+    console.log('🟡 [getReportHistory] 요청 userId:', userId);
+
+    const data = await api.get(`/v1/users/${userId}/my-page/reports`);
+
+    console.log('🟢 [getReportHistory] raw response:', data);
+    console.log('🟢 [getReportHistory] Array 여부:', Array.isArray(data));
+    console.log(
+      '🟢 [getReportHistory] length:',
+      Array.isArray(data) ? data.length : 'N/A',
+    );
+
+    // axios interceptor 때문에 data가 곧 응답 body
+    return data ?? [];
   } catch (error) {
     console.error('신고 내역 조회 실패:', error);
-    throw error;
+    return [];
   }
 };

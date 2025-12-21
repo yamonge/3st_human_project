@@ -8,12 +8,50 @@ import {
   Image,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {getUserIdOrThrow} from '../../api/axiosConfig';
 import LinearGradient from 'react-native-linear-gradient';
 import {ArrowLeft, Shield, AlertTriangle, Star} from 'lucide-react-native';
 import ReportCard from '../../components/mypage/ReportCard';
-// import {getReportHistory} from '../../api/mypage';
+import {getReportHistory} from '../../api/mypage';
 import styles from '../../styles/screens/mypage/ReportHistoryStyles';
 import {colors} from '../../styles/common';
+
+/* =========================
+   매핑 유틸 함수들
+========================= */
+
+// statusCd → ReportCard.status
+const mapStatus = statusCd => {
+  switch (statusCd) {
+    case 'APPROVED':
+    case 'PROCESSED':
+      return 'completed';
+    case 'REJECTED':
+      return 'rejected';
+    case 'PENDING':
+    default:
+      return 'pending';
+  }
+};
+
+// reportReasonCd → ReportCard.category
+const mapCategory = reportReasonCd => {
+  const cd = (reportReasonCd || '').toUpperCase();
+  if (cd.includes('COPY')) return 'copyright';
+  if (cd.includes('SPAM') || cd.includes('AD')) return 'spam';
+  if (cd.includes('ABUSE') || cd.includes('PROFAN')) return 'abuse';
+  return 'inappropriate';
+};
+
+// ISO Date → YYYY.MM.DD
+const formatDate = iso => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}.${mm}.${dd}`;
+};
 
 /**
  * 신고 내역 화면
@@ -37,58 +75,29 @@ export default function ReportHistoryScreen({navigation}) {
     try {
       setLoading(true);
 
-      // TODO: 실제 API 연동 (주석 해제)
-      // const response = await getReportHistory();
-      // setReports(response.reports);
-      // setTotalCount(response.totalCount);
+      // ✅ userId 확보
+      const userId = await getUserIdOrThrow();
 
-      // 임시 더미 데이터
-      const dummyData = {
-        reports: [
-          {
-            id: 1,
-            title: '이상한 레시피',
-            targetName: '나쁜사람',
-            reason: '음란물 포함',
-            category: 'inappropriate', // inappropriate, copyright, abuse, spam
-            status: 'completed', // completed, pending, rejected
-            createdAt: '2024.11.25',
-          },
-          {
-            id: 2,
-            title: '복사한 레시피',
-            targetName: '도둑이',
-            reason: '타 사이트 레시피 무단 복제',
-            category: 'copyright',
-            status: 'pending',
-            createdAt: '2024.11.20',
-          },
-          {
-            id: 3,
-            title: '김치찌개',
-            targetName: '악플러',
-            reason: '댓글에 욕설 사용',
-            category: 'abuse',
-            status: 'completed',
-            createdAt: '2024.11.18',
-          },
-          {
-            id: 4,
-            title: '광고 레시피',
-            targetName: '스패머',
-            reason: '광고 링크 포함',
-            category: 'spam',
-            status: 'rejected',
-            createdAt: '2024.11.15',
-          },
-        ],
-        totalCount: 4,
-      };
+      // ✅ axios interceptor 기준: 이미 data
+      const list = await getReportHistory(userId);
 
-      setReports(dummyData.reports);
-      setTotalCount(dummyData.totalCount);
+      // ✅ 화면 전용 모델로 변환
+      const mapped = (list ?? []).map(item => ({
+        id: item.reportId,
+        title: item.title,
+        targetName: item.targetName,
+        reason: item.reportContent || '-',
+        category: mapCategory(item.reportReasonCd),
+        status: mapStatus(item.statusCd),
+        createdAt: formatDate(item.createdDate),
+      }));
+
+      setReports(mapped);
+      setTotalCount(mapped.length);
     } catch (error) {
       console.error('신고 내역 불러오기 실패:', error);
+      setReports([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }

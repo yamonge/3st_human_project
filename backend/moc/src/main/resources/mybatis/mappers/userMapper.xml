@@ -248,4 +248,14 @@
           AND p.leave_date IS NULL
     </select>
 
+    <select id="selectReviewedUserDetail"
+            parameterType="long"
+            resultType="com.cucook.moc.user.dto.ReviewedUserDetailDTO">
+        SELECT
+            user_id               AS userId,
+            user_nickname         AS nickname,
+            user_profile_image_url AS profileImageUrl
+        FROM tb_user
+        WHERE user_id = #{userId}
+    </select>
 </mapper>

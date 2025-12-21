@@ -1,7 +1,10 @@
 package com.cucook.moc.user.dao;
 
+import com.cucook.moc.user.dto.response.MyPageReportItemDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 @Mapper
 public interface MyPageDAO {
@@ -25,4 +28,6 @@ public interface MyPageDAO {
      * 전체 참여한 모임 수 (나간 방 제외)
      */
     int countTotalMeetings(@Param("userId") Long userId);
+
+    List<MyPageReportItemDTO> selectMyReportHistory(Long userId);
 }
