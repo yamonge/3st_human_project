@@ -10,7 +10,7 @@ const normalizeRecipe = recipe => {
   // 안드로이드 에뮬레이터 localhost 보정
   if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
     r.thumbnailUrl = r.thumbnailUrl.replace(
-      'http://localhost:8090',
+      'http://192.168.50.117:8090',
       'http://10.0.2.2:8090',
     );
   }

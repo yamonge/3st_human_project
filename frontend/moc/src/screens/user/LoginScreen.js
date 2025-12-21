@@ -15,7 +15,7 @@ import Button from '../../components/common/Button';
 import SocialButton from '../../components/common/SocialButton';
 import {loginStyles} from '../../styles/screens/user/loginStyles';
 import {colors} from '../../styles/common';
-import authAPI from '../../api/auth';
+import authAPI, {signInWithGoogle, signInWithFacebook} from '../../api/auth';
 import LoginLogo from '../../assets/images/user/loginLogo.svg';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
@@ -74,12 +74,12 @@ export default function LoginScreen({navigation}) {
       // 251213 추가: 로그인 후 푸시 알림 권한 요청 화면으로 이동
     } catch (err) {
       console.log('LOGIN ERROR DEBUG', {
-      name: err?.name,
-      message: err?.message,
-      hasResponse: !!err?.response,
-      status: err?.response?.status,
-      data: err?.response?.data,
-    });
+        name: err?.name,
+        message: err?.message,
+        hasResponse: !!err?.response,
+        status: err?.response?.status,
+        data: err?.response?.data,
+      });
       console.error('로그인 실패:', err);
 
       const msg = err.response?.data?.message;
@@ -107,14 +107,24 @@ export default function LoginScreen({navigation}) {
       setLoading(true);
       setError('');
 
-      // TODO: 구글 로그인 SDK 연동
-      // const { idToken } = await GoogleSignin.signIn();
-      // const response = await authAPI.googleLogin(idToken);
+      // 1. 구글 SDK로 idToken 획득
+      const {idToken} = await signInWithGoogle();
 
-      Alert.alert('구글 로그인', '구글 로그인 기능은 준비 중입니다.');
+      // 2. 백엔드로 idToken 전송
+      const response = await authAPI.googleLogin(idToken);
+
+      // 3. 메인 화면으로 이동
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'MainApp'}],
+      });
     } catch (err) {
       console.error('구글 로그인 실패:', err);
-      setError('구글 로그인 중 오류가 발생했습니다.');
+      setError(
+        err.message === 'Sign in action cancelled'
+          ? '로그인이 취소되었습니다.'
+          : '구글 로그인 중 오류가 발생했습니다.',
+      );
     } finally {
       setLoading(false);
     }
@@ -126,11 +136,24 @@ export default function LoginScreen({navigation}) {
       setLoading(true);
       setError('');
 
-      // TODO: 페이스북 로그인 SDK 연동
-      Alert.alert('페이스북 로그인', '페이스북 로그인 기능은 준비 중입니다.');
+      // 1. 페이스북 SDK로 accessToken 획득
+      const {accessToken} = await signInWithFacebook();
+
+      // 2. 백엔드로 accessToken 전송
+      const response = await authAPI.facebookLogin(accessToken);
+
+      // 3. 메인 화면으로 이동
+      navigation.reset({
+        index: 0,
+        routes: [{name: 'MainApp'}],
+      });
     } catch (err) {
       console.error('페이스북 로그인 실패:', err);
-      setError('페이스북 로그인 중 오류가 발생했습니다.');
+      setError(
+        err.message === '사용자가 로그인을 취소했습니다.'
+          ? '로그인이 취소되었습니다.'
+          : '페이스북 로그인 중 오류가 발생했습니다.',
+      );
     } finally {
       setLoading(false);
     }

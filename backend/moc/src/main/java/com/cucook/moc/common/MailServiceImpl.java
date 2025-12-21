@@ -36,10 +36,18 @@ public class MailServiceImpl implements MailService {
     private String buildResetMailText(String resetUrl) {
         StringBuilder sb = new StringBuilder();
         sb.append("안녕하세요.\n\n");
-        sb.append("비밀번호 재설정을 위한 링크를 안내드립니다.\n");
-        sb.append("아래 링크를 클릭하여 새 비밀번호를 설정해 주세요.\n\n");
-        sb.append(resetUrl).append("\n\n");
-        sb.append("본 메일은 일정 시간 후 만료될 수 있습니다.\n");
+        sb.append("비밀번호 재설정을 위한 인증 토큰을 안내드립니다.\n\n");
+        sb.append("🔑 앱에서 비밀번호 재설정 화면으로 이동 후,\n");
+        sb.append("아래 토큰을 복사하여 입력해주세요.\n\n");
+        
+        // URL에서 토큰만 추출하여 표시
+        String token = resetUrl.substring(resetUrl.lastIndexOf("=") + 1);
+        sb.append("━━━━━━━━━━━━━━━━━━━━━━\n");
+        sb.append(token).append("\n");
+        sb.append("━━━━━━━━━━━━━━━━━━━━━━\n\n");
+        
+        sb.append("※ 이 토큰은 1시간 동안만 유효합니다.\n");
+        sb.append("※ 토큰 사용 후에는 자동으로 만료됩니다.\n\n");
         sb.append("감사합니다.");
         return sb.toString();
     }

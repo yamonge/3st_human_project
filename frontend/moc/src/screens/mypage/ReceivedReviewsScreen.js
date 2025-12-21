@@ -50,6 +50,7 @@ export default function ReceivedReviewsScreen({route, navigation}) {
       const mappedReviews = response.receivedReviews.map(review => ({
         id: review.reviewId,
         nickname: review.writer?.nickname ?? '알 수 없음',
+        profileImageUrl: review.writer?.profileImageUrl ?? null,
         rating: review.rating,
         content: review.userReviewComment,
         createdAt: review.createdDateFormatted,
@@ -110,15 +111,22 @@ export default function ReceivedReviewsScreen({route, navigation}) {
           <View style={styles.profileSection}>
             {/* 프로필 아이콘 */}
             <View style={styles.profileIcon}>
-              <LinearGradient
-                colors={['#FFB900', '#FF8904']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 1}}
-                style={styles.profileGradient}>
-                <Text style={{fontSize: 18, color: '#FFF'}}>
-                  {review.nickname.charAt(0)}
-                </Text>
-              </LinearGradient>
+              {review.profileImageUrl ? (
+                <Image
+                  source={{uri: review.profileImageUrl}}
+                  style={styles.profileImage}
+                />
+              ) : (
+                <LinearGradient
+                  colors={['#FFB900', '#FF8904']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  style={styles.profileGradient}>
+                  <Text style={{fontSize: 18, color: '#FFF'}}>
+                    {review.nickname.charAt(0)}
+                  </Text>
+                </LinearGradient>
+              )}
             </View>
 
             {/* 닉네임 & 별점 */}

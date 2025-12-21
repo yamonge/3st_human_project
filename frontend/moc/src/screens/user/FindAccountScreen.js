@@ -87,9 +87,9 @@ export default function FindAccountScreen({navigation}) {
   // 이메일 찾기 처리
   const handleFindEmail = async () => {
     if (!idName) {
-        Alert.alert('알림', '이름을 입력해주세요.');
-        return;
-      }
+      Alert.alert('알림', '이름을 입력해주세요.');
+      return;
+    }
 
     if (!idBirthDate) {
       Alert.alert('알림', '생년월일을 선택해주세요.');
@@ -112,8 +112,8 @@ export default function FindAccountScreen({navigation}) {
       } else {
         Alert.alert('오류', '이메일 찾기 중 오류가 발생했습니다.');
       }
-    } finally{
-      setLoading(false);  // 성공 실패 상관없이 호출
+    } finally {
+      setLoading(false); // 성공 실패 상관없이 호출
     }
   };
 
@@ -124,20 +124,20 @@ export default function FindAccountScreen({navigation}) {
 
   // 임시 비밀번호 발송 처리
   const handleSendPassword = async () => {
-      if (!pwEmail) {
-        Alert.alert('알림', '이메일을 입력해주세요.');
-        return;
-      }
+    if (!pwEmail) {
+      Alert.alert('알림', '이메일을 입력해주세요.');
+      return;
+    }
 
-      if (!pwName) {
-        Alert.alert('알림', '이름을 입력해주세요.');
-        return;
-      }
+    if (!pwName) {
+      Alert.alert('알림', '이름을 입력해주세요.');
+      return;
+    }
 
-      if (!pwBirthDate) {
-        Alert.alert('알림', '생년월일을 선택해주세요.');
-        return;
-      }
+    if (!pwBirthDate) {
+      Alert.alert('알림', '생년월일을 선택해주세요.');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -145,23 +145,32 @@ export default function FindAccountScreen({navigation}) {
       const response = await authAPI.sendPasswordResetLink(
         pwEmail,
         pwName,
-        pwBirthDate
+        pwBirthDate,
       );
+
       Alert.alert(
-    '알림',
-    '비밀번호 변경용 링크 발송이 완료되었습니다. 이메일을 확인해주세요.',
-    [{ text: '확인', onPress: goToLogin }],
-  );
+        '발송 완료',
+        '이메일로 인증 토큰이 발송되었습니다.\n토큰을 복사하여 입력해주세요.',
+        [
+          {
+            text: '확인',
+            onPress: () => navigation.navigate('ResetPassword'),
+          },
+        ],
+      );
     } catch (err) {
       console.error('비밀번호 변경용 링크 - 이메일 발송 실패:', err);
 
       if (err.response?.status === 404) {
         Alert.alert('알림', '일치하는 사용자 정보를 찾을 수 없습니다.');
       } else {
-        Alert.alert('오류', '비밀번호 변경용 링크 발송 중 오류가 발생했습니다.');
+        Alert.alert(
+          '오류',
+          '비밀번호 변경용 링크 발송 중 오류가 발생했습니다.',
+        );
       }
-    } finally{
-      setLoading(false);  // 성공 실패 상관없이 호출
+    } finally {
+      setLoading(false); // 성공 실패 상관없이 호출
     }
   };
 

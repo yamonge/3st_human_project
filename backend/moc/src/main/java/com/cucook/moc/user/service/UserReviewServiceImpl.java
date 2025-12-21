@@ -205,20 +205,27 @@ public class UserReviewServiceImpl implements UserReviewService {
 
     /**
      * 후기 작성 사용자 정보를 조회하여 ReviewedUserDetailDTO로 반환하는 헬퍼 메서드.
-     * (현재 tb_user 테이블이 없으므로 임시 더미 데이터 반환)
      * @param userId 조회할 사용자의 ID
      * @return ReviewedUserDetailDTO
      */
     private ReviewedUserDetailDTO getReviewedUserDetailDTO(Long userId) {
-        // TODO: 실제 구현 시 UserDAO를 사용하여 tb_user 테이블에서 사용자 정보(닉네임, 프로필 이미지)를 조회해야 합니다.
-        // 현재 UserDAO가 UserVO와 매핑되지 않고, tb_user 테이블도 없으므로 임시 더미 데이터를 반환합니다.
+        if (userId == null) {
+            return new ReviewedUserDetailDTO(null, "알 수 없음", null);
+        }
 
-        // UserVO user = userDAO.selectUserById(userId); // 실제 UserDAO 호출 예시
-        // if (user != null) {
-        //     return new ReviewedUserDetailDTO(user.getUserId(), user.getNickname(), user.getProfileImageUrl());
-        // }
-
-        // ⭐ 임시 더미 데이터 반환 (UserDAO가 아직 없거나 유저 정보가 미완성일 때)
-        return new ReviewedUserDetailDTO(userId, "테스트 닉네임-" + userId, "https://default-profile.png");
+        try {
+            // UserDAO를 통해 실제 사용자 정보 조회
+            ReviewedUserDetailDTO userDetail = userDAO.selectReviewedUserDetail(userId);
+            
+            if (userDetail != null) {
+                return userDetail;
+            }
+            
+            // 사용자를 찾지 못한 경우 기본값 반환
+            return new ReviewedUserDetailDTO(userId, "알 수 없음", null);
+        } catch (Exception e) {
+            // 조회 중 예외 발생 시 기본값 반환
+            return new ReviewedUserDetailDTO(userId, "알 수 없음", null);
+        }
     }
 }

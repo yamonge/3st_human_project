@@ -116,6 +116,7 @@ npm install react-native-svg-transformer@^1.5.2 --save-dev --legacy-peer-deps
 npm install react-native-nitro-modules --legacy-peer-deps
 npm install react-native-nitro-sound --legacy-peer-deps
 npm install react-native-webview --legacy-peer-deps
+npm install @react-native-google-signin/google-signin react-native-fbsdk-next --legacy-peer-deps
 ```
 ---
 

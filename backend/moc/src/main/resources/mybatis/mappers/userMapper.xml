@@ -88,7 +88,7 @@
             #{userEmail},
             #{userName},
             #{userNickname},
-            #{userPassword},
+            #{userPassword, jdbcType=VARCHAR},
             #{userBirthDate, jdbcType=DATE},
             #{fcmToken, jdbcType=VARCHAR},
             #{deviceOs, jdbcType=VARCHAR},
@@ -110,7 +110,7 @@
         SELECT *
         FROM tb_user
         WHERE user_name = #{userName}
-            AND user_birth_date = #{userBirthDate}
+            AND TRUNC(user_birth_date) = TRUNC(#{userBirthDate})
     </select>
 
     <!-- 5) 비밀번호 찾기용 사용자 조회 (이메일 + 이름 + 생년월일) -->
@@ -121,7 +121,7 @@
         FROM tb_user
         WHERE user_email      = #{userEmail}
             AND user_name       = #{userName}
-            AND user_birth_date = #{userBirthDate}
+            AND TRUNC(user_birth_date) = TRUNC(#{userBirthDate})
     </select>
 
     <!-- 6) 비밀번호 변경 -->
