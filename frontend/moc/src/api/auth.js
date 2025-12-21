@@ -2,6 +2,8 @@ import api from './axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
 import axios from 'axios';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 
 /**
  * FCM 토큰 가져오기
@@ -15,6 +17,89 @@ const getFCMToken = async () => {
   } catch (error) {
     console.error('[FCM 토큰 가져오기 실패]', error);
     return null;
+  }
+};
+
+/**
+ * 구글 로그인 SDK 초기화
+ */
+export const initGoogleSignIn = () => {
+  GoogleSignin.configure({
+    webClientId:
+      '1081675491060-ao6tarullgvoga5n4o2pp33ic7c710di.apps.googleusercontent.com',
+    offlineAccess: true,
+    forceCodeForRefreshToken: true, // refresh token을 위한 설정
+  });
+};
+
+/**
+ * 구글 로그인 실행
+ * @returns {Promise<{idToken: string, user: object}>}
+ */
+export const signInWithGoogle = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
+    const response = await GoogleSignin.signIn();
+
+    console.log(
+      '✅ Google SignIn Full Response:',
+      JSON.stringify(response, null, 2),
+    );
+
+    // 응답 구조: { type: "success", data: { idToken, serverAuthCode, user } }
+    const userInfo = response.data || response; // data 추출
+
+    console.log('✅ Google SignIn Success:', {
+      hasIdToken: !!userInfo.idToken,
+      hasServerAuthCode: !!userInfo.serverAuthCode,
+      idTokenLength: userInfo.idToken?.length,
+      user: userInfo.user,
+    });
+
+    // idToken이 없으면 serverAuthCode 사용 시도
+    const tokenToUse = userInfo.idToken || userInfo.serverAuthCode;
+
+    if (!tokenToUse) {
+      throw new Error('Google ID Token 또는 ServerAuthCode를 받지 못했습니다.');
+    }
+
+    return {
+      idToken: tokenToUse,
+      user: userInfo.user,
+    };
+  } catch (error) {
+    console.error('구글 로그인 에러:', error);
+    throw error;
+  }
+};
+
+/**
+ * 페이스북 로그인 실행
+ * @returns {Promise<{accessToken: string}>}
+ */
+export const signInWithFacebook = async () => {
+  try {
+    const result = await LoginManager.logInWithPermissions([
+      'public_profile',
+      'email',
+    ]);
+
+    if (result.isCancelled) {
+      throw new Error('사용자가 로그인을 취소했습니다.');
+    }
+
+    const data = await AccessToken.getCurrentAccessToken();
+
+    if (!data) {
+      throw new Error('액세스 토큰을 가져올 수 없습니다.');
+    }
+
+    return {
+      accessToken: data.accessToken,
+    };
+  } catch (error) {
+    console.error('페이스북 로그인 에러:', error);
+    throw error;
   }
 };
 
@@ -70,19 +155,30 @@ export const authAPI = {
    */
   googleLogin: async idToken => {
     try {
-      const response = await api.post('/auth/google', {
-        idToken,
+      // FCM 토큰 가져오기
+      const fcmToken = await getFCMToken();
+
+      console.log('📤 Sending to backend:', {
+        idToken: idToken?.substring(0, 50) + '...',
+        hasFcmToken: !!fcmToken,
       });
 
-      // 사용자 정보 저장
-      if (response.user) {
-        await AsyncStorage.setItem('userEmail', response.user.email || '');
-        await AsyncStorage.setItem(
-          'userNickname',
-          response.user.nickname || '',
-        );
-        await AsyncStorage.setItem('userName', response.user.name || '');
-      }
+      const response = await api.post('/auth/google', {
+        idToken,
+        fcmToken,
+        deviceOs: 'Android', // 또는 Platform.OS
+        deviceVersion: '', // 필요시 Device.getSystemVersion()
+      });
+
+      // 사용자 정보 저장 (LoginResponseDTO 구조)
+      await AsyncStorage.multiSet([
+        ['userId', response?.userId ? String(response.userId) : ''],
+        ['userEmail', response?.userEmail ?? ''],
+        ['userName', response?.userName ?? ''],
+        ['userNickname', response?.userNickname ?? ''],
+        ['userType', response?.userType ?? ''],
+        ['userStatus', response?.userStatus ?? ''],
+      ]);
 
       return response;
     } catch (error) {
@@ -98,19 +194,30 @@ export const authAPI = {
    */
   facebookLogin: async accessToken => {
     try {
-      const response = await api.post('/auth/facebook', {
-        accessToken,
+      // FCM 토큰 가져오기
+      const fcmToken = await getFCMToken();
+
+      console.log('📤 Sending to backend:', {
+        accessToken: accessToken?.substring(0, 50) + '...',
+        hasFcmToken: !!fcmToken,
       });
 
-      // 사용자 정보 저장
-      if (response.user) {
-        await AsyncStorage.setItem('userEmail', response.user.email || '');
-        await AsyncStorage.setItem(
-          'userNickname',
-          response.user.nickname || '',
-        );
-        await AsyncStorage.setItem('userName', response.user.name || '');
-      }
+      const response = await api.post('/auth/facebook', {
+        accessToken,
+        fcmToken,
+        deviceOs: 'Android',
+        deviceVersion: '',
+      });
+
+      // 사용자 정보 저장 (LoginResponseDTO 구조)
+      await AsyncStorage.multiSet([
+        ['userId', response?.userId ? String(response.userId) : ''],
+        ['userEmail', response?.userEmail ?? ''],
+        ['userName', response?.userName ?? ''],
+        ['userNickname', response?.userNickname ?? ''],
+        ['userType', response?.userType ?? ''],
+        ['userStatus', response?.userStatus ?? ''],
+      ]);
 
       return response;
     } catch (error) {

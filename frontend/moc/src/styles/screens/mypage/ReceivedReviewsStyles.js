@@ -192,6 +192,11 @@ export default StyleSheet.create({
     overflow: 'hidden',
   },
 
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+
   profileGradient: {
     width: '100%',
     height: '100%',

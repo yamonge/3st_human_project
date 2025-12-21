@@ -15,12 +15,14 @@ import {
   displayFCMNotification,
   setupFCM,
 } from './src/utils/notificationService';
+import {initGoogleSignIn} from './src/api/auth'; // ✅ 추가
 
 // 온보딩 & 인증 화면
 import OnboardingScreen from './src/screens/onboarding/OnboardingScreen';
 import LoginScreen from './src/screens/user/LoginScreen';
 import SignupScreen from './src/screens/user/SignupScreen';
 import FindAccountScreen from './src/screens/user/FindAccountScreen';
+import ResetPasswordScreen from './src/screens/user/ResetPasswordScreen';
 
 // 메인 화면
 import HomeScreen from './src/screens/home/HomeScreen';
@@ -348,6 +350,7 @@ function App() {
   useEffect(() => {
     checkFirstLaunch();
     initializeFCM();
+    initGoogleSignIn(); // ✅ 구글 로그인 SDK 초기화
   }, []);
 
   // FCM 초기화 및 푸시 알림 리스너 설정
@@ -463,6 +466,10 @@ function App() {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
             <Stack.Screen name="FindAccount" component={FindAccountScreen} />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
+            />
 
             {/* 메인 앱 (하단 탭 네비게이션) */}
             <Stack.Screen name="MainApp" component={MainTabNavigator} />

@@ -1,5 +1,9 @@
 package com.cucook.moc.user.controller;
 
+import com.cucook.moc.auth.dto.GoogleLoginRequestDTO;
+import com.cucook.moc.auth.dto.FacebookLoginRequestDTO;
+import com.cucook.moc.auth.service.GoogleAuthService;
+import com.cucook.moc.auth.service.FacebookAuthService;
 import com.cucook.moc.user.dto.PublicProfileDTO;
 import com.cucook.moc.user.dto.UserProfileDTO;
 import com.cucook.moc.user.dto.UserReviewDTO;
@@ -23,6 +27,8 @@ import java.util.Map;
 public class UserAuthController {
 
     private final UserService userService;
+    private final GoogleAuthService googleAuthService;
+    private final FacebookAuthService facebookAuthService;
 
     @GetMapping("/check-email")
     public ResponseEntity<Boolean> checkEmail(@RequestParam("email") String email) {
@@ -51,6 +57,31 @@ public class UserAuthController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 구글 소셜 로그인
+     * POST /api/auth/google
+     * 
+     * @param request Google ID Token + FCM Token
+     * @return LoginResponseDTO (일반 로그인과 동일한 응답)
+     */
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponseDTO> googleLogin(@RequestBody GoogleLoginRequestDTO request) {
+        LoginResponseDTO response = googleAuthService.googleLogin(request);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 페이스북 소셜 로그인
+     * POST /api/auth/facebook
+     * 
+     * @param request Facebook Access Token + FCM Token
+     * @return LoginResponseDTO (일반 로그인과 동일한 응답)
+     */
+    @PostMapping("/facebook")
+    public ResponseEntity<LoginResponseDTO> facebookLogin(@RequestBody FacebookLoginRequestDTO request) {
+        LoginResponseDTO response = facebookAuthService.facebookLogin(request);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/find-email")
     public ResponseEntity<FindEmailResponseDTO> findEmail(@RequestBody FindEmailRequestDTO request) {
