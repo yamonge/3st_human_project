@@ -111,7 +111,7 @@ export default function IngredientManagementScreen({navigation}) {
       setNewIngredientName('');
       setShowAddModal(false);
 
-      await loadIngredients(); // 🔥 여기 중요
+      await loadIngredients();
     } catch (error) {
       Alert.alert('오류', '재료 추가에 실패했습니다.');
       console.error(error);
@@ -120,7 +120,7 @@ export default function IngredientManagementScreen({navigation}) {
   // AI 레시피 추천
   const handleAIRecommend = () => {
     // TODO: RecipeFilterScreen으로 이동
-    Alert.alert('개발 중', 'AI 레시피 추천 기능은 개발 중입니다.');
+    navigation.navigate('RecipeFilter');
   };
 
   return (
