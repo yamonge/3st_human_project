@@ -82,12 +82,15 @@ export default function RecipeDetailScreen({route, navigation}) {
 
   const checkIsMyRecipe = async () => {
     try {
-      const userEmail = await AsyncStorage.getItem('userEmail');
-      if (userEmail && recipe?.author === userEmail) {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (storedUserId && recipe?.ownerUserId === Number(storedUserId)) {
         setIsMyRecipe(true);
+      } else {
+        setIsMyRecipe(false);
       }
     } catch (error) {
       console.error('사용자 정보 확인 실패:', error);
+      setIsMyRecipe(false);
     }
   };
 
@@ -194,11 +197,15 @@ export default function RecipeDetailScreen({route, navigation}) {
           <View style={styles.headerLeft}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() =>
-                from === 'recipeboard'
-                  ? navigation.navigate('RecipeBoard')
-                  : navigation.navigate('SharedRecipes')
-              }>
+              onPress={() => {
+                if (from === 'recipeboard') {
+                  navigation.navigate('RecipeBoard');
+                } else if (from === 'recipeSave') {
+                  navigation.navigate('SavedRecipes');
+                } else {
+                  navigation.navigate('SharedRecipes');
+                }
+              }}>
               <ChevronLeft size={24} color="#F55E5E" />
             </TouchableOpacity>
             <View>

@@ -15,6 +15,7 @@ public class RecipeReportResponseDTO {
     private Long reportId;         // 신고 ID (tb_recipe_report.recipe_report_id)
     private Long recipeId;         // 신고된 레시피 ID (tb_recipe_report.recipe_id)
     private Long reporterUserId;   // 신고한 사용자 ID (tb_recipe_report.reporter_user_id)
+    private String reporterNickname; // 신고자 닉네임
     private String reportReasonCd; // 신고 사유 코드
     private String content;        // 상세 신고 내용
     private String statusCd;       // ⭐ 처리 상태 (PENDING, APPROVED, REJECTED)
@@ -33,6 +34,7 @@ public class RecipeReportResponseDTO {
         dto.setReportId(reportVO.getReportId());
         dto.setRecipeId(reportVO.getRecipeId());
         dto.setReporterUserId(reportVO.getReporterUserId());
+        dto.setReporterNickname(reportVO.getReporterNickname());
         dto.setReportReasonCd(reportVO.getReportReasonCd());
         dto.setContent(reportVO.getContent());
         dto.setStatusCd(reportVO.getStatusCd());

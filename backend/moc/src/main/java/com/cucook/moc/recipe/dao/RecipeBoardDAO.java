@@ -29,7 +29,8 @@ public interface RecipeBoardDAO {
     );
 
     RecipeVO selectPublicRecipeById(
-            @Param("recipeId") Long recipeId
+            @Param("recipeId") Long recipeId,
+            @Param("loginUserId") Long loginUserId
     );
 
     // ** 신규 추가: LISTAGG 최적화 쿼리 메소드 **

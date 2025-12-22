@@ -83,4 +83,16 @@ public interface RecipeReportDAO {
      * @return 삭제된 레코드 수
      */
     int deleteRecipeReport(@Param("reportId") Long reportId, @Param("reporterUserId") Long reporterUserId);
+
+    /**
+     * 레시피 신고 상태를 업데이트합니다. (관리자용)
+     * 
+     * @param recipeReportId 신고 ID
+     * @param statusCd 상태 코드 (PENDING, PROCESSED 등)
+     * @return 업데이트된 레코드 수
+     */
+    int updateRecipeReportStatus(
+            @Param("recipeReportId") Long recipeReportId, 
+            @Param("statusCd") String statusCd
+    );
 }

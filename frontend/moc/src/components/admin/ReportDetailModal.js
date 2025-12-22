@@ -75,9 +75,32 @@ export default function ReportDetailModal({
           </View>
 
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>피신고자</Text>
+            <Text style={styles.detailLabel}>
+              {report.reportType === 'post' ? '레시피' : '피신고자'}
+            </Text>
             <Text style={styles.detailValue}>{report.reported}</Text>
           </View>
+
+          {report.reportType === 'user' && report.reportedUserId && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>피신고자 ID</Text>
+              <Text style={styles.detailValue}>{report.reportedUserId}</Text>
+            </View>
+          )}
+
+          {report.reportType === 'post' && report.recipeId && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>레시피 ID</Text>
+              <Text style={styles.detailValue}>{report.recipeId}</Text>
+            </View>
+          )}
+
+          {report.reportType === 'post' && report.recipeOwnerId && (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>게시글 공유자 ID</Text>
+              <Text style={styles.detailValue}>{report.recipeOwnerId}</Text>
+            </View>
+          )}
 
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>신고 날짜</Text>

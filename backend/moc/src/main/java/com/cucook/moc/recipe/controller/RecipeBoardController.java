@@ -37,7 +37,10 @@ public class RecipeBoardController {
      * 공개 레시피 상세
      */
     @GetMapping("/{recipeId}")
-    public RecipeVO detail(@PathVariable Long recipeId) {
-        return recipeBoardService.getPublicRecipeDetail(recipeId);
+    public RecipeVO detail(
+            @PathVariable Long recipeId,
+            @RequestParam(required = false) Long loginUserId
+    ) {
+        return recipeBoardService.getPublicRecipeDetail(recipeId, loginUserId);
     }
 }

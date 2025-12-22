@@ -10,6 +10,7 @@ import {
   TextInput,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   ChevronLeft,
@@ -42,10 +43,12 @@ export default function IngredientManagementScreen({navigation}) {
   const [newIngredientName, setNewIngredientName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 재료 목록 불러오기
-  useEffect(() => {
-    loadIngredients();
-  }, []);
+  // 재료 목록 불러오기 (화면 포커스마다)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadIngredients();
+    }, []),
+  );
 
   const loadIngredients = async () => {
     try {

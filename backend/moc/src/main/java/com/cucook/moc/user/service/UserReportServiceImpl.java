@@ -56,10 +56,10 @@ public class UserReportServiceImpl implements UserReportService {
         // ⭐ 현재 UserDAO에 selectUserById가 없으므로 임시로 이 로직은 주석 처리합니다.
         //    실제 구현 시 userDAO를 통해 사용자 존재 여부를 확인해야 합니다.
 
-        // 2. 이미 신고했는지 확인 (중복 신고 방지 - DDL의 UNIQUE INDEX 활용)
-        if (userReportDAO.checkIfUserReportExists(reporterUserId, requestDTO.getReportedUserId()) > 0) {
-            throw new IllegalArgumentException("이미 해당 사용자 (ID: " + requestDTO.getReportedUserId() + ")를 신고했습니다.");
-        }
+        // 2. 중복 신고 허용 (제한 제거)
+        // if (userReportDAO.checkIfUserReportExists(reporterUserId, requestDTO.getReportedUserId()) > 0) {
+        //     throw new IllegalArgumentException("이미 해당 사용자 (ID: " + requestDTO.getReportedUserId() + ")를 신고했습니다.");
+        // }
 
         // 3. Request DTO -> VO 변환 및 설정
         UserReportVO vo = new UserReportVO();

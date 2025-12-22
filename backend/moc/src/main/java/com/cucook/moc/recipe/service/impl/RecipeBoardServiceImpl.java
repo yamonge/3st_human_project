@@ -195,8 +195,9 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
 
     @Override
     @Transactional(readOnly = true)
-    public RecipeVO getPublicRecipeDetail(Long recipeId) {
-        RecipeVO vo = recipeBoardDAO.selectPublicRecipeById(recipeId);
+    public RecipeVO getPublicRecipeDetail(Long recipeId, Long loginUserId) {
+        Long safeLoginUserId = (loginUserId == null ? -1L : loginUserId);
+        RecipeVO vo = recipeBoardDAO.selectPublicRecipeById(recipeId, safeLoginUserId);
         System.out.println(vo.toString());
         if (vo == null) {
             throw new IllegalArgumentException("레시피를 찾을 수 없습니다.");

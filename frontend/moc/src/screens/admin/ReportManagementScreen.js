@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,18 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {ArrowLeft, Search, ChevronDown} from 'lucide-react-native';
 import styles from '../../styles/screens/admin/ReportManagementStyles';
 import {colors} from '../../styles/common';
-import {getReportList, sendWarning, suspendUserByReport} from '../../api/admin';
+import {
+  getReportList,
+  sendWarning,
+  suspendUserByReport,
+  deleteRecipeByReport,
+  processRecipeReport,
+} from '../../api/admin';
 import SuspendDurationModal from '../../components/admin/SuspendDurationModal';
 import ReportDetailModal from '../../components/admin/ReportDetailModal';
 
@@ -44,10 +51,12 @@ export default function ReportManagementScreen({navigation}) {
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
-  // ✅ 마운트 시 1회: 서버에서 전체 목록 조회
-  useEffect(() => {
-    fetchReports();
-  }, []);
+  // ✅ 화면 focus 시마다 서버에서 전체 목록 조회
+  useFocusEffect(
+    useCallback(() => {
+      fetchReports();
+    }, []),
+  );
 
   // ✅ 필터 변경 시: 프론트에서만 필터 적용
   useEffect(() => {
@@ -156,7 +165,7 @@ export default function ReportManagementScreen({navigation}) {
           text: '발송',
           onPress: async () => {
             try {
-              await sendWarning(report.id, {
+              await sendWarning(report.originalId, {
                 userId: report.reportedUserId,
                 reason: report.description,
               });
@@ -198,7 +207,7 @@ export default function ReportManagementScreen({navigation}) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await suspendUserByReport(selectedReport.id, {
+              await suspendUserByReport(selectedReport.originalId, {
                 userId: selectedReport.reportedUserId,
                 duration: duration === 'permanent' ? 999999 : duration,
                 reason: selectedReport.description,
@@ -212,6 +221,34 @@ export default function ReportManagementScreen({navigation}) {
             } catch (error) {
               console.error('계정 정지 실패:', error);
               Alert.alert('오류', '계정 정지에 실패했습니다.');
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  // 게시글 삭제 (레시피 신고)
+  const handleDeleteRecipe = report => {
+    Alert.alert(
+      '게시글 삭제',
+      `"${report.reported}" 레시피를 삭제하시겠습니까?`,
+      [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteRecipeByReport(report.recipeId);
+              await processRecipeReport(report.originalId);
+              Alert.alert('완료', '게시글이 삭제되었습니다.');
+
+              // ✅ 서버 데이터 최신화
+              await fetchReports();
+            } catch (error) {
+              console.error('게시글 삭제 실패:', error);
+              Alert.alert('오류', '게시글 삭제에 실패했습니다.');
             }
           },
         },
@@ -371,8 +408,12 @@ export default function ReportManagementScreen({navigation}) {
             <Text style={styles.labelText}>신고자:</Text>
             <Text style={styles.reporterText}>{report.reporter}</Text>
             <Text style={styles.arrowText}>→</Text>
-            <Text style={styles.labelText}>피신고자:</Text>
-            <Text style={styles.reportedText}>{report.reported}</Text>
+            <Text style={styles.labelText}>
+              {report.reportType === 'post' ? '레시피:' : '피신고자:'}
+            </Text>
+            <Text style={styles.reportedText} numberOfLines={1}>
+              {report.reported}
+            </Text>
           </View>
           <Text style={styles.descriptionText}>{report.description}</Text>
         </View>
@@ -380,35 +421,53 @@ export default function ReportManagementScreen({navigation}) {
         {/* 하단: 액션 버튼 */}
         {report.status === 'pending' && (
           <View style={styles.actionButtons}>
-            {/* 경고 발송 버튼 */}
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleSendWarning(report)}
-              activeOpacity={0.8}>
-              <LinearGradient
-                colors={['#FAD15D', '#D09E10']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
-                angle={104.04}
-                style={styles.gradientButton}>
-                <Text style={styles.actionButtonText}>경고 발송</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+            {report.reportType === 'user' ? (
+              // 유저 신고: 경고 발송 + 계정 정지
+              <>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => handleSendWarning(report)}
+                  activeOpacity={0.8}>
+                  <LinearGradient
+                    colors={['#FAD15D', '#D09E10']}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 0}}
+                    angle={104.04}
+                    style={styles.gradientButton}>
+                    <Text style={styles.actionButtonText}>경고 발송</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
 
-            {/* 계정 정지 버튼 */}
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => handleSuspendUser(report)}
-              activeOpacity={0.8}>
-              <LinearGradient
-                colors={['#ED6F75', '#F60000']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 1}}
-                angle={166.1}
-                style={styles.gradientButton}>
-                <Text style={styles.actionButtonText}>계정 정지</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => handleSuspendUser(report)}
+                  activeOpacity={0.8}>
+                  <LinearGradient
+                    colors={['#ED6F75', '#F60000']}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}
+                    angle={166.1}
+                    style={styles.gradientButton}>
+                    <Text style={styles.actionButtonText}>계정 정지</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            ) : (
+              // 레시피 신고: 게시글 삭제
+              <TouchableOpacity
+                style={[styles.actionButton, {flex: 1}]}
+                onPress={() => handleDeleteRecipe(report)}
+                activeOpacity={0.8}>
+                <LinearGradient
+                  colors={['#ED6F75', '#F60000']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 1}}
+                  angle={166.1}
+                  style={styles.gradientButton}>
+                  <Text style={styles.actionButtonText}>게시글 삭제</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </TouchableOpacity>

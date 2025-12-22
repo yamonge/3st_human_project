@@ -25,6 +25,7 @@
         JOIN tb_user u1 ON u1.user_id = r.reporter_user_id
         JOIN tb_user u2 ON u2.user_id = r.reported_user_id
         WHERE 1=1
+        AND r.processing_status_cd = 'PENDING'
 
         <if test="reasonCd != null and reasonCd != ''">
             AND r.report_reason_cd = #{reasonCd}

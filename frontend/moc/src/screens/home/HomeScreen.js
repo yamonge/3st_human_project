@@ -94,9 +94,12 @@ export default function HomeScreen({navigation}) {
 
   const [popularRecipes, setPopularRecipes] = useState([]);
 
-  useEffect(() => {
-    fetchPopularRecipes();
-  }, []);
+  // 🔥 화면 focus 시마다 인기 레시피 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      fetchPopularRecipes();
+    }, []),
+  );
 
   const fetchPopularRecipes = async () => {
     try {

@@ -54,10 +54,10 @@ public class RecipeReportServiceImpl implements RecipeReportService {
             throw new IllegalArgumentException("신고할 레시피 (ID: " + requestDTO.getRecipeId() + ")를 찾을 수 없습니다.");
         }
 
-        // 2. 이미 신고했는지 확인 (중복 신고 방지)
-        if (recipeReportDAO.checkIfRecipeReportExists(requestDTO.getRecipeId(), reporterUserId) > 0) {
-            throw new IllegalArgumentException("이미 해당 레시피 (ID: " + requestDTO.getRecipeId() + ")를 신고했습니다.");
-        }
+        // 2. 중복 신고 허용 (제한 제거)
+        // if (recipeReportDAO.checkIfRecipeReportExists(requestDTO.getRecipeId(), reporterUserId) > 0) {
+        //     throw new IllegalArgumentException("이미 해당 레시피 (ID: " + requestDTO.getRecipeId() + ")를 신고했습니다.");
+        // }
 
         // 3. Request DTO -> VO 변환 및 설정
         RecipeReportVO vo = new RecipeReportVO();
@@ -221,10 +221,10 @@ public class RecipeReportServiceImpl implements RecipeReportService {
         // 현재는 편의상 RecipeVO를 조회하여 DTO로 변환하는 방식을 사용합니다.
         RecipeVO recipe = recipeDAO.selectRecipeById(recipeId);
         if (recipe != null) {
-            return new ReportedRecipeDetailDTO(recipe.getRecipeId(), recipe.getTitle(), recipe.getThumbnailUrl());
+            return new ReportedRecipeDetailDTO(recipe.getRecipeId(), recipe.getOwnerUserId(), recipe.getTitle(), recipe.getThumbnailUrl());
         }
 
         // 임시 더미 데이터 반환 (레시피 정보가 없을 때)
-        return new ReportedRecipeDetailDTO(recipeId, "알 수 없는 레시피 (ID: " + recipeId + ")", "https://default-recipe.png");
+        return new ReportedRecipeDetailDTO(recipeId, null, "알 수 없는 레시피 (ID: " + recipeId + ")", "https://default-recipe.png");
     }
 }

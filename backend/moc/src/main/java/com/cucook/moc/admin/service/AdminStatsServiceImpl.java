@@ -25,7 +25,9 @@ public class AdminStatsServiceImpl implements AdminStatsService {
         }
 
         int totalUsers = adminStatsDAO.countNonWithdrawUsers();
-        int pendingReports = adminStatsDAO.countPendingUserReports();
+        int userReports = adminStatsDAO.countPendingUserReports();
+        int recipeReports = adminStatsDAO.countPendingRecipeReports();
+        int pendingReports = userReports + recipeReports;
 
         AdminStatsResponseDTO dto = new AdminStatsResponseDTO();
         dto.setTotalUsers(totalUsers);
