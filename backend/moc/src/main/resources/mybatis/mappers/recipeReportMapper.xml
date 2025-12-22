@@ -7,6 +7,7 @@
         <id     property="reportId"       column="recipe_report_id"/>
         <result property="recipeId"       column="recipe_id"/>
         <result property="reporterUserId" column="reporter_user_id"/>
+        <result property="reporterNickname" column="reporter_nickname"/>
         <result property="reportReasonCd" column="report_reason_cd"/>
         <result property="content"        column="content"/>
         <result property="statusCd"       column="status_cd"/>
@@ -26,22 +27,27 @@
     -->
     <select id="selectReportedRecipesByReporterUserId" parameterType="long" resultMap="RecipeReportResultMap">
         SELECT
-            recipe_report_id,
-            recipe_id,
-            reporter_user_id,
-            report_reason_cd,
-            content,
-            status_cd,
-            created_id,
-            created_date,
-            updated_id,
-            updated_date
+            r.recipe_report_id,
+            r.recipe_id,
+            r.reporter_user_id,
+            u.user_nickname AS reporter_nickname,
+            r.report_reason_cd,
+            r.content,
+            r.status_cd,
+            r.created_id,
+            r.created_date,
+            r.updated_id,
+            r.updated_date
         FROM
-            tb_recipe_report
+            tb_recipe_report r
+            LEFT JOIN tb_user u ON u.user_id = r.reporter_user_id
+            LEFT JOIN tb_recipe rec ON rec.recipe_id = r.recipe_id
         WHERE
-            reporter_user_id = #{reporterUserId}
+            r.reporter_user_id = #{reporterUserId}
+            AND r.status_cd = 'PENDING'
+            AND (rec.is_deleted IS NULL OR rec.is_deleted = 'N')
         ORDER BY
-            created_date DESC -- 최신 신고일 순으로 정렬
+            r.created_date DESC -- 최신 신고일 순으로 정렬
     </select>
 
     <!--
@@ -166,5 +172,15 @@
         WHERE recipe_report_id = #{reportId}
           AND reporter_user_id = #{reporterUserId} -- 신고한 사용자 본인만 삭제 가능하도록 권한 확인
     </delete>
+
+    <!-- 
+        레시피 신고 상태 업데이트 (관리자용)
+    -->
+    <update id="updateRecipeReportStatus">
+        UPDATE tb_recipe_report
+        SET status_cd = #{statusCd},
+            updated_date = SYSTIMESTAMP
+        WHERE recipe_report_id = #{recipeReportId}
+    </update>
 
 </mapper>

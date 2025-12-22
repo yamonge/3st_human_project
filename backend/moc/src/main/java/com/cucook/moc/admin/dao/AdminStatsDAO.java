@@ -10,5 +10,7 @@ public interface AdminStatsDAO {
 
     int countPendingUserReports();
 
+    int countPendingRecipeReports();
+
     int isAdminUser(@Param("adminUserId") Long adminUserId);
 }

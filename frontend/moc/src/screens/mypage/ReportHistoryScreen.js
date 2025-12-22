@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {getUserIdOrThrow} from '../../api/axiosConfig';
 import LinearGradient from 'react-native-linear-gradient';
 import {ArrowLeft, Shield, AlertTriangle, Star} from 'lucide-react-native';
@@ -66,9 +67,12 @@ export default function ReportHistoryScreen({navigation}) {
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    loadReports();
-  }, []);
+  // 화면 focus 시마다 신고 내역 새로고침
+  useFocusEffect(
+    useCallback(() => {
+      loadReports();
+    }, []),
+  );
 
   // 신고 내역 불러오기
   const loadReports = async () => {

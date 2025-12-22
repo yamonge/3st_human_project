@@ -10,8 +10,8 @@ const normalizeRecipe = recipe => {
   // 안드로이드 에뮬레이터 localhost 보정
   if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
     r.thumbnailUrl = r.thumbnailUrl.replace(
-      'http://192.168.35.21:8090',
-      'http://10.0.2.2:8090',
+      'http://localhost:8090',
+      'http://192.168.1.134:8090',
     );
   }
 
@@ -113,7 +113,12 @@ export const getRecipeBoardList = async ({
  */
 export const getRecipeBoardDetail = async recipeId => {
   try {
-    const response = await api.get(`/v1/recipes/board/${recipeId}`);
+    const userId = await AsyncStorage.getItem('userId');
+    const response = await api.get(`/v1/recipes/board/${recipeId}`, {
+      params: {
+        loginUserId: userId ? Number(userId) : undefined,
+      },
+    });
     console.log('📦 게시판 상세 API raw response:', response);
     return response; // RecipeBoardDetailResponseDTO
   } catch (error) {

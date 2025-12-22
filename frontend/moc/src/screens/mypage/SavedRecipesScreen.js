@@ -81,7 +81,10 @@ export default function SavedRecipesScreen({navigation}) {
 
   // 레시피 카드 클릭 핸들러
   const handleRecipePress = recipe => {
-    navigation.navigate('RecipeBoardDetail', {recipeId: recipe.recipeId});
+    navigation.navigate('RecipeBoardDetail', {
+      recipeId: recipe.recipeId,
+      from: 'recipeSave',
+    });
   };
 
   // 현재 표시할 리스트

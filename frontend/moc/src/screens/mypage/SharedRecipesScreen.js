@@ -34,57 +34,56 @@ export default function SharedRecipesScreen({navigation}) {
   }, []);
 
   // 레시피 목록 불러오기
-const loadRecipes = async () => {
-  try {
-    setLoading(true);
+  const loadRecipes = async () => {
+    try {
+      setLoading(true);
 
-    const userId = await AsyncStorage.getItem('userId');
-    console
-    if (!userId) {
-      setRecipes([]);
-      setTotalCount(0);
-      return;
+      const userId = await AsyncStorage.getItem('userId');
+      console;
+      if (!userId) {
+        setRecipes([]);
+        setTotalCount(0);
+        return;
+      }
+
+      const response = await getSharedRecipes(userId);
+      console.log('✅ [SharedRecipesScreen] API raw response:', response);
+      const list = response?.bookmarkedRecipes ?? [];
+      console.log('[SharedRecipes] bookmarkedRecipes length:', list.length);
+      console.log('[SharedRecipes] first item:', list[0]);
+      setRecipes(
+        list
+          .filter(item => item?.recipe)
+          .map(item => {
+            const r = item.recipe;
+            return {
+              recipeId: r.recipeId, // ← id 말고
+              title: r.title,
+              authorNickname: r.authorNickname,
+              cookTimeMin: r.cookTimeMin,
+              difficultyCd: r.difficultyCd,
+              thumbnailUrl: r.thumbnailUrl,
+              likeCnt: r.likeCnt,
+              isLiked: false,
+              createdDate: item.createdDate,
+            };
+          }),
+      );
+      setTotalCount(response?.totalCount ?? 0);
+    } catch (error) {
+      console.error('공유한 레시피 불러오기 실패:', error);
+    } finally {
+      setLoading(false);
     }
-
-    const response = await getSharedRecipes(userId);
-    console.log('✅ [SharedRecipesScreen] API raw response:', response);
-    const list = response?.bookmarkedRecipes ?? [];
-    console.log('[SharedRecipes] bookmarkedRecipes length:', list.length);
-    console.log('[SharedRecipes] first item:', list[0]);
-    setRecipes(
-      list
-        .filter(item => item?.recipe)
-        .map(item => {
-          const r = item.recipe;
-          return {
-            recipeId: r.recipeId, // ← id 말고
-            title: r.title,
-            authorNickname: r.authorNickname,
-            cookTimeMin: r.cookTimeMin,
-            difficultyCd: r.difficultyCd,
-            thumbnailUrl: r.thumbnailUrl,
-            likeCnt: r.likeCnt,
-            isLiked: false,
-            createdDate: item.createdDate,
-          };
-        }),
-    );
-    setTotalCount(response?.totalCount ?? 0);
-  } catch (error) {
-    console.error('공유한 레시피 불러오기 실패:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // 레시피 카드 클릭 핸들러
   const handleRecipePress = recipeId => {
     navigation.navigate('RecipeBoardDetail', {
       recipeId: recipeId,
-      from: 'recipeboard',
+      from: 'shareBoard',
     });
   };
-
 
   return (
     <View style={styles.container}>

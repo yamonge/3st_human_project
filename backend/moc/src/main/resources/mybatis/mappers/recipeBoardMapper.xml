@@ -318,6 +318,7 @@
                     SELECT 1
                     FROM tb_recipe_like l
                     WHERE l.recipe_id = r.recipe_id
+                    AND l.user_id = #{loginUserId}
                 ) THEN 1
                 ELSE 0
                 END AS liked_by_me,

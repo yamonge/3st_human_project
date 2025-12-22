@@ -18,6 +18,13 @@
         WHERE UPPER(processing_status_cd) = 'PENDING'
     </select>
 
+    <!-- 미처리 신고 수 (레시피 신고: tb_recipe_report 기준) -->
+    <select id="countPendingRecipeReports" resultType="int">
+        SELECT COUNT(*)
+        FROM tb_recipe_report
+        WHERE UPPER(status_cd) = 'PENDING'
+    </select>
+
     <!-- 관리자 여부 확인 -->
     <select id="isAdminUser" parameterType="long" resultType="int">
         SELECT COUNT(*)

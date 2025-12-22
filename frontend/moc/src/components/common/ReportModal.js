@@ -101,14 +101,31 @@ const ReportModal = ({visible, onClose, reportTarget, onSubmit}) => {
       onClose();
     } catch (error) {
       console.error('신고 처리 실패:', error);
+
+      // 중복 신고 에러 처리
+      const errorMessage = error.response?.data?.message || error.message || '';
+      const isDuplicateReport =
+        errorMessage.includes('이미') || errorMessage.includes('신고');
+
       if (Platform.OS === 'web') {
-        window.alert('신고 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.');
+        if (isDuplicateReport) {
+          window.alert('이미 신고한 대상입니다.\n중복 신고는 불가능합니다.');
+        } else {
+          window.alert('신고 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.');
+        }
       } else {
         const {Alert} = require('react-native');
-        Alert.alert(
-          '오류',
-          '신고 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.',
-        );
+        if (isDuplicateReport) {
+          Alert.alert(
+            '알림',
+            '이미 신고한 대상입니다.\n중복 신고는 불가능합니다.',
+          );
+        } else {
+          Alert.alert(
+            '오류',
+            '신고 처리에 실패했습니다.\n잠시 후 다시 시도해주세요.',
+          );
+        }
       }
     }
   };

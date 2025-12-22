@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import {ChevronLeft, ChevronRight, Pin} from 'lucide-react-native';
 import {notificationAPI} from '../../api/notification';
@@ -27,9 +28,11 @@ export default function NotificationListScreen({navigation}) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadNotifications();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadNotifications();
+    }, []),
+  );
 
   /**
    * 공지사항 목록 불러오기

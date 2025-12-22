@@ -156,50 +156,96 @@ export const unsuspendUser = async userId => {
 // ===== 신고 관리 =====
 
 /**
- * 신고 목록 조회
- * @param {Object} params - { type, status, search }
+ * 신고 목록 조회 (유저 신고 + 레시피 신고 통합)
+ * @param {Object} params - { reportType, type, status, search }
  * @returns {Promise<Object>}
  */
 export const getReportList = async (params = {}) => {
   try {
-    // ✅ 현재 백엔드는 "유저 신고"만 있으므로,
-    // reportType이 'post'인 경우는 일단 빈 배열 반환(추후 게시물 신고 API 추가 시 확장)
     const reportType = params.reportType;
-    if (reportType && reportType !== 'user') {
-      return {reports: []};
+    const allReports = [];
+
+    // ✅ 유저 신고 조회
+    if (!reportType || reportType === 'all' || reportType === 'user') {
+      try {
+        const mappedParams = {
+          keyword: params.search ? String(params.search).trim() : '',
+          reasonCd: mapTypeToReasonCd(params.type),
+          statusCd: mapStatusToStatusCd(params.status),
+          lastUserReportId: params.lastUserReportId ?? null,
+          limit: params.limit ?? 50,
+        };
+
+        const userList = await api.get(
+          '/admin/reports/users',
+          withAdminMeta({params: mappedParams}),
+        );
+
+        const userReports = (userList || []).map(dto => ({
+          id: `user-${dto.userReportId}`,
+          originalId: dto.userReportId,
+          reportType: 'user',
+          source: 'shopping_together',
+          type: String(dto.reportReasonCd || '').toLowerCase(),
+          status: dto.processingStatusCd === 'PENDING' ? 'pending' : 'resolved',
+          date: formatDateYYYYMMDD(dto.createdDate),
+          reporter: dto.reporterNickname,
+          reported: dto.reportedNickname,
+          reportedUserId: dto.reportedUserId,
+          description: dto.reportComment,
+          details: dto.reportComment,
+        }));
+
+        allReports.push(...userReports);
+      } catch (error) {
+        console.error('유저 신고 조회 실패:', error);
+      }
     }
 
-    const mappedParams = {
-      keyword: params.search ? String(params.search).trim() : '',
-      reasonCd: mapTypeToReasonCd(params.type),
-      statusCd: mapStatusToStatusCd(params.status),
-      // cursor 기반 확장 여지
-      lastUserReportId: params.lastUserReportId ?? null,
-      limit: params.limit ?? 50,
-    };
+    // ✅ 레시피 신고 조회 (관리자 userId로 호출)
+    if (!reportType || reportType === 'all' || reportType === 'post') {
+      try {
+        const adminUserId = await getMyUserId();
+        if (adminUserId) {
+          const recipeList = await api.get(
+            `/v1/users/${adminUserId}/recipe-reports`,
+          );
 
-    const list = await api.get(
-      '/admin/reports/users',
-      withAdminMeta({params: mappedParams}),
-    );
+          const recipeReports = (recipeList?.reportedRecipes || []).map(
+            dto => ({
+              id: `recipe-${dto.reportId}`,
+              originalId: dto.reportId,
+              reportType: 'post',
+              source: 'recipe_board',
+              type: String(dto.reportReasonCd || '').toLowerCase(),
+              status: dto.statusCd === 'PENDING' ? 'pending' : 'resolved',
+              date: formatDateYYYYMMDD(dto.createdDate),
+              reporter:
+                dto.reporterNickname || `사용자 ID: ${dto.reporterUserId}`,
+              reported: dto.reportedRecipe?.title || '삭제된 레시피',
+              reportedUserId: null,
+              recipeId: dto.recipeId,
+              recipeOwnerId: dto.reportedRecipe?.ownerUserId, // 레시피 작성자 ID
+              description: dto.content || '신고 내용 없음',
+              details: dto.content || '신고 내용 없음',
+            }),
+          );
 
-    // 백엔드 DTO -> 화면 모델 매핑
-    const reports = (list || []).map(dto => ({
-      id: dto.userReportId,
-      reportType: 'user',
-      // tb_user_report에 출처 컬럼이 없다면, UI 표시용으로 고정
-      source: 'shopping_together',
-      type: String(dto.reportReasonCd || '').toLowerCase(),
-      status: dto.processingStatusCd === 'PENDING' ? 'pending' : 'resolved',
-      date: formatDateYYYYMMDD(dto.createdDate),
-      reporter: dto.reporterNickname,
-      reported: dto.reportedNickname,
-      reportedUserId: dto.reportedUserId,
-      description: dto.reportComment,
-      details: dto.reportComment,
-    }));
+          allReports.push(...recipeReports);
+        }
+      } catch (error) {
+        console.error('레시피 신고 조회 실패:', error);
+      }
+    }
 
-    return {reports};
+    // 날짜 최신순 정렬
+    allReports.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB - dateA;
+    });
+
+    return {reports: allReports};
   } catch (error) {
     console.error('신고 목록 조회 실패:', error);
     throw error;
@@ -233,6 +279,43 @@ export const sendWarning = async (reportId, data) => {
     );
   } catch (error) {
     console.error('경고 발송 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 레시피 삭제 (신고 처리)
+ * DELETE /api/admin/posts/{recipeId}?userId=관리자ID
+ */
+export const deleteRecipeByReport = async recipeId => {
+  try {
+    const adminUserId = await getMyUserId();
+
+    return api.delete(
+      `/admin/posts/${recipeId}`,
+      withAdminMeta({params: {userId: adminUserId}}),
+    );
+  } catch (error) {
+    console.error('레시피 삭제 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 레시피 신고 처리 완료 마킹
+ * POST /api/admin/reports/recipes/{recipeReportId}/process
+ */
+export const processRecipeReport = async recipeReportId => {
+  try {
+    const adminUserId = await getMyUserId();
+
+    return api.post(
+      `/admin/reports/recipes/${recipeReportId}/process`,
+      {},
+      withAdminMeta({params: {userId: adminUserId}}),
+    );
+  } catch (error) {
+    console.error('레시피 신고 처리 실패:', error);
     throw error;
   }
 };

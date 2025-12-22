@@ -16,7 +16,7 @@ public interface RecipeBoardService {
             int size
     );
 
-    RecipeVO getPublicRecipeDetail(Long recipeId);
+    RecipeVO getPublicRecipeDetail(Long recipeId, Long loginUserId);
 
     RecipeBoardListResponseDTO getPublicRecipesOptimized(
             Long loginUserId,
