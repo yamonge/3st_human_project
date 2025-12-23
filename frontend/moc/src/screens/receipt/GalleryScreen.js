@@ -25,7 +25,7 @@ const GalleryScreen = ({navigation, route}) => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [endCursor, setEndCursor] = useState(null);
   const [isRecognizing, setIsRecognizing] = useState(false);
-  const from = route.params?.from; // 'receipt' 또는 'profile'
+  const from = route.params?.from; // 'receipt' 또는 'notice'
 
   // ✅ 화면 진입 시마다 선택 초기화 및 사진 목록 새로 로드
   useFocusEffect(
@@ -72,9 +72,7 @@ const GalleryScreen = ({navigation, route}) => {
   // X 버튼 (뒤로가기) 처리
   const handleGoBack = () => {
     // from에 따라 분기 처리
-    if (from === 'profile') {
-      navigation.navigate('ProfileEdit');
-    } else if (from === 'notice') {
+    if (from === 'notice') {
       navigation.navigate('NoticeForm', {
         mode: route.params?.mode || 'create',
         noticeId: route.params?.noticeId,
@@ -98,12 +96,7 @@ const GalleryScreen = ({navigation, route}) => {
     console.log('📷 선택한 사진:', selectedPhoto.uri);
 
     // from에 따라 분기 처리
-    if (from === 'profile') {
-      // 프로필 수정 화면으로 돌아가면서 이미지 전달
-      navigation.navigate('ProfileEdit', {
-        selectedImage: selectedPhoto.uri,
-      });
-    } else if (from === 'notice') {
+    if (from === 'notice') {
       // 공지사항 작성/수정 화면으로 돌아가면서 이미지 전달
       navigation.navigate('NoticeForm', {
         mode: route.params?.mode || 'create',
@@ -244,7 +237,7 @@ const GalleryScreen = ({navigation, route}) => {
             end={{x: 1, y: 0}}
             style={styles.uploadButton}>
             <Text style={styles.uploadButtonText}>
-              {from === 'profile' ? '선택 완료' : '선택한 사진 업로드'}
+              {from === 'notice' ? '선택 완료' : '선택한 사진 업로드'}
             </Text>
           </LinearGradient>
         </TouchableOpacity>

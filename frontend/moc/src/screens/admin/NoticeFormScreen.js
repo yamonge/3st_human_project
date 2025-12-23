@@ -6,10 +6,9 @@ import {
   TextInput,
   ScrollView,
   Alert,
-  Image,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
-import {ArrowLeft, ImageIcon} from 'lucide-react-native';
+import {ArrowLeft} from 'lucide-react-native';
 import styles from '../../styles/screens/admin/NoticeFormStyles';
 import {colors} from '../../styles/common';
 import {createNotice, updateNotice, getNoticeDetail} from '../../api/admin';
@@ -35,14 +34,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function NoticeFormScreen({navigation, route}) {
   const mode = route?.params?.mode || 'create'; // 'create' | 'edit'
   const noticeId = route?.params?.noticeId;
-  const selectedImage = route?.params?.selectedImage; // 갤러리에서 선택한 이미지
-  const currentTitle = route?.params?.currentTitle; // 갤러리에서 복귀 시 제목
-  const currentContent = route?.params?.currentContent; // 갤러리에서 복귀 시 내용
-  const currentImage = route?.params?.currentImage; // 갤러리에서 복귀 시 기존 이미지
+  // 이미지 업로드 제거 - 관련 route params 무시
+  const currentTitle = route?.params?.currentTitle; // 갤러리에서 복귀 시 제목 (무시 가능)
+  const currentContent = route?.params?.currentContent; // 갤러리에서 복귀 시 내용 (무시 가능)
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [imageUri, setImageUri] = useState(null);
+  // imageUri removed
   const [loading, setLoading] = useState(false);
   const [isadmin, setIsadmin] = useState('N');
   // 화면 마운트시 관리자 여부 확인
@@ -53,60 +51,19 @@ export default function NoticeFormScreen({navigation, route}) {
     })();
   }, []);
 
-
   // 화면 포커스 시 초기화 및 로드
   useFocusEffect(
     useCallback(() => {
-      console.log('🔍 NoticeFormScreen focused - params:', {
-        mode,
-        noticeId,
-        selectedImage,
-        currentTitle,
-        currentContent,
-        currentImage,
-      });
+      console.log('🔍 NoticeFormScreen focused - params:', {mode, noticeId});
 
-      // 갤러리에서 복귀한 경우 (selectedImage가 있거나 current* 값이 있음)
-      const isFromGallery = selectedImage || currentTitle !== undefined;
-
-      if (isFromGallery) {
-        // 갤러리에서 복귀 시 기존 입력값 복원
-        if (currentTitle !== undefined) {
-          setTitle(currentTitle);
-        }
-        if (currentContent !== undefined) {
-          setContent(currentContent);
-        }
-        if (currentImage !== undefined) {
-          setImageUri(currentImage);
-        }
-
-        // 새로 선택한 이미지 적용
-        if (selectedImage) {
-          setImageUri(selectedImage);
-        }
-      } else {
-        // 갤러리에서 온 게 아닐 때
-        if (mode === 'create') {
-          // 작성 모드: 완전 초기화
-          console.log('✨ 작성 모드 - 초기화');
-          setTitle('');
-          setContent('');
-          setImageUri(null);
-        } else if (mode === 'edit' && noticeId) {
-          // 수정 모드: 데이터 로드
-          console.log('✏️ 수정 모드 - 데이터 로드');
-          loadNoticeDetail();
-        }
+      // 갤러리에서의 이미지 핸들링 제거
+      if (mode === 'create') {
+        setTitle('');
+        setContent('');
+      } else if (mode === 'edit' && noticeId) {
+        loadNoticeDetail();
       }
-    }, [
-      mode,
-      noticeId,
-      selectedImage,
-      currentTitle,
-      currentContent,
-      currentImage,
-    ]),
+    }, [mode, noticeId, currentTitle, currentContent]),
   );
 
   // 공지사항 상세 로드 (수정 모드)
@@ -116,7 +73,7 @@ export default function NoticeFormScreen({navigation, route}) {
       const data = await getNoticeDetail(noticeId);
       setTitle(data.title);
       setContent(data.content);
-      setImageUri(data.imageUrl);
+      // imageUrl ignored (image upload removed)
     } catch (error) {
       console.error('공지사항 로드 실패:', error);
       Alert.alert('오류', '공지사항을 불러오는데 실패했습니다.');
@@ -125,17 +82,7 @@ export default function NoticeFormScreen({navigation, route}) {
     }
   };
 
-  // 이미지 선택 (GalleryScreen으로 이동)
-  const handleSelectImage = () => {
-    navigation.navigate('Gallery', {
-      from: 'notice', // 공지사항 작성에서 왔음을 표시
-      mode: mode, // 작성/수정 모드 전달
-      noticeId: noticeId, // 수정 시 공지사항 ID 전달
-      currentTitle: title, // 현재 입력된 제목
-      currentContent: content, // 현재 입력된 내용
-      currentImage: imageUri, // 현재 선택된 이미지
-    });
-  };
+  // 이미지 업로드 제거 — 더 이상 Gallery로 이동하지 않음
 
   // 유효성 검사
   const validateForm = () => {
@@ -152,7 +99,7 @@ export default function NoticeFormScreen({navigation, route}) {
 
   // 취소
   const handleCancel = () => {
-    if (title || content || imageUri) {
+    if (title || content) {
       Alert.alert('확인', '작성 중인 내용이 있습니다. 정말 취소하시겠습니까?', [
         {text: '계속 작성', style: 'cancel'},
         {
@@ -180,7 +127,6 @@ export default function NoticeFormScreen({navigation, route}) {
       const payload = {
         title: title.trim(),
         content: content.trim(),
-        imageUrl: imageUri ?? null, // ✅ 백엔드 DTO 필드명에 맞춤
       };
 
       if (mode === 'create') {
@@ -188,7 +134,8 @@ export default function NoticeFormScreen({navigation, route}) {
         Alert.alert('성공', '공지사항이 작성되었습니다.', [
           {
             text: '확인',
-            onPress: () => navigation.navigate('NoticeManagement', {refresh: Date.now()}),
+            onPress: () =>
+              navigation.navigate('NoticeManagement', {refresh: Date.now()}),
           },
         ]);
       } else {
@@ -196,7 +143,8 @@ export default function NoticeFormScreen({navigation, route}) {
         Alert.alert('성공', '공지사항이 수정되었습니다.', [
           {
             text: '확인',
-            onPress: () => navigation.navigate('NoticeManagement', {refresh: Date.now()}),
+            onPress: () =>
+              navigation.navigate('NoticeManagement', {refresh: Date.now()}),
           },
         ]);
       }
@@ -262,25 +210,7 @@ export default function NoticeFormScreen({navigation, route}) {
           />
         </View>
 
-        {/* 이미지 업로드 */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>이미지</Text>
-          <TouchableOpacity
-            style={styles.imageUploadBox}
-            onPress={handleSelectImage}
-            activeOpacity={0.7}
-            disabled={loading}>
-            {imageUri ? (
-              <Image source={{uri: imageUri}} style={styles.uploadedImage} />
-            ) : (
-              <>
-                <ImageIcon size={32} color={colors.textLightGray} />
-                <Text style={styles.uploadText}>이미지 업로드</Text>
-                <Text style={styles.uploadSubText}>클릭하여 파일 선택</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
+        {/* 이미지 업로드 UI 제거 */}
 
         {/* 하단 버튼 */}
         <View style={styles.buttonContainer}>
