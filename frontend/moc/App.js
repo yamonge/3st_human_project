@@ -399,7 +399,7 @@ function App() {
     try {
       const {data} = remoteMessage;
 
-      // TODO: 알림 데이터에 따라 적절한 화면으로 이동
+      // 알림 데이터에 따른 화면 이동 처리
       // 예: chatRoomId가 있으면 채팅방으로 이동
       if (data?.chatRoomId && navigationRef.current) {
         // 메인 화면으로 먼저 이동 후 채팅방 열기
@@ -436,7 +436,7 @@ function App() {
 
   // 로딩 중
   if (isFirstLaunch === null || isLoggedIn === null) {
-    return null; // TODO: 스플래시 화면 추가
+    return null; // 스플래시 화면 추가 (추후 구현)
   }
 
   // 초기 화면 결정 - 항상 온보딩부터 시작

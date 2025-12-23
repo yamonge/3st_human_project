@@ -38,7 +38,7 @@ export default function IngredientCard({
         angle={135}
         style={styles.iconContainer}>
         <View style={styles.iconWrapper}>
-          {/* TODO: 실제 아이콘 이미지로 교체 */}
+          {/* 실제 아이콘 이미지로 교체 필요 */}
           <View style={styles.iconPlaceholder}>
             <Text style={styles.iconText}>{name.charAt(0)}</Text>
           </View>

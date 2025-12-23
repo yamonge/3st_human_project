@@ -46,7 +46,7 @@ export const getUserInfo = async () => {
  */
 export const updateProfile = async profileData => {
   try {
-    // TODO: 백엔드 API 연동 시 주석 해제
+    // 백엔드 API 연동 시 주석 해제
     const response = await api.put('/users/profile', profileData, {
       meta: {requiresUserId: true},
     });

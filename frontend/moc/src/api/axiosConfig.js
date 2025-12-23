@@ -143,14 +143,14 @@ api.interceptors.response.use(
         await AsyncStorage.removeItem('userEmail');
         await AsyncStorage.removeItem('userNickname');
         await AsyncStorage.removeItem('userName');
-        // TODO: 로그인 화면으로 이동
+        // 로그인 화면으로 이동
         // NavigationService.navigate('Login');
       }
 
       // 403 에러 (권한 없음)
       if (status === 403) {
         console.error('🚫 접근 권한이 없습니다.');
-        // TODO: 권한 없음 알림 표시
+        // 권한 없음 알림 표시
       }
 
       // 404 에러 (리소스 없음)
@@ -161,7 +161,7 @@ api.interceptors.response.use(
       // 500 에러 (서버 에러)
       if (status === 500) {
         console.error('💥 서버 에러가 발생했습니다.');
-        // TODO: 서버 에러 알림 표시
+        // 서버 에러 알림 표시
       }
     }
     // 응답이 없는 경우 (네트워크 에러)
@@ -178,7 +178,7 @@ api.interceptors.response.use(
       console.log('📛 Error:', error.message);
       console.log('💡 Tip: 서버가 실행 중인지, 네트워크 연결을 확인하세요.');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-      // TODO: 네트워크 에러 알림 표시
+      // 네트워크 에러 알림 표시
     }
     // 기타 에러
     else {

@@ -185,7 +185,7 @@ export default function ProfileScreen({navigation}) {
     } else if (item.screen === 'Settings') {
       navigation.navigate('Settings');
     } else {
-      // TODO: 다른 화면들 구현 후 연결
+      // 개발 중인 화면 처리
       Alert.alert('개발 중', `${item.title} 화면은 개발 중입니다.`);
     }
   };

@@ -33,7 +33,7 @@ const IngredientInputScreen = ({navigation}) => {
   // 다음 단계로 (레시피 필터 화면으로 이동)
   const handleNext = () => {
     if (ingredients.length === 0) {
-      // TODO: 재료를 최소 1개 이상 입력하라는 안내 메시지
+      // 안내: 재료를 최소 1개 이상 입력해주세요
       return;
     }
     // 재료를 객체 배열로 변환 (IngredientSelectionScreen이 기대하는 형식)

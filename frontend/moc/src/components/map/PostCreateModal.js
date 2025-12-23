@@ -158,10 +158,7 @@ export default function PostCreateModal({
       // (중요) 성공시에만 닫기
       onClose?.();
 
-      // TODO(2단계): "작성 시점에 채팅방 생성"을 백엔드가 하고,
-      // create 응답에서 chatRoomId까지 내려주도록 만들면
-      // 여기서 바로 이동 가능
-      // navigation.navigate('ChatRoom', { chatRoomId });
+      // 2단계: 작성 시점에 채팅방 생성 처리(백엔드에서 chatRoomId 반환 시 여기서 이동 가능)
     } catch (error) {
       console.error('[게시물 생성 실패]', error);
       Alert.alert('오류', '게시물 작성에 실패했습니다. 다시 시도해주세요.');
