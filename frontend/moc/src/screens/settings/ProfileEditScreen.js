@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -38,34 +38,109 @@ export default function ProfileEditScreen({navigation, route}) {
     profileImage: null,
   });
 
+  // 갤러리에서 돌아온 직후 서버 reload를 건너뛰기 위한 ref
+  const skipLoadRef = useRef(false);
+
   useEffect(() => {
-    loadProfileData();
+    // 마운트/포커스 시: Gallery에서 selectedImage와 함께 진입한 경우
+    // 서버 데이터를 바로 덮어쓰지 않도록 처리
+    const applyTempSelectedImage = async () => {
+      try {
+        // 우선 route params 확인
+        if (route.params?.selectedImage) {
+          console.log(
+            'ProfileEditScreen -> mount received route.params.selectedImage:',
+            route.params.selectedImage,
+          );
+          setProfileData(prev => ({
+            ...prev,
+            profileImage: route.params.selectedImage,
+          }));
+          skipLoadRef.current = true;
+          navigation.setParams({selectedImage: undefined});
+          return true;
+        }
+
+        // route params가 없으면 AsyncStorage의 임시값 확인
+        const tmp = await AsyncStorage.getItem('tempSelectedImage');
+        if (tmp) {
+          console.log(
+            'ProfileEditScreen -> mount found tempSelectedImage:',
+            tmp,
+          );
+          setProfileData(prev => ({...prev, profileImage: tmp}));
+          skipLoadRef.current = true;
+          await AsyncStorage.removeItem('tempSelectedImage');
+          return true;
+        }
+        return false;
+      } catch (e) {
+        console.warn('ProfileEditScreen -> applyTempSelectedImage error', e);
+        return false;
+      }
+    };
+
+    (async () => {
+      const applied = await applyTempSelectedImage();
+      if (!applied) {
+        loadProfileData();
+      }
+    })();
 
     // 화면 진입 시 데이터 다시 로드 (수정 취소 시 원래 데이터로 복원)
-    const unsubscribe = navigation.addListener('focus', () => {
+    const unsubscribe = navigation.addListener('focus', async () => {
+      console.log('Focus event triggered');
+      console.log('skipLoadRef before reset:', skipLoadRef.current);
+
+      // 뒤로가기 후 돌아올 때 항상 최신 데이터 로드
+      skipLoadRef.current = false;
+      console.log('skipLoadRef after reset:', skipLoadRef.current);
+
+      // 로컬에 선택된 이미지가 있으면 서버 데이터 덮어쓰기 방지
+      const tmp = await AsyncStorage.getItem('tempSelectedImage');
+      if (tmp) {
+        console.log(
+          'Focus found tempSelectedImage, skipping server load:',
+          tmp,
+        );
+        setProfileData(prev => ({...prev, profileImage: tmp}));
+        return;
+      }
+
       loadProfileData();
     });
 
-    return unsubscribe;
+    // 화면 이탈 시 임시 이미지 데이터 삭제
+    const unsubscribeBlur = navigation.addListener('blur', async () => {
+      console.log('Blur event triggered, clearing tempSelectedImage');
+      try {
+        await AsyncStorage.removeItem('tempSelectedImage');
+      } catch (e) {
+        console.warn('Failed to clear tempSelectedImage on blur:', e);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      unsubscribeBlur();
+    };
   }, [navigation]);
 
-  // 갤러리에서 선택한 이미지 받기
   useEffect(() => {
-    if (route.params?.selectedImage) {
-      setProfileData(prev => ({
-        ...prev,
-        profileImage: route.params.selectedImage,
-      }));
-      // params 초기화
-      navigation.setParams({selectedImage: undefined});
-    }
-  }, [route.params?.selectedImage]);
+    console.log(
+      'ProfileEditScreen -> profileData.profileImage changed:',
+      profileData.profileImage,
+    );
+  }, [profileData.profileImage]);
 
   // 프로필 데이터 로드
+  // 갤러리에서 돌아온 직후 서버 reload를 건너뛰기 위한 ref
   const loadProfileData = async () => {
     try {
       setLoading(true);
+      console.log('Loading profile data from server...');
       const data = await getUserInfo();
+      console.log('Loaded profile data:', data);
       setProfileData({
         name: data.name || '',
         nickname: data.nickname || '',
@@ -121,18 +196,12 @@ export default function ProfileEditScreen({navigation, route}) {
     try {
       setLoading(true);
 
-      // API 호출
+      // API 호출 - updateProfile이 로컬 URI를 FormData로 자동 변환 처리
       await updateProfile({
         name: profileData.name,
         nickname: profileData.nickname,
-        profileImage: profileData.profileImage,
+        profileImage: profileData.profileImage, // content:// URI 그대로 전달
       });
-
-      // AsyncStorage 업데이트
-      await AsyncStorage.setItem('userNickname', profileData.nickname);
-      if (profileData.profileImage) {
-        await AsyncStorage.setItem('profileImage', profileData.profileImage);
-      }
 
       Alert.alert('완료', '프로필이 수정되었습니다.', [
         {

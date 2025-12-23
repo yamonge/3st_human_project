@@ -385,8 +385,7 @@ const PostListBottomSheet = forwardRef(
       // ✅ 모달 닫기 (중복 close 방지: PostFilterModal에서는 onClose를 따로 호출하지 않게 수정)
       setShowPostFilterModal(false);
 
-      // TODO: 서버에서 필터링해서 받고 싶다면, 아래처럼 정책을 바꾸면 됩니다.
-      // 백엔드 API 연동 시 필터 파라미터와 함께 요청
+      // 서버 필터링: 필요 시 필터 파라미터로 요청하도록 변경 가능
       /*
     loadPostsWithFilters(filters);
     */

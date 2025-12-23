@@ -11,7 +11,7 @@ const RecipeSelectionScreen = ({navigation}) => {
 
   const handleMyIngredients = () => {
     // 내 재료로 추천받기 - 레시피 필터 화면으로 이동 (카메라 플로우와 동일)
-    // TODO: 실제로는 사용자의 저장된 재료 목록을 가져와서 전달해야 함
+    // 향후: 사용자의 저장된 재료 목록을 전달하도록 구현
     navigation.navigate('RecipeFilter', {
       ingredients: [], // 추후 AsyncStorage 또는 API에서 가져온 재료 목록
     });

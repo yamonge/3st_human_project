@@ -159,7 +159,7 @@ export default function UserManagementModal({
         <View style={styles.modalContent}>
           {/* 경고 아이콘 */}
           <View style={styles.iconContainer}>
-            {/* //TODO 사용자 프로필 사진 */}
+            {/* 사용자 프로필 사진 */}
             <AlertTriangle size={64} color="#FF8904" strokeWidth={2} />
           </View>
 

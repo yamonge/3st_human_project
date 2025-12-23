@@ -1,3 +1,0 @@
-Login
-Register
-Find

@@ -122,7 +122,7 @@ export default function IngredientManagementScreen({navigation}) {
   };
   // AI 레시피 추천
   const handleAIRecommend = () => {
-    // TODO: RecipeFilterScreen으로 이동
+    // 이동: RecipeFilterScreen으로 연결
     navigation.navigate('RecipeFilter');
   };
 
