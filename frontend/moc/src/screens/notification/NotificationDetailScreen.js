@@ -50,7 +50,6 @@ export default function NotificationDetailScreen({navigation, route}) {
 
       const data = await notificationAPI.getNotificationDetail(noticeId);
       console.log('🔍 [NotificationDetail] API 응답 데이터:', data);
-      console.log('🖼️  [NotificationDetail] 이미지 URL:', data.imageUrl);
       setNotice(data);
     } catch (err) {
       console.error('공지사항 상세 불러오기 실패:', err);
@@ -184,17 +183,6 @@ export default function NotificationDetailScreen({navigation, route}) {
           {/* 날짜 */}
           <Text style={styles.noticeDate}>{notice.createdAt}</Text>
         </View>
-
-        {/* 이미지 영역 (있는 경우에만 표시) */}
-        {notice.imageUrl && (
-          <View style={styles.imageSection}>
-            <Image
-              source={{uri: notice.imageUrl}}
-              style={styles.noticeImage}
-              resizeMode="cover"
-            />
-          </View>
-        )}
 
         {/* 본문 영역 */}
         <View style={styles.contentSection}>

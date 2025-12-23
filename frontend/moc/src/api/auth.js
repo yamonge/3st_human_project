@@ -38,7 +38,16 @@ export const initGoogleSignIn = () => {
  */
 export const signInWithGoogle = async () => {
   try {
-    await GoogleSignin.hasPlayServices();
+    console.log('🔍 [Google SignIn] 시작...');
+
+    // Play Services 확인
+    console.log('🔍 [Google SignIn] Play Services 확인 중...');
+    const hasPlayServices = await GoogleSignin.hasPlayServices({
+      showPlayServicesUpdateDialog: true,
+    });
+    console.log('✅ [Google SignIn] Play Services 사용 가능:', hasPlayServices);
+
+    console.log('🔍 [Google SignIn] signIn() 호출 중...');
     const response = await GoogleSignin.signIn();
 
     console.log(

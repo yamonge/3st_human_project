@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import LinearGradient from 'react-native-linear-gradient';
-import {ArrowLeft, User, Camera, Mail} from 'lucide-react-native';
+import {ArrowLeft, User, Mail} from 'lucide-react-native';
 import styles from '../../styles/screens/settings/ProfileEditStyles';
 import {colors} from '../../styles/common';
 import {getUserInfo, updateProfile} from '../../api/settings';
@@ -35,7 +35,6 @@ export default function ProfileEditScreen({navigation, route}) {
     name: '',
     nickname: '',
     email: '',
-    profileImage: null,
   });
 
   // 갤러리에서 돌아온 직후 서버 reload를 건너뛰기 위한 ref
@@ -134,7 +133,6 @@ export default function ProfileEditScreen({navigation, route}) {
   }, [profileData.profileImage]);
 
   // 프로필 데이터 로드
-  // 갤러리에서 돌아온 직후 서버 reload를 건너뛰기 위한 ref
   const loadProfileData = async () => {
     try {
       setLoading(true);
@@ -145,38 +143,12 @@ export default function ProfileEditScreen({navigation, route}) {
         name: data.name || '',
         nickname: data.nickname || '',
         email: data.email || '',
-        profileImage: data.profileImage || null,
       });
     } catch (error) {
       console.error('프로필 데이터 로드 실패:', error);
       Alert.alert('오류', '프로필 정보를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 이미지 선택 (권한 체크 후 갤러리로 이동)
-  const handleSelectImage = async () => {
-    if (Platform.OS === 'android') {
-      const androidVersion = Platform.Version;
-      const permission =
-        androidVersion >= 33
-          ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
-          : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
-
-      // 권한 요청 (시스템 권한 창 표시)
-      const granted = await PermissionsAndroid.request(permission);
-
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        // 권한 허용 → 갤러리로 이동
-        navigation.navigate('Gallery', {from: 'profile'});
-      } else {
-        // 권한 거부 → 모달 표시
-        setShowPermissionModal(true);
-      }
-    } else {
-      // iOS는 바로 이동
-      navigation.navigate('Gallery', {from: 'profile'});
     }
   };
 
@@ -196,11 +168,10 @@ export default function ProfileEditScreen({navigation, route}) {
     try {
       setLoading(true);
 
-      // API 호출 - updateProfile이 로컬 URI를 FormData로 자동 변환 처리
+      // API 호출
       await updateProfile({
         name: profileData.name,
         nickname: profileData.nickname,
-        profileImage: profileData.profileImage, // content:// URI 그대로 전달
       });
 
       Alert.alert('완료', '프로필이 수정되었습니다.', [
@@ -245,33 +216,17 @@ export default function ProfileEditScreen({navigation, route}) {
         enableOnAndroid={true}
         enableAutomaticScroll={true}
         extraScrollHeight={20}>
-        {/* 프로필 사진 영역 */}
+        {/* 프로필 아이콘 영역 */}
         <View style={styles.profileImageContainer}>
           <View style={styles.profileImageWrapper}>
-            {profileData.profileImage ? (
-              <Image
-                source={{uri: profileData.profileImage}}
-                style={styles.profileImage}
-              />
-            ) : (
-              <LinearGradient
-                colors={['#98D8FF', '#698FEE', '#D7FEFF']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 1}}
-                style={styles.profileImagePlaceholder}>
-                <User size={40} color={colors.white} strokeWidth={2} />
-              </LinearGradient>
-            )}
-
-            {/* 카메라 버튼 */}
-            <TouchableOpacity
-              style={styles.cameraButton}
-              onPress={handleSelectImage}
-              activeOpacity={0.8}>
-              <Camera size={14} color={colors.white} strokeWidth={2.5} />
-            </TouchableOpacity>
+            <LinearGradient
+              colors={['#98D8FF', '#698FEE', '#D7FEFF']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={styles.profileImagePlaceholder}>
+              <User size={40} color={colors.white} strokeWidth={2} />
+            </LinearGradient>
           </View>
-          <Text style={styles.profileImageLabel}>프로필 사진 변경</Text>
         </View>
 
         {/* 입력 폼 */}
