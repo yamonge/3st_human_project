@@ -49,6 +49,8 @@ export default function NotificationDetailScreen({navigation, route}) {
       }
 
       const data = await notificationAPI.getNotificationDetail(noticeId);
+      console.log('🔍 [NotificationDetail] API 응답 데이터:', data);
+      console.log('🖼️  [NotificationDetail] 이미지 URL:', data.imageUrl);
       setNotice(data);
     } catch (err) {
       console.error('공지사항 상세 불러오기 실패:', err);

@@ -7,6 +7,7 @@ import com.cucook.moc.notice.dto.response.NoticeDetailResponseDTO;
 import com.cucook.moc.notice.dto.response.NoticeListItemResponseDTO;
 import com.cucook.moc.notice.vo.NoticeVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,9 @@ import java.util.List;
 public class NoticeServiceImpl implements NoticeService {
 
     private final NoticeDAO noticeDAO;
+    
+    @Value("${server.base-url:http://localhost:8090}")
+    private String serverBaseUrl;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,7 +62,17 @@ public class NoticeServiceImpl implements NoticeService {
         dto.setNoticeId(vo.getNoticeId());
         dto.setTitle(vo.getTitle());
         dto.setContent(vo.getContent());
-        dto.setImageUrl(vo.getImageUrl());
+        
+        // 이미지 URL 변환 (상대 경로 → 절대 URL)
+        String imageUrl = vo.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            // 이미 절대 URL이면 그대로, 상대 경로면 절대 URL로 변환
+            if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+                imageUrl = serverBaseUrl + imageUrl;
+            }
+        }
+        dto.setImageUrl(imageUrl);
+        
         dto.setPinned("Y".equalsIgnoreCase(vo.getIsPinned()));
         dto.setVisible("Y".equalsIgnoreCase(vo.getIsVisible()));
         dto.setViewCount((vo.getViewCnt() != null ? vo.getViewCnt() : 0L) + 1L);

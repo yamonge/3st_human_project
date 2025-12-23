@@ -46,7 +46,51 @@ export const getUserInfo = async () => {
  */
 export const updateProfile = async profileData => {
   try {
-    // 백엔드 API 연동 시 주석 해제
+    // profileImage가 로컬 URI(file:// 또는 content://)인 경우에는
+    // FormData로 multipart/form-data 전송을 하도록 처리
+    const {profileImage, name, nickname} = profileData || {};
+
+    const isLocalImage =
+      typeof profileImage === 'string' &&
+      (profileImage.startsWith('file://') ||
+        profileImage.startsWith('content://'));
+
+    // 간단한 확장자 -> mime 타입 추출기
+    const getMimeType = uri => {
+      try {
+        const ext = uri.split('.').pop().toLowerCase();
+        if (ext === 'png') return 'image/png';
+        if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+        if (ext === 'heic') return 'image/heic';
+      } catch (e) {}
+      return 'image/jpeg';
+    };
+
+    if (isLocalImage) {
+      const form = new FormData();
+      if (name !== undefined) form.append('name', name);
+      if (nickname !== undefined) form.append('nickname', nickname);
+
+      const fileName = profileImage.split('/').pop();
+      const file = {
+        uri: profileImage,
+        name: fileName || `photo_${Date.now()}.jpg`,
+        type: getMimeType(profileImage),
+      };
+
+      form.append('profileImage', file);
+
+      const response = await api.put('/users/profile', form, {
+        meta: {requiresUserId: true},
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response;
+    }
+
+    // 로컬 이미지가 아닌 경우(이미 업로드된 URL 또는 null)는 JSON으로 전송
     const response = await api.put('/users/profile', profileData, {
       meta: {requiresUserId: true},
     });
@@ -153,5 +197,32 @@ export const getAppVersion = async () => {
       latestVersion: '1.0.0',
       updateRequired: false,
     };
+  }
+};
+
+/**
+ * 이미지 업로드
+ * @param {string} imageUri - 업로드할 이미지 URI
+ * @returns {Promise<Object>} - 업로드된 이미지의 URL
+ */
+export const uploadImage = async imageUri => {
+  try {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      name: 'profile.jpg',
+      type: 'image/jpeg',
+    });
+
+    const response = await api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('이미지 업로드 실패:', error);
+    throw error;
   }
 };

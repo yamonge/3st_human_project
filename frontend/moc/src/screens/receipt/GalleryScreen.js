@@ -12,6 +12,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import {X, Image as ImageIcon} from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {CameraRoll} from '@react-native-camera-roll/camera-roll';
 import LinearGradient from 'react-native-linear-gradient';
 import {useFocusEffect} from '@react-navigation/native';
@@ -66,6 +67,7 @@ const GalleryScreen = ({navigation, route}) => {
 
   // 사진 선택
   const handleSelectPhoto = photo => {
+    console.log('GalleryScreen -> photo selected:', photo);
     setSelectedPhoto(photo);
   };
 
@@ -95,11 +97,20 @@ const GalleryScreen = ({navigation, route}) => {
       return;
     }
 
-    console.log('📷 선택한 사진:', selectedPhoto.uri);
+    console.log(
+      'GalleryScreen -> uploading selectedPhoto.uri:',
+      selectedPhoto.uri,
+    );
 
     // from에 따라 분기 처리
     if (from === 'profile') {
       // 프로필 수정 화면으로 돌아가면서 이미지 전달
+      // AsyncStorage에 임시 저장 후 내비게이트하여 timing/race condition 방지
+      try {
+        await AsyncStorage.setItem('tempSelectedImage', selectedPhoto.uri);
+      } catch (e) {
+        console.warn('Failed to cache selected image:', e);
+      }
       navigation.navigate('ProfileEdit', {
         selectedImage: selectedPhoto.uri,
       });

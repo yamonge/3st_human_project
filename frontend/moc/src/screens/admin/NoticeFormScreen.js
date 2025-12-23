@@ -53,7 +53,6 @@ export default function NoticeFormScreen({navigation, route}) {
     })();
   }, []);
 
-
   // 화면 포커스 시 초기화 및 로드
   useFocusEffect(
     useCallback(() => {
@@ -180,7 +179,7 @@ export default function NoticeFormScreen({navigation, route}) {
       const payload = {
         title: title.trim(),
         content: content.trim(),
-        imageUrl: imageUri ?? null, // ✅ 백엔드 DTO 필드명에 맞춤
+        imageUri: imageUri ?? null, // ✅ 로컬 URI 그대로 전달 (API에서 처리)
       };
 
       if (mode === 'create') {
@@ -188,7 +187,8 @@ export default function NoticeFormScreen({navigation, route}) {
         Alert.alert('성공', '공지사항이 작성되었습니다.', [
           {
             text: '확인',
-            onPress: () => navigation.navigate('NoticeManagement', {refresh: Date.now()}),
+            onPress: () =>
+              navigation.navigate('NoticeManagement', {refresh: Date.now()}),
           },
         ]);
       } else {
@@ -196,7 +196,8 @@ export default function NoticeFormScreen({navigation, route}) {
         Alert.alert('성공', '공지사항이 수정되었습니다.', [
           {
             text: '확인',
-            onPress: () => navigation.navigate('NoticeManagement', {refresh: Date.now()}),
+            onPress: () =>
+              navigation.navigate('NoticeManagement', {refresh: Date.now()}),
           },
         ]);
       }

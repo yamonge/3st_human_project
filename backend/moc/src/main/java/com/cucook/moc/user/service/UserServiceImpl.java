@@ -45,6 +45,9 @@ public class UserServiceImpl implements UserService {
     private final ShoppingPostDAO shoppingPostDAO;
     private final ChatParticipantDAO chatParticipantDAO;
     
+    @Value("${server.base-url:http://localhost:8090}")
+    private String serverBaseUrl;
+    
     // 관리자 권한 판정
     @Override
     public CheckAdminResponseDTO checkAdmin(Long userId) {
@@ -466,7 +469,16 @@ public class UserServiceImpl implements UserService {
         dto.setName(user.getUserName());
         dto.setNickname(user.getUserNickname());
         dto.setEmail(user.getUserEmail());
-        dto.setProfileImage(user.getUserProfileImageUrl());
+        
+        // 프로필 이미지 URL 변환 (상대 경로 → 절대 URL)
+        String profileImageUrl = user.getUserProfileImageUrl();
+        if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+            // 이미 절대 URL이면 그대로, 상대 경로면 절대 URL로 변환
+            if (!profileImageUrl.startsWith("http://") && !profileImageUrl.startsWith("https://")) {
+                profileImageUrl = serverBaseUrl + profileImageUrl;
+            }
+        }
+        dto.setProfileImage(profileImageUrl);
 
         // ✅ [추가] user_type: 'Y'면 admin, 그 외 user
         dto.setRole("Y".equalsIgnoreCase(user.getUserType()) ? "admin" : "user");

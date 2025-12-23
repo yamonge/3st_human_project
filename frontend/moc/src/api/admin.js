@@ -442,12 +442,32 @@ export const getNoticeDetail = async noticeId => {
 
 /**
  * 공지사항 작성
- * @param {Object} data - { title, content, important }
+ * @param {Object} data - { title, content, imageUri }
  * @returns {Promise<Object>}
  */
 export const createNotice = async data => {
   try {
-    const response = await api.post('/admin/notices', data);
+    const formData = new FormData();
+    formData.append('title', data.title);
+    formData.append('content', data.content);
+
+    // 이미지가 로컬 URI인 경우 파일로 전송
+    if (data.imageUri && data.imageUri.startsWith('content://')) {
+      const fileName =
+        data.imageUri.split('/').pop() || `notice_${Date.now()}.jpg`;
+      const file = {
+        uri: data.imageUri,
+        name: fileName,
+        type: 'image/jpeg',
+      };
+      formData.append('image', file);
+    }
+
+    const response = await api.post('/admin/notices', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response;
   } catch (error) {
     console.error('공지사항 작성 실패:', error);
@@ -458,12 +478,32 @@ export const createNotice = async data => {
 /**
  * 공지사항 수정
  * @param {number} noticeId - 공지사항 ID
- * @param {Object} data - { title, content, important }
+ * @param {Object} data - { title, content, imageUri }
  * @returns {Promise<Object>}
  */
 export const updateNotice = async (noticeId, data) => {
   try {
-    const response = await api.put(`/admin/notices/${noticeId}`, data);
+    const formData = new FormData();
+    if (data.title) formData.append('title', data.title);
+    if (data.content) formData.append('content', data.content);
+
+    // 이미지가 로컬 URI인 경우 파일로 전송
+    if (data.imageUri && data.imageUri.startsWith('content://')) {
+      const fileName =
+        data.imageUri.split('/').pop() || `notice_${Date.now()}.jpg`;
+      const file = {
+        uri: data.imageUri,
+        name: fileName,
+        type: 'image/jpeg',
+      };
+      formData.append('image', file);
+    }
+
+    const response = await api.put(`/admin/notices/${noticeId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response;
   } catch (error) {
     console.error('공지사항 수정 실패:', error);
