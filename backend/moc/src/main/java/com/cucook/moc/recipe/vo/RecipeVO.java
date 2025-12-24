@@ -19,6 +19,7 @@ public class RecipeVO {
     private String cuisineStyleCd;
     private String category;
     private String authorNickname;
+    private String authorProfileImageUrl;
     private Integer likedByMe;
     private String isPublic;
     private String isDeleted;

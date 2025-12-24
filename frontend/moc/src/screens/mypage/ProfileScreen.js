@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import MenuCard from '../../components/mypage/MenuCard';
 import styles from '../../styles/screens/mypage/ProfileScreenStyles';
 import {getMenuCounts} from '../../api/mypage';
+import {getUserInfo} from '../../api/settings';
 
 /**
  * 마이페이지 메인 화면
@@ -56,19 +57,56 @@ export default function ProfileScreen({navigation}) {
   const loadUserInfo = async () => {
     try {
       const storedUserId = await AsyncStorage.getItem('userId');
-      const nickname = await AsyncStorage.getItem('userNickname');
-      const email = await AsyncStorage.getItem('userEmail');
-      const profileImage = await AsyncStorage.getItem('profileImage');
+      const userIdNum = storedUserId ? Number(storedUserId) : null;
+      setUserId(userIdNum);
 
-      setUserId(storedUserId ? Number(storedUserId) : null);
-      // ✅ 조건 걸지 말고 항상 set (이전 값이 남는 문제 방지)
-      setUserInfo({
-        nickname: nickname || '둘리',
-        email: email || 'dooly@gmail.com',
-        profileImage: profileImage,
-      });
+      if (userIdNum) {
+        // API에서 최신 프로필 정보 가져오기
+        const userData = await getUserInfo();
+        setUserInfo({
+          nickname: userData.nickname || '사용자',
+          email: userData.email || '',
+          profileImage: userData.profileImage || null,
+        });
+
+        // AsyncStorage에도 최신 정보 저장 (다른 화면에서 사용할 수 있도록)
+        if (userData.nickname) {
+          await AsyncStorage.setItem('userNickname', userData.nickname);
+        }
+        if (userData.email) {
+          await AsyncStorage.setItem('userEmail', userData.email);
+        }
+        if (userData.profileImage) {
+          await AsyncStorage.setItem('profileImage', userData.profileImage);
+        } else {
+          await AsyncStorage.removeItem('profileImage');
+        }
+      } else {
+        // userId가 없으면 AsyncStorage에서 기본값 가져오기
+        const nickname = await AsyncStorage.getItem('userNickname');
+        const email = await AsyncStorage.getItem('userEmail');
+        const profileImage = await AsyncStorage.getItem('profileImage');
+        setUserInfo({
+          nickname: nickname || '사용자',
+          email: email || '',
+          profileImage: profileImage,
+        });
+      }
     } catch (error) {
       console.error('사용자 정보 로드 실패:', error);
+      // 에러 발생 시 AsyncStorage에서 기본값 가져오기
+      try {
+        const nickname = await AsyncStorage.getItem('userNickname');
+        const email = await AsyncStorage.getItem('userEmail');
+        const profileImage = await AsyncStorage.getItem('profileImage');
+        setUserInfo({
+          nickname: nickname || '사용자',
+          email: email || '',
+          profileImage: profileImage,
+        });
+      } catch (storageError) {
+        console.error('AsyncStorage 읽기 실패:', storageError);
+      }
     }
   };
 

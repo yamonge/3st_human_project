@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
   },
 
   authorAvatar: {
+    overflow: 'hidden',
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -135,6 +136,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#7F7FFF',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  authorAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
   },
 
   authorInitial: {

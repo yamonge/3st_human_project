@@ -6,6 +6,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {Portal} from '@gorhom/portal';
@@ -101,7 +102,7 @@ const ParticipantProfileBottomSheet = ({
 
         setProfileData({
           nickname: profile.userNickname || participant.nickname || '사용자',
-          avatar: participant.avatar || '👤',
+          profileImageUrl: profile.profileImageUrl || participant.profileImageUrl || null,
           joinDate: formatJoinDate(profile.createdDate),
           rating: profile.ratingScore || 0,
           reviewCount: profile.reviewCnt || 0,
@@ -124,7 +125,7 @@ const ParticipantProfileBottomSheet = ({
         // 에러 시 기본값 설정
         setProfileData({
           nickname: participant.nickname || '사용자',
-          avatar: participant.avatar || '👤',
+          profileImageUrl: participant.profileImageUrl || null,
           joinDate: '가입일 알 수 없음',
           rating: 0,
           reviewCount: 0,
@@ -254,7 +255,16 @@ const ParticipantProfileBottomSheet = ({
                 {/* 프로필 정보 */}
                 <View style={styles.profileSection}>
                   <View style={styles.avatarContainer}>
-                    <Text style={styles.avatarText}>{profileData.avatar}</Text>
+                    {profileData.profileImageUrl ? (
+                      <Image
+                        source={{uri: profileData.profileImageUrl}}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <Text style={styles.avatarText}>
+                        {profileData.nickname.charAt(0)}
+                      </Text>
+                    )}
                   </View>
                   <Text style={styles.nickname}>{profileData.nickname}</Text>
                   <Text style={styles.joinDate}>{profileData.joinDate}</Text>

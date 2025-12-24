@@ -15,4 +15,5 @@ public class PublicProfileDTO {
     private Integer attendanceRate;     // 참석률 (완료 / 참여 * 100)
     private java.util.Date createdDate; // 가입일
     private Integer reviewCnt;          // 후기 개수
+    private String profileImageUrl;     // 프로필 이미지 URL
 }

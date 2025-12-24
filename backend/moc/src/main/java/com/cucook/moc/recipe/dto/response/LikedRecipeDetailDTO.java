@@ -19,5 +19,6 @@ public class LikedRecipeDetailDTO {
     private Integer viewCnt;
     private Integer likeCnt;
     private String authorNickname;
+    private Integer likedByMe; // 좋아요한 게시물이므로 항상 1 (true)
     // private Long ownerUserId;
 }

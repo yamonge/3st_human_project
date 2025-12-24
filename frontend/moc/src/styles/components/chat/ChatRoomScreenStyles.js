@@ -284,11 +284,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+
+  participantAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
 
   participantAvatarText: {
     fontSize: 20,
     lineHeight: 30,
+    color: '#6B7280',
+    fontWeight: '600',
   },
 
   participantNickname: {

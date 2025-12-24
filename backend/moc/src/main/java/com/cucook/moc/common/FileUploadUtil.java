@@ -19,13 +19,30 @@ import java.util.UUID;
 public class FileUploadUtil {
 
     private final String serverBaseUrl;
+    private final String uploadBaseDir;
 
-    public FileUploadUtil(@Value("${server.base-url:http://localhost:8090}") String serverBaseUrl) {
+    public FileUploadUtil(
+            @Value("${server.base-url:http://localhost:8090}") String serverBaseUrl,
+            @Value("${file.upload.dir:#{systemProperties['user.dir']}/uploads}") String uploadDir) {
         this.serverBaseUrl = serverBaseUrl;
+        
+        // 업로드 디렉토리 경로 결정
+        Path uploadPath = Paths.get(uploadDir);
+        if (!uploadPath.isAbsolute()) {
+            // 상대 경로인 경우 현재 작업 디렉토리 기준
+            uploadPath = Paths.get(System.getProperty("user.dir")).resolve(uploadDir);
+        }
+        
+        this.uploadBaseDir = uploadPath.toString().replace("\\", "/") + "/";
+        
+        // 디렉토리 생성
+        try {
+            Files.createDirectories(uploadPath);
+            System.out.println("✅ 업로드 디렉토리: " + uploadPath.toAbsolutePath());
+        } catch (IOException e) {
+            System.err.println("❌ 업로드 디렉토리 생성 실패: " + uploadPath + " - " + e.getMessage());
+        }
     }
-
-    // 업로드 기본 경로 (프로젝트 루트 기준)
-    private static final String UPLOAD_BASE_DIR = "src/main/resources/static/uploads/";
     
     // 프로필 이미지 저장 경로
     private static final String PROFILE_DIR = "profile/";
@@ -50,7 +67,7 @@ public class FileUploadUtil {
         String fileName = UUID.randomUUID().toString() + extension;
 
         // 저장 경로 생성
-        Path uploadPath = Paths.get(UPLOAD_BASE_DIR + PROFILE_DIR);
+        Path uploadPath = Paths.get(uploadBaseDir + PROFILE_DIR);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
@@ -80,7 +97,7 @@ public class FileUploadUtil {
         String fileName = UUID.randomUUID().toString() + extension;
 
         // 저장 경로 생성
-        Path uploadPath = Paths.get(UPLOAD_BASE_DIR + NOTICE_DIR);
+        Path uploadPath = Paths.get(uploadBaseDir + NOTICE_DIR);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
@@ -98,15 +115,15 @@ public class FileUploadUtil {
      * @param fileUrl 삭제할 파일의 URL (예: /uploads/profile/uuid_filename.jpg)
      * @return 삭제 성공 여부
      */
-    public static boolean deleteFile(String fileUrl) {
+    public boolean deleteFile(String fileUrl) {
         if (fileUrl == null || fileUrl.isEmpty()) {
             return false;
         }
 
         try {
             // URL에서 실제 파일 경로 추출
-            String filePath = fileUrl.replace("/uploads/", UPLOAD_BASE_DIR);
-            Path path = Paths.get(filePath);
+            String relativePath = fileUrl.replace("/uploads/", "");
+            Path path = Paths.get(uploadBaseDir + relativePath);
             
             if (Files.exists(path)) {
                 Files.delete(path);

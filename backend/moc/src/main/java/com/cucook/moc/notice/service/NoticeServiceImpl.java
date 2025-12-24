@@ -68,6 +68,18 @@ public class NoticeServiceImpl implements NoticeService {
         if (imageUrl != null && !imageUrl.isEmpty()) {
             // 이미 절대 URL이면 그대로, 상대 경로면 절대 URL로 변환
             if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+                // /uploads/로 시작하지 않으면 추가
+                if (!imageUrl.startsWith("/uploads/")) {
+                    // notice/로 시작하는 경우 /uploads/ 추가
+                    if (imageUrl.startsWith("notice/")) {
+                        imageUrl = "/uploads/" + imageUrl;
+                    } else if (imageUrl.startsWith("/notice/")) {
+                        imageUrl = "/uploads" + imageUrl;
+                    } else {
+                        // 기타 경우 /uploads/ 추가
+                        imageUrl = "/uploads/" + imageUrl;
+                    }
+                }
                 imageUrl = serverBaseUrl + imageUrl;
             }
         }

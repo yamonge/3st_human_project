@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import {ChevronLeft, Star} from 'lucide-react-native';
 import {getUserReviews, getPublicProfile} from '../../api/chat';
@@ -59,6 +60,7 @@ const AllReviewsScreen = ({visible, onClose, participant}) => {
                 id: review.userReviewId || index,
                 author: review.writerNickname || '익명',
                 authorInitial: getInitial(review.writerNickname),
+                authorProfileImageUrl: review.writerProfileImageUrl || null,
                 rating: review.rating || 5,
                 date: getRelativeTime(review.createdDate),
                 content: review.comment || '',
@@ -193,9 +195,16 @@ const AllReviewsScreen = ({visible, onClose, participant}) => {
                 <View style={styles.reviewHeader}>
                   <View style={styles.reviewAuthor}>
                     <View style={styles.authorAvatar}>
-                      <Text style={styles.authorInitial}>
-                        {review.authorInitial}
-                      </Text>
+                      {review.authorProfileImageUrl ? (
+                        <Image
+                          source={{uri: review.authorProfileImageUrl}}
+                          style={styles.authorAvatarImage}
+                        />
+                      ) : (
+                        <Text style={styles.authorInitial}>
+                          {review.authorInitial}
+                        </Text>
+                      )}
                     </View>
                     <Text style={styles.authorName}>{review.author}</Text>
                   </View>
