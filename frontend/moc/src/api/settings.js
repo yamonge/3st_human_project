@@ -1,5 +1,20 @@
 import api from './axiosConfig';
+import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+/**
+ * 이미지 URL 변환 (Android 에뮬레이터 localhost 보정)
+ */
+const normalizeImageUrl = imageUrl => {
+  if (!imageUrl) return imageUrl;
+  
+  // Android 에뮬레이터에서 localhost를 실제 서버 IP로 변환
+  if (Platform.OS === 'android' && imageUrl.startsWith('http://localhost:8090')) {
+    return imageUrl.replace('http://localhost:8090', 'http://192.168.50.117:8090');
+  }
+  
+  return imageUrl;
+};
 
 /**
  * 설정 관련 API
@@ -14,6 +29,11 @@ export const getUserInfo = async () => {
     const response = await api.get('/users/me', {
       meta: {requiresUserId: true},
     });
+
+    // 프로필 이미지 URL 변환
+    if (response.profileImage) {
+      response.profileImage = normalizeImageUrl(response.profileImage);
+    }
 
     return response;
   } catch (error) {
@@ -87,6 +107,11 @@ export const updateProfile = async profileData => {
         },
       });
 
+      // 프로필 이미지 URL 변환
+      if (response.profileImage) {
+        response.profileImage = normalizeImageUrl(response.profileImage);
+      }
+
       return response;
     }
 
@@ -94,6 +119,11 @@ export const updateProfile = async profileData => {
     const response = await api.put('/users/profile', profileData, {
       meta: {requiresUserId: true},
     });
+
+    // 프로필 이미지 URL 변환
+    if (response.profileImage) {
+      response.profileImage = normalizeImageUrl(response.profileImage);
+    }
 
     return response;
   } catch (error) {

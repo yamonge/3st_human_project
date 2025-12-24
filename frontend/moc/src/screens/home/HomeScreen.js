@@ -109,7 +109,8 @@ export default function HomeScreen({navigation}) {
         size: 3,
       });
       console.log('인기 레시피 데이터:', res);
-      setPopularRecipes(res.items);
+      // getRecipeBoardList에서 이미 normalizeRecipe가 적용됨
+      setPopularRecipes(res.items || []);
     } catch (e) {
       console.error('인기 레시피 조회 실패', e);
     }

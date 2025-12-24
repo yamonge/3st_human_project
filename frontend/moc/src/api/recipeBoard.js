@@ -7,11 +7,19 @@ const normalizeRecipe = recipe => {
 
   const r = {...recipe};
 
-  // 안드로이드 에뮬레이터 localhost 보정
+  // 안드로이드 에뮬레이터 localhost 보정 - 썸네일 이미지
   if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
     r.thumbnailUrl = r.thumbnailUrl.replace(
       'http://localhost:8090',
-      'http://192.168.1.134:8090',
+      'http://192.168.50.117:8090',
+    );
+  }
+
+  // 안드로이드 에뮬레이터 localhost 보정 - 작성자 프로필 이미지
+  if (r.authorProfileImageUrl?.startsWith('http://localhost:8090')) {
+    r.authorProfileImageUrl = r.authorProfileImageUrl.replace(
+      'http://localhost:8090',
+      'http://192.168.50.117:8090',
     );
   }
 
@@ -78,6 +86,21 @@ export const getRecipeBoardList = async ({
         size,
       },
     });
+    
+    // items 배열의 각 레시피를 정규화
+    if (response.items && Array.isArray(response.items)) {
+      response.items = response.items.map(recipe => {
+        const normalized = normalizeRecipe(recipe);
+        // 디버깅: 작성자 프로필 이미지 URL 확인
+        if (normalized.authorProfileImageUrl) {
+          console.log('✅ [recipeBoard] authorProfileImageUrl:', normalized.authorProfileImageUrl);
+        } else {
+          console.log('⚠️ [recipeBoard] authorProfileImageUrl 없음:', normalized);
+        }
+        return normalized;
+      });
+    }
+    
     return response; // RecipeBoardListResponseDTO
   } catch (error) {
     console.error('게시판 레시피 목록 조회 실패:', error);
@@ -120,6 +143,12 @@ export const getRecipeBoardDetail = async recipeId => {
       },
     });
     console.log('📦 게시판 상세 API raw response:', response);
+    
+    // 레시피 상세 정보 정규화
+    if (response) {
+      return normalizeRecipe(response);
+    }
+    
     return response; // RecipeBoardDetailResponseDTO
   } catch (error) {
     console.error('게시판 레시피 상세 조회 실패:', error);

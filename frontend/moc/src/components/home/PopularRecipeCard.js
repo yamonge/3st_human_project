@@ -94,8 +94,29 @@ export default function PopularRecipeCard({recipe, rank, onPress, onLike}) {
 
         {/* 작성자 */}
         <View style={homeStyles.recipeAuthor}>
+          <View
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 10,
+              overflow: 'hidden',
+              marginRight: 6,
+              backgroundColor: '#E5E7EB',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            {recipe.authorProfileImageUrl ? (
+              <Image
+                source={{uri: recipe.authorProfileImageUrl}}
+                style={{width: 20, height: 20}}
+                resizeMode="cover"
+              />
+            ) : (
+              <User size={12} color="#9CA3AF" />
+            )}
+          </View>
           <Text style={homeStyles.recipeAuthorText} numberOfLines={1}>
-            👨‍🍳 {recipe.authorNickname}
+            {recipe.authorNickname}
           </Text>
         </View>
 

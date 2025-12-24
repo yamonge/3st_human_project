@@ -9,7 +9,7 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
-    paddingTop: 56,
+    paddingTop: 23,
     paddingHorizontal: 12,
     paddingBottom: 16,
   },

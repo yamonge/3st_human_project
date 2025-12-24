@@ -9,6 +9,7 @@ import com.cucook.moc.recipe.vo.RecipeBoardListItemVO;
 import com.cucook.moc.recipe.vo.RecipeBoardListItemWithIngredientsVO;
 import com.cucook.moc.recipe.vo.RecipeVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,9 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
     private static final String RECORD_DELIMITER = "\\|\\|"; // 개별 재료 구분자 (||)
     private static final String FIELD_DELIMITER = "::";     // 이름:수량 구분자 (::)
     private final RecipeBoardDAO recipeBoardDAO;
+    
+    @Value("${server.base-url:http://localhost:8090}")
+    private String serverBaseUrl;
 
     // ----------------------------------------------------------------------------------
     // ** 신규 추가: LISTAGG 최적화 로직 **
@@ -104,10 +108,46 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         vo.setRecipeId(dto.getRecipeId());
         vo.setTitle(dto.getTitle());
         vo.setSummary(dto.getSummary());
-        vo.setThumbnailUrl(dto.getThumbnailUrl());
+        
+        // 썸네일 URL 변환 (상대 경로 → 절대 URL)
+        String thumbnailUrl = dto.getThumbnailUrl();
+        if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
+            if (!thumbnailUrl.startsWith("http://") && !thumbnailUrl.startsWith("https://")) {
+                if (!thumbnailUrl.startsWith("/uploads/")) {
+                    if (thumbnailUrl.startsWith("recipe/")) {
+                        thumbnailUrl = "/uploads/" + thumbnailUrl;
+                    } else if (thumbnailUrl.startsWith("/recipe/")) {
+                        thumbnailUrl = "/uploads" + thumbnailUrl;
+                    } else {
+                        thumbnailUrl = "/uploads/" + thumbnailUrl;
+                    }
+                }
+                thumbnailUrl = serverBaseUrl + thumbnailUrl;
+            }
+        }
+        vo.setThumbnailUrl(thumbnailUrl);
+        
         vo.setLikedByMe(dto.getLikedByMe());
         vo.setAuthorNickname(dto.getAuthorNickname());
-        vo.setAuthorProfileImageUrl(dto.getAuthorProfileImageUrl());
+        
+        // 작성자 프로필 이미지 URL 변환 (상대 경로 → 절대 URL)
+        String authorProfileImageUrl = dto.getAuthorProfileImageUrl();
+        if (authorProfileImageUrl != null && !authorProfileImageUrl.isEmpty()) {
+            if (!authorProfileImageUrl.startsWith("http://") && !authorProfileImageUrl.startsWith("https://")) {
+                if (!authorProfileImageUrl.startsWith("/uploads/")) {
+                    if (authorProfileImageUrl.startsWith("profile/")) {
+                        authorProfileImageUrl = "/uploads/" + authorProfileImageUrl;
+                    } else if (authorProfileImageUrl.startsWith("/profile/")) {
+                        authorProfileImageUrl = "/uploads" + authorProfileImageUrl;
+                    } else {
+                        authorProfileImageUrl = "/uploads/" + authorProfileImageUrl;
+                    }
+                }
+                authorProfileImageUrl = serverBaseUrl + authorProfileImageUrl;
+            }
+        }
+        vo.setAuthorProfileImageUrl(authorProfileImageUrl);
+        
         vo.setCookTimeMin(dto.getCookTimeMin());
         vo.setCuisineStyleCd(dto.getCuisineStyleCd());
         vo.setCategory(dto.getCategory());
@@ -181,6 +221,45 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
                 safeSize
         );
 
+        // ✅ 4-1. URL 변환 (상대 경로 → 절대 URL)
+        for (RecipeBoardListItemVO item : items) {
+            // 썸네일 URL 변환
+            String thumbnailUrl = item.getThumbnailUrl();
+            if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
+                if (!thumbnailUrl.startsWith("http://") && !thumbnailUrl.startsWith("https://")) {
+                    if (!thumbnailUrl.startsWith("/uploads/")) {
+                        if (thumbnailUrl.startsWith("recipe/")) {
+                            thumbnailUrl = "/uploads/" + thumbnailUrl;
+                        } else if (thumbnailUrl.startsWith("/recipe/")) {
+                            thumbnailUrl = "/uploads" + thumbnailUrl;
+                        } else {
+                            thumbnailUrl = "/uploads/" + thumbnailUrl;
+                        }
+                    }
+                    thumbnailUrl = serverBaseUrl + thumbnailUrl;
+                }
+                item.setThumbnailUrl(thumbnailUrl);
+            }
+            
+            // 작성자 프로필 이미지 URL 변환
+            String authorProfileImageUrl = item.getAuthorProfileImageUrl();
+            if (authorProfileImageUrl != null && !authorProfileImageUrl.isEmpty()) {
+                if (!authorProfileImageUrl.startsWith("http://") && !authorProfileImageUrl.startsWith("https://")) {
+                    if (!authorProfileImageUrl.startsWith("/uploads/")) {
+                        if (authorProfileImageUrl.startsWith("profile/")) {
+                            authorProfileImageUrl = "/uploads/" + authorProfileImageUrl;
+                        } else if (authorProfileImageUrl.startsWith("/profile/")) {
+                            authorProfileImageUrl = "/uploads" + authorProfileImageUrl;
+                        } else {
+                            authorProfileImageUrl = "/uploads/" + authorProfileImageUrl;
+                        }
+                    }
+                    authorProfileImageUrl = serverBaseUrl + authorProfileImageUrl;
+                }
+                item.setAuthorProfileImageUrl(authorProfileImageUrl);
+            }
+        }
+
         // ✅ 5. 전체 개수 조회 (페이징용)
         int total = recipeBoardDAO.countPublicRecipes(
                 search,
@@ -202,6 +281,44 @@ public class RecipeBoardServiceImpl implements RecipeBoardService {
         if (vo == null) {
             throw new IllegalArgumentException("레시피를 찾을 수 없습니다.");
         }
+        
+        // URL 변환 (상대 경로 → 절대 URL)
+        // 썸네일 URL 변환
+        String thumbnailUrl = vo.getThumbnailUrl();
+        if (thumbnailUrl != null && !thumbnailUrl.isEmpty()) {
+            if (!thumbnailUrl.startsWith("http://") && !thumbnailUrl.startsWith("https://")) {
+                if (!thumbnailUrl.startsWith("/uploads/")) {
+                    if (thumbnailUrl.startsWith("recipe/")) {
+                        thumbnailUrl = "/uploads/" + thumbnailUrl;
+                    } else if (thumbnailUrl.startsWith("/recipe/")) {
+                        thumbnailUrl = "/uploads" + thumbnailUrl;
+                    } else {
+                        thumbnailUrl = "/uploads/" + thumbnailUrl;
+                    }
+                }
+                thumbnailUrl = serverBaseUrl + thumbnailUrl;
+            }
+            vo.setThumbnailUrl(thumbnailUrl);
+        }
+        
+        // 작성자 프로필 이미지 URL 변환
+        String authorProfileImageUrl = vo.getAuthorProfileImageUrl();
+        if (authorProfileImageUrl != null && !authorProfileImageUrl.isEmpty()) {
+            if (!authorProfileImageUrl.startsWith("http://") && !authorProfileImageUrl.startsWith("https://")) {
+                if (!authorProfileImageUrl.startsWith("/uploads/")) {
+                    if (authorProfileImageUrl.startsWith("profile/")) {
+                        authorProfileImageUrl = "/uploads/" + authorProfileImageUrl;
+                    } else if (authorProfileImageUrl.startsWith("/profile/")) {
+                        authorProfileImageUrl = "/uploads" + authorProfileImageUrl;
+                    } else {
+                        authorProfileImageUrl = "/uploads/" + authorProfileImageUrl;
+                    }
+                }
+                authorProfileImageUrl = serverBaseUrl + authorProfileImageUrl;
+            }
+            vo.setAuthorProfileImageUrl(authorProfileImageUrl);
+        }
+        
         return vo;
     }
 }
