@@ -92,6 +92,13 @@ public class RecipeLikeServiceImpl implements RecipeLikeService {
         // DAO에서 이미 DTO 형태로 조인하여 가져오는 쿼리를 사용
         List<RecipeLikeResponseDTO> dtoList = recipeLikeDAO.selectRecipeLikesWithDetailByUserId(userId);
 
+        // 좋아요한 게시물이므로 모든 항목의 likedByMe를 true로 설정
+        dtoList.forEach(dto -> {
+            if (dto.getRecipe() != null) {
+                dto.getRecipe().setLikedByMe(1); // 1 = true
+            }
+        });
+
         // 정렬 순서가 필요하다면 여기서 추가 정렬 가능 (DAO 쿼리에서 이미 created_date DESC로 정렬)
 
         return new RecipeLikeListResponseDTO(dtoList, dtoList.size());

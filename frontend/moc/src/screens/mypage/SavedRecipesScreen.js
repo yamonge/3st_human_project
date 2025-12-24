@@ -196,13 +196,18 @@ export default function SavedRecipesScreen({navigation}) {
             {currentList.length > 0 ? (
               currentList.map(item => {
                 const recipe = item.recipe; // ⭐ saved / liked 공통
+                
+                // 좋아요한 게시물 탭일 때는 likedByMe를 명시적으로 true로 설정
+                const recipeWithLike = activeTab === 'liked' 
+                  ? {...recipe, likedByMe: recipe.likedByMe || 1} 
+                  : recipe;
 
-                const key = `recipe-${item.recipe.recipeId}`;
+                const key = `recipe-${recipe.recipeId}`;
 
                 return (
                   <RecipeListItem
                     key={key}
-                    recipe={recipe}
+                    recipe={recipeWithLike}
                     onPress={() => handleRecipePress(recipe)}
                     hideLike={activeTab === 'saved'}
                   />

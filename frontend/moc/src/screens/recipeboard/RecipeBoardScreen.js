@@ -56,6 +56,7 @@ const RecipeBoardScreen = ({navigation}) => {
 
   const [currentFilterType, setCurrentFilterType] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isFirstMount, setIsFirstMount] = useState(true);
 
   const slideAnim = useRef(new Animated.Value(300)).current;
 
@@ -109,17 +110,30 @@ const RecipeBoardScreen = ({navigation}) => {
     }
   };
 
-  /* 최초 진입 */
+  /* 최초 진입 시에만 필터 초기화 */
   useFocusEffect(
     React.useCallback(() => {
-      // 화면 포커스될 때마다 실행
-      setSearchQuery('');
-      setSelectedStyle(null);
-      setSelectedDifficulty(null);
-      setSelectedTime(null);
+      if (isFirstMount) {
+        // 최초 진입 시에만 필터 초기화
+        setSearchQuery('');
+        setSelectedStyle(null);
+        setSelectedDifficulty(null);
+        setSelectedTime(null);
+        setIsFirstMount(false);
+      }
+      // 필터 상태 유지하면서 데이터만 새로고침
       fetchRecipeBoard();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
+
+  // 필터 변경 시 자동 새로고침
+  useEffect(() => {
+    if (!isFirstMount) {
+      fetchRecipeBoard();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // useEffect(() => {
   //   fetchRecipeBoard();
@@ -136,9 +150,9 @@ const RecipeBoardScreen = ({navigation}) => {
       필터 바텀시트
   ========================= */
   const filterOptions = {
-    style: ['한식', '중식', '일식', '양식', '퓨전'],
-    difficulty: ['하', '중', '상'],
-    time: ['10분 이내', '30분 이내', '1시간 이내', '1시간 이상'],
+    style: ['전체', '한식', '중식', '일식', '양식', '퓨전'],
+    difficulty: ['전체', '하', '중', '상'],
+    time: ['전체', '10분 이내', '30분 이내', '1시간 이내', '1시간 이상'],
   };
 
   const openFilterSheet = Type => {
@@ -163,9 +177,16 @@ const RecipeBoardScreen = ({navigation}) => {
   };
 
   const handleFilterSelect = value => {
-    if (currentFilterType === 'style') setSelectedStyle(value);
-    if (currentFilterType === 'difficulty') setSelectedDifficulty(value);
-    if (currentFilterType === 'time') setSelectedTime(value);
+    // "전체" 선택 시 null로 설정하여 필터 해제
+    if (currentFilterType === 'style') {
+      setSelectedStyle(value === '전체' ? null : value);
+    }
+    if (currentFilterType === 'difficulty') {
+      setSelectedDifficulty(value === '전체' ? null : value);
+    }
+    if (currentFilterType === 'time') {
+      setSelectedTime(value === '전체' ? null : value);
+    }
 
     closeFilterSheet();
   };

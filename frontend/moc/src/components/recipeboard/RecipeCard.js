@@ -61,7 +61,14 @@ const RecipeCard = ({recipe, onPress}) => {
         {/* 소유자 정보 */}
         <View style={styles.ownerContainer}>
           <View style={styles.ownerAvatar}>
-            <User size={14} color="#9CA3AF" />
+            {recipe.authorProfileImageUrl ? (
+              <Image
+                source={{uri: recipe.authorProfileImageUrl}}
+                style={styles.ownerAvatarImage}
+              />
+            ) : (
+              <User size={14} color="#9CA3AF" />
+            )}
           </View>
           <Text style={styles.ownerLabel}>소유자:</Text>
           <Text style={styles.ownerName} numberOfLines={1}>

@@ -102,6 +102,12 @@ export default StyleSheet.create({
     backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  ownerAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
   },
   ownerAvatarIcon: {
     width: 14,

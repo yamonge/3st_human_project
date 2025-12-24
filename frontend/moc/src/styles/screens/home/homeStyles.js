@@ -249,6 +249,8 @@ export const homeStyles = StyleSheet.create({
 
   recipeAuthor: {
     marginBottom: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 
   recipeAuthorText: {

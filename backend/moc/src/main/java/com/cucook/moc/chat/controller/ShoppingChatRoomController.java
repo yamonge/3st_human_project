@@ -5,10 +5,12 @@ import com.cucook.moc.chat.dto.ChatParticipantDTO;
 import com.cucook.moc.chat.dto.ChatRoomSummaryDTO;
 import com.cucook.moc.chat.service.ShoppingChatRoomService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 // REST - 채팅방 목록 조회
 @RestController
@@ -20,6 +22,9 @@ public class ShoppingChatRoomController {
 
     @Autowired
     private ChatParticipantDAO chatParticipantDAO;
+
+    @Value("${server.base-url:http://localhost:8090}")
+    private String serverBaseUrl;
 
     @GetMapping("/me")
     public List<ChatRoomSummaryDTO> getMyChatRooms(@RequestParam("userId") Long userId) {
@@ -34,6 +39,20 @@ public class ShoppingChatRoomController {
             @PathVariable Long chatRoomId) {
         List<ChatParticipantDTO> participants = 
             chatParticipantDAO.selectParticipantInfos(chatRoomId);
+        
+        // 프로필 이미지 URL 변환 (상대 경로 → 절대 URL)
+        participants = participants.stream()
+            .map(p -> {
+                String profileImageUrl = p.getProfileImageUrl();
+                if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                    if (!profileImageUrl.startsWith("http://") && !profileImageUrl.startsWith("https://")) {
+                        p.setProfileImageUrl(serverBaseUrl + profileImageUrl);
+                    }
+                }
+                return p;
+            })
+            .collect(Collectors.toList());
+        
         return ResponseEntity.ok(participants);
     }
 

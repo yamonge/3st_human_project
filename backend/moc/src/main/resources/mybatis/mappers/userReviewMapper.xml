@@ -157,6 +157,7 @@
             ur.target_user_id AS targetUserId,
             ur.writer_user_id AS writerUserId,
             u.user_nickname AS writerNickname,
+            u.user_profile_image_url AS writerProfileImageUrl,
             ur.shopping_post_id AS shoppingPostId,
             ur.rating,
             ur.user_review_comment AS "comment",

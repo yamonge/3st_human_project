@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import {Portal} from '@gorhom/portal';
 import {
@@ -210,7 +211,7 @@ const ChatRoomScreen = ({
             userId: p.userId,
             nickname: p.nickname,
             ratingScore: p.ratingScore,
-            avatar: '👤',
+            profileImageUrl: p.profileImageUrl || null,
             isMe: p.userId === currentUserIdNum,
           }));
           setParticipants(formattedParticipants);
@@ -239,7 +240,7 @@ const ChatRoomScreen = ({
                 userId: p.userId,
                 nickname: p.nickname,
                 ratingScore: p.ratingScore,
-                avatar: '👤',
+                profileImageUrl: p.profileImageUrl || null,
                 isMe: p.userId === currentUserIdNum,
               }));
               setParticipants(formattedParticipants);
@@ -507,7 +508,7 @@ const ChatRoomScreen = ({
           userId: p.userId,
           nickname: p.nickname,
           ratingScore: p.ratingScore,
-          avatar: '👤', // 기본 아바타 (향후 프로필 이미지로 대체)
+          profileImageUrl: p.profileImageUrl || null,
           isMe: p.userId === currentUserIdNum,
           isOwner: p.isOwner, // 방장 여부 (API 응답)
         }));
@@ -650,9 +651,16 @@ const ChatRoomScreen = ({
                     onPress={() => handleShowProfile(participant)}>
                     <View style={styles.participantInfo}>
                       <View style={styles.participantAvatar}>
-                        <Text style={styles.participantAvatarText}>
-                          {participant.avatar}
-                        </Text>
+                        {participant.profileImageUrl ? (
+                          <Image
+                            source={{uri: participant.profileImageUrl}}
+                            style={styles.participantAvatarImage}
+                          />
+                        ) : (
+                          <Text style={styles.participantAvatarText}>
+                            {participant.nickname.charAt(0)}
+                          </Text>
+                        )}
                       </View>
                       <Text style={styles.participantNickname}>
                         {participant.nickname}

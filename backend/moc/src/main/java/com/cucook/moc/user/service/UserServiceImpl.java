@@ -403,7 +403,15 @@ public class UserServiceImpl implements UserService {
         // 4) 후기 개수 조회
         int reviewCount = userReviewDAO.countReceivedUserReviewsByUserId(targetUserId);
 
-        // 5) 공개용 프로필 DTO 구성
+        // 5) 프로필 이미지 URL 변환 (상대 경로 → 절대 URL)
+        String profileImageUrl = user.getUserProfileImageUrl();
+        if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+            if (!profileImageUrl.startsWith("http://") && !profileImageUrl.startsWith("https://")) {
+                profileImageUrl = serverBaseUrl + profileImageUrl;
+            }
+        }
+
+        // 6) 공개용 프로필 DTO 구성
         return PublicProfileDTO.builder()
                 .userId(user.getUserId())
                 .userNickname(user.getUserNickname())
@@ -412,6 +420,7 @@ public class UserServiceImpl implements UserService {
                 .attendanceRate(attendanceRate)
                 .createdDate(user.getCreatedDate())
                 .reviewCnt(reviewCount)
+                .profileImageUrl(profileImageUrl)
                 .build();
     }
 

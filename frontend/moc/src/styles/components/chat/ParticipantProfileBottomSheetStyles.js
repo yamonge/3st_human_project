@@ -65,11 +65,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     // iOS 그라데이션 대체 (그라데이션 라이브러리 필요 시 추가)
     backgroundColor: '#7F7FFF',
+    overflow: 'hidden',
+  },
+
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 48,
   },
 
   avatarText: {
     fontSize: 30,
     lineHeight: 36,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 
   nickname: {
