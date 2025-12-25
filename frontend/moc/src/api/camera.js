@@ -1,4 +1,6 @@
 import axios from './axiosConfig';
+import {normalizeRecipeImages} from '../utils/imageUrlHelper';
+
 /**
  * 재료 인식 API (에러 처리 포함)
  * 촬영한 이미지를 백엔드로 전송하여 AI 재료 인식 수행
@@ -18,15 +20,7 @@ import axios from './axiosConfig';
 const normalizeRecipe = recipe => {
   if (!recipe) return recipe;
 
-  const r = {...recipe};
-
-  // 실제 디바이스 localhost 보정 (로컬 네트워크 IP 사용)
-  if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
-    r.thumbnailUrl = r.thumbnailUrl.replace(
-      'http://localhost:8090',
-      'http://192.168.50.117:8090',
-    );
-  }
+  const r = normalizeRecipeImages(recipe);
 
   // 난이도 한글화 (화면 공통 사용)
   r.difficultyText =

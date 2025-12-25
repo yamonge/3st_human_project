@@ -1,27 +1,12 @@
 import api from './axiosConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {normalizeRecipeImages} from '../utils/imageUrlHelper';
 
 // ✅ 레시피 공통 정규화 함수 (여기 딱 1번만)
 const normalizeRecipe = recipe => {
   if (!recipe) return recipe;
 
-  const r = {...recipe};
-
-  // 안드로이드 에뮬레이터 localhost 보정 - 썸네일 이미지
-  if (r.thumbnailUrl?.startsWith('http://localhost:8090')) {
-    r.thumbnailUrl = r.thumbnailUrl.replace(
-      'http://localhost:8090',
-      'http://192.168.50.117:8090',
-    );
-  }
-
-  // 안드로이드 에뮬레이터 localhost 보정 - 작성자 프로필 이미지
-  if (r.authorProfileImageUrl?.startsWith('http://localhost:8090')) {
-    r.authorProfileImageUrl = r.authorProfileImageUrl.replace(
-      'http://localhost:8090',
-      'http://192.168.50.117:8090',
-    );
-  }
+  const r = normalizeRecipeImages(recipe);
 
   // 난이도 한글화
   r.difficultyText =
