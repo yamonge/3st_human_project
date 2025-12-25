@@ -1,25 +1,11 @@
 import api from './axiosConfig';
-import {Platform} from 'react-native';
 import {format} from 'date-fns';
+import {normalizeImageUrl} from '../utils/imageUrlHelper';
 
 const toDateText = ts => {
   if (!ts) return '';
   const d = new Date(ts);
   return isNaN(d.getTime()) ? '' : format(d, 'yyyy.MM.dd');
-};
-
-/**
- * 이미지 URL 변환 (Android 에뮬레이터 localhost 보정)
- */
-const normalizeImageUrl = imageUrl => {
-  if (!imageUrl) return imageUrl;
-  
-  // Android 에뮬레이터에서 localhost를 실제 서버 IP로 변환
-  if (Platform.OS === 'android' && imageUrl.startsWith('http://localhost:8090')) {
-    return imageUrl.replace('http://localhost:8090', 'http://192.168.50.117:8090');
-  }
-  
-  return imageUrl;
 };
 
 /**

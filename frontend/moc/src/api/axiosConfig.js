@@ -2,11 +2,13 @@ import axios from 'axios';
 import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// ✅ 서버 IP 주소 (중앙 관리)
+export const SERVER_IP = Platform.OS === 'android' ? '192.168.50.117' : 'localhost';
+export const SERVER_PORT = '8090';
+export const SERVER_BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+
 // API 기본 URL (백엔드 개발자가 제공하는 주소로 변경 필요)
-const BASE_URL =
-  Platform.OS === 'android'
-    ? 'http://192.168.50.117:8090/api'
-    : 'http://localhost:8090/api';
+const BASE_URL = `${SERVER_BASE_URL}/api`;
 
 // axios 인스턴스 생성
 const api = axios.create({
