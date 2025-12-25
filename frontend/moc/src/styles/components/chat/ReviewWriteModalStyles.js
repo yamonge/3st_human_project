@@ -70,11 +70,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+
+  profileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 30,
   },
 
   profileEmoji: {
     fontSize: 28,
     includeFontPadding: false,
+    color: '#737373',
+    fontWeight: 'bold',
   },
 
   profileTitle: {

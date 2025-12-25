@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, TouchableOpacity, TextInput, Alert} from 'react-native';
+import {View, Text, TouchableOpacity, TextInput, Alert, Image} from 'react-native';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Star} from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,6 +29,8 @@ export default function ReviewWriteModal({
 }) {
   const [userId, setUserId] = useState(null);
   const [hostUserId, setHostUserId] = useState(null); // 방장 ID
+  const [hostNickname, setHostNickname] = useState(null); // 방장 닉네임
+  const [hostProfileImageUrl, setHostProfileImageUrl] = useState(null); // 방장 프로필 이미지 URL
   const [rating, setRating] = useState(0); // 별점 (1~5)
   const [reviewText, setReviewText] = useState(''); // 후기 내용
   const [isFocused, setIsFocused] = useState(false);
@@ -64,17 +66,24 @@ export default function ReviewWriteModal({
 
           if (host) {
             setHostUserId(host.userId);
+            setHostNickname(host.nickname || null);
+            setHostProfileImageUrl(host.profileImageUrl || null);
             console.log(
               '✅ [ReviewWriteModal] 방장 ID:',
               host.userId,
               '닉네임:',
               host.nickname,
+              '프로필 이미지:',
+              host.profileImageUrl || '없음',
             );
           } else {
             console.warn(
               '⚠️ [ReviewWriteModal] 방장을 찾을 수 없습니다. 첫 번째 참여자를 방장으로 설정합니다.',
             );
-            setHostUserId(participants[0].userId);
+            const firstParticipant = participants[0];
+            setHostUserId(firstParticipant.userId);
+            setHostNickname(firstParticipant.nickname || null);
+            setHostProfileImageUrl(firstParticipant.profileImageUrl || null);
           }
         } else {
           console.warn('⚠️ [ReviewWriteModal] 참여자 목록이 비어있습니다.');
@@ -93,6 +102,7 @@ export default function ReviewWriteModal({
       setRating(0);
       setReviewText('');
       setIsFocused(false);
+      // 방장 정보는 유지 (visible이 true일 때 다시 로드됨)
     }
   }, [visible]);
 
@@ -213,10 +223,22 @@ export default function ReviewWriteModal({
             {/* 프로필 섹션 */}
             <View style={styles.profileSection}>
               <View style={styles.profileImageContainer}>
-                <Text style={styles.profileEmoji}>👽</Text>
+                {hostProfileImageUrl ? (
+                  <Image
+                    source={{uri: hostProfileImageUrl}}
+                    style={styles.profileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.profileEmoji}>
+                    {hostNickname
+                      ? hostNickname.charAt(0).toUpperCase()
+                      : '👽'}
+                  </Text>
+                )}
               </View>
               <Text style={styles.profileTitle}>
-                {placeName || '장보기'}님과의 장보기
+                {hostNickname || placeName || '장보기'}님과의 장보기
               </Text>
               <Text style={styles.profileSubtitle}>어떠셨나요?</Text>
             </View>

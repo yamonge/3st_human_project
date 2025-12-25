@@ -1,4 +1,5 @@
 import axiosInstance from './axiosConfig';
+import {normalizeImageUrl} from '../utils/imageUrlHelper';
 
 /**
  * 채팅 관련 API
@@ -63,6 +64,17 @@ export const getChatRoomParticipants = async chatRoomId => {
     const response = await axiosInstance.get(
       `/chat/rooms/${chatRoomId}/participants`,
     );
+    
+    // 참여자 목록의 프로필 이미지 URL 변환 (Android localhost 보정)
+    if (Array.isArray(response)) {
+      return response.map(participant => ({
+        ...participant,
+        profileImageUrl: participant.profileImageUrl
+          ? normalizeImageUrl(participant.profileImageUrl)
+          : null,
+      }));
+    }
+    
     return response;
   } catch (error) {
     console.error('참여자 목록 조회 실패:', error);
@@ -153,6 +165,15 @@ export const getUserReviews = async (userId, limit = null) => {
 export const getPublicProfile = async userId => {
   try {
     const response = await axiosInstance.get(`/auth/${userId}/public-profile`);
+    
+    // 프로필 이미지 URL 변환 (Android localhost 보정)
+    if (response && response.profileImageUrl) {
+      return {
+        ...response,
+        profileImageUrl: normalizeImageUrl(response.profileImageUrl),
+      };
+    }
+    
     return response;
   } catch (error) {
     console.error('공개 프로필 조회 실패:', error);
