@@ -30,14 +30,14 @@ export default function PostFilterModal({
 
   // 필터 상태
   const [selectedIngredients, setSelectedIngredients] = useState([]);
-  const [peopleCount, setPeopleCount] = useState(2);
+  const [peopleCount, setPeopleCount] = useState(5);
   const [selectedTime, setSelectedTime] = useState(null);
 
   // ✅ visible이 true가 될 때마다 initialFilters로 초기화
   useEffect(() => {
     if (visible) {
       setSelectedIngredients(initialFilters?.ingredients || []);
-      setPeopleCount(initialFilters?.peopleCount || 2);
+      setPeopleCount(initialFilters?.peopleCount || 5);
       setSelectedTime(initialFilters?.time || null);
     }
   }, [visible, initialFilters]);
@@ -72,7 +72,7 @@ export default function PostFilterModal({
    */
   const handleReset = () => {
     setSelectedIngredients([]);
-    setPeopleCount(2);
+    setPeopleCount(5);
     setSelectedTime(null);
   };
 

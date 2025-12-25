@@ -104,7 +104,7 @@ export default function HomeScreen({navigation}) {
   const fetchPopularRecipes = async () => {
     try {
       const res = await getRecipeBoardList({
-        sort: 'LIKE',
+        sort: 'POPULAR',
         page: 1,
         size: 3,
       });
