@@ -155,7 +155,9 @@ const ReportModal = ({visible, onClose, reportTarget, onSubmit}) => {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <AlertTriangle size={24} color="#EF4444" />
-              <Text style={styles.headerTitle}>사용자 신고</Text>
+              <Text style={styles.headerTitle}>
+                {reportTarget?.type === 'recipe' ? '게시글 신고' : '사용자 신고'}
+              </Text>
             </View>
             <TouchableOpacity
               style={styles.closeButton}
