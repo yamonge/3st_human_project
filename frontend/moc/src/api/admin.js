@@ -49,16 +49,31 @@ const mapDurationToSuspendType = duration => {
 };
 
 // 화면 상태/사유 -> 백엔드 검색값 매핑
+// 유저 신고: PROCESSED, 레시피 신고: APPROVED/REJECTED
 const mapStatusToStatusCd = status => {
   if (!status || status === 'all') return 'ALL';
   if (status === 'pending') return 'PENDING';
-  return 'PROCESSED'; // resolved
+  // resolved는 유저 신고는 PROCESSED, 레시피 신고는 APPROVED로 매핑
+  // 백엔드에서 각각 처리하므로 여기서는 공통으로 반환
+  return 'PROCESSED'; // 유저 신고용 (레시피 신고는 별도 처리 필요 시 수정)
 };
 
 // 신고 유형 -> reasonCd 매핑 (noshow/abuse/fake -> NOSHOW/ABUSE/FAKE)
 const mapTypeToReasonCd = type => {
   if (!type || type === 'all') return '';
   return String(type).toUpperCase();
+};
+
+// reportReasonCd를 정규화하는 함수 (신고 모달 코드를 일관된 형식으로 변환)
+const normalizeReportType = reportReasonCd => {
+  if (!reportReasonCd) return '';
+  const cd = String(reportReasonCd).toLowerCase();
+  // 신고 모달 코드를 정규화
+  if (cd === 'no_show') return 'noshow';
+  if (cd === 'profanity') return 'abuse';
+  if (cd === 'fake_profile') return 'fake';
+  if (cd === 'inappropriate_behavior') return 'inappropriate';
+  return cd;
 };
 
 // ===== 관리자 통계 =====
@@ -186,7 +201,7 @@ export const getReportList = async (params = {}) => {
           originalId: dto.userReportId,
           reportType: 'user',
           source: 'shopping_together',
-          type: String(dto.reportReasonCd || '').toLowerCase(),
+          type: normalizeReportType(dto.reportReasonCd),
           status: dto.processingStatusCd === 'PENDING' ? 'pending' : 'resolved',
           date: formatDateYYYYMMDD(dto.createdDate),
           reporter: dto.reporterNickname,
@@ -202,37 +217,51 @@ export const getReportList = async (params = {}) => {
       }
     }
 
-    // ✅ 레시피 신고 조회 (관리자 userId로 호출)
+    // ✅ 레시피 신고 조회 (관리자용 전체 목록)
     if (!reportType || reportType === 'all' || reportType === 'post') {
       try {
-        const adminUserId = await getMyUserId();
-        if (adminUserId) {
-          const recipeList = await api.get(
-            `/v1/users/${adminUserId}/recipe-reports`,
-          );
-
-          const recipeReports = (recipeList?.reportedRecipes || []).map(
-            dto => ({
-              id: `recipe-${dto.reportId}`,
-              originalId: dto.reportId,
-              reportType: 'post',
-              source: 'recipe_board',
-              type: String(dto.reportReasonCd || '').toLowerCase(),
-              status: dto.statusCd === 'PENDING' ? 'pending' : 'resolved',
-              date: formatDateYYYYMMDD(dto.createdDate),
-              reporter:
-                dto.reporterNickname || `사용자 ID: ${dto.reporterUserId}`,
-              reported: dto.reportedRecipe?.title || '삭제된 레시피',
-              reportedUserId: null,
-              recipeId: dto.recipeId,
-              recipeOwnerId: dto.reportedRecipe?.ownerUserId, // 레시피 작성자 ID
-              description: dto.content || '신고 내용 없음',
-              details: dto.content || '신고 내용 없음',
-            }),
-          );
-
-          allReports.push(...recipeReports);
+        // 레시피 신고 상태 매핑 (APPROVED/REJECTED 사용)
+        let recipeStatusCd = 'ALL';
+        if (params.status && params.status !== 'all') {
+          if (params.status === 'pending') {
+            recipeStatusCd = 'PENDING';
+          } else {
+            // resolved는 PROCESSED로 보내고, 백엔드에서 APPROVED/REJECTED로 변환
+            recipeStatusCd = 'PROCESSED';
+          }
         }
+
+        const mappedParams = {
+          keyword: params.search ? String(params.search).trim() : '',
+          reasonCd: mapTypeToReasonCd(params.type),
+          statusCd: recipeStatusCd,
+          lastRecipeReportId: params.lastRecipeReportId ?? null,
+          limit: params.limit ?? 50,
+        };
+
+        const recipeList = await api.get(
+          '/admin/reports/recipes',
+          withAdminMeta({params: mappedParams}),
+        );
+
+        const recipeReports = (recipeList || []).map(dto => ({
+          id: `recipe-${dto.recipeReportId}`,
+          originalId: dto.recipeReportId,
+          reportType: 'post',
+          source: 'recipe_board',
+          type: normalizeReportType(dto.reportReasonCd),
+          status: dto.statusCd === 'PENDING' ? 'pending' : 'resolved',
+          date: formatDateYYYYMMDD(dto.createdDate),
+          reporter: dto.reporterNickname || `사용자 ID: ${dto.reporterUserId}`,
+          reported: dto.recipeTitle || '삭제된 레시피',
+          reportedUserId: null,
+          recipeId: dto.recipeId,
+          recipeOwnerId: dto.recipeOwnerUserId, // 레시피 작성자 ID
+          description: dto.content || '신고 내용 없음',
+          details: dto.content || '신고 내용 없음',
+        }));
+
+        allReports.push(...recipeReports);
       } catch (error) {
         console.error('레시피 신고 조회 실패:', error);
       }

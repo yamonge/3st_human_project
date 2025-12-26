@@ -30,6 +30,9 @@ const ReportCard = ({report}) => {
       copyright: {color: '#AD46FF', label: '저작권 침해'},
       abuse: {color: '#FF6900', label: '욕설/비방'},
       spam: {color: '#F6339A', label: '스팸/광고'},
+      noshow: {color: '#FFA500', label: '약속 불이행'},
+      fraud: {color: '#DC143C', label: '사기'},
+      fake: {color: '#9B59B6', label: '허위 프로필'},
     };
     return styles[category] || styles.inappropriate;
   };
