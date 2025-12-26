@@ -27,7 +27,11 @@ import {colors} from '../../styles/common';
 export default function SavedRecipesScreen({navigation}) {
   const fixImageUrl = url => {
     if (!url) return null;
-    return url.replace('http://localhost:8090', 'http://10.0.2.2:8090');
+    // localhost 또는 로컬 IP를 ngrok URL로 변환
+    return url.replace(
+      /https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.0\.2\.2):8090/,
+      'https://f6aa9ba6797e.ngrok-free.app',
+    );
   };
 
   const [userId, setUserId] = useState(null);

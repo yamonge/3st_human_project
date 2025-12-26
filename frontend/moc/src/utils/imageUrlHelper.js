@@ -2,24 +2,23 @@ import {Platform} from 'react-native';
 import {SERVER_IP, SERVER_PORT, SERVER_BASE_URL} from '../api/axiosConfig';
 
 /**
- * 이미지 URL 변환 (Android 에뮬레이터 localhost 보정)
- * 백엔드에서 반환된 localhost URL을 실제 서버 IP로 변환
+ * 이미지 URL 변환 (ngrok URL 보정)
+ * 백엔드에서 반환된 localhost URL을 ngrok URL로 변환
  * 
  * @param {string} imageUrl - 변환할 이미지 URL
  * @returns {string} 변환된 이미지 URL
  * 
  * @example
  * const normalizedUrl = normalizeImageUrl('http://localhost:8090/image.jpg');
- * // Android: 'http://192.168.50.117:8090/image.jpg'
- * // iOS: 'http://localhost:8090/image.jpg'
+ * // 'https://f6aa9ba6797e.ngrok-free.app/image.jpg'
  */
 export const normalizeImageUrl = imageUrl => {
   if (!imageUrl) return imageUrl;
   
-  // localhost URL을 실제 서버 IP로 변환
-  if (imageUrl.startsWith(`http://localhost:${SERVER_PORT}`)) {
+  // localhost URL을 ngrok URL로 변환
+  if (imageUrl.includes('localhost:8090') || imageUrl.includes('192.168.')) {
     return imageUrl.replace(
-      `http://localhost:${SERVER_PORT}`,
+      /https?:\/\/(localhost|192\.168\.\d+\.\d+):8090/,
       SERVER_BASE_URL,
     );
   }

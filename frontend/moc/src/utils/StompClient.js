@@ -26,10 +26,7 @@ class StompClient {
    * WebSocket 서버 URL 가져오기
    */
   getWebSocketUrl() {
-    const BASE_URL =
-      Platform.OS === 'android'
-        ? 'http://192.168.1.134:8090' // Android 에뮬레이터 → PC
-        : 'http://localhost:8090'; // iOS 시뮬레이터 / 웹
+    const BASE_URL = 'https://f6aa9ba6797e.ngrok-free.app';
 
     return `${BASE_URL}/ws-chat`; // WebSocket 엔드포인트
   }
