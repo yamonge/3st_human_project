@@ -260,11 +260,20 @@ export default function ReportManagementScreen({navigation}) {
   const getTypeLabel = type => {
     switch (type) {
       case 'noshow':
+      case 'no_show':
         return '노쇼';
       case 'abuse':
+      case 'profanity':
         return '욕설';
       case 'fake':
+      case 'fake_profile':
         return '허위';
+      case 'fraud':
+        return '사기';
+      case 'inappropriate_behavior':
+        return '부적절한 행동';
+      case 'other':
+        return '기타';
       default:
         return '기타';
     }

@@ -38,6 +38,14 @@ const mapStatus = statusCd => {
 // reportReasonCd → ReportCard.category
 const mapCategory = reportReasonCd => {
   const cd = (reportReasonCd || '').toUpperCase();
+  // 신고 모달의 코드와 매핑
+  if (cd === 'PROFANITY') return 'abuse';
+  if (cd === 'INAPPROPRIATE_BEHAVIOR') return 'inappropriate';
+  if (cd === 'FRAUD') return 'fraud';
+  if (cd === 'NO_SHOW') return 'noshow';
+  if (cd === 'FAKE_PROFILE') return 'fake';
+  if (cd === 'OTHER') return 'inappropriate';
+  // 기존 매핑 (하위 호환성)
   if (cd.includes('COPY')) return 'copyright';
   if (cd.includes('SPAM') || cd.includes('AD')) return 'spam';
   if (cd.includes('ABUSE') || cd.includes('PROFAN')) return 'abuse';

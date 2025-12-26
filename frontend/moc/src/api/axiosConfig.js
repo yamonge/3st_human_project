@@ -3,7 +3,7 @@ import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ✅ 서버 IP 주소 (중앙 관리)
-export const SERVER_IP = Platform.OS === 'android' ? '192.168.50.117' : 'localhost';
+export const SERVER_IP = Platform.OS === 'android' ? '192.168.1.134' : 'localhost';
 export const SERVER_PORT = '8090';
 export const SERVER_BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
 
