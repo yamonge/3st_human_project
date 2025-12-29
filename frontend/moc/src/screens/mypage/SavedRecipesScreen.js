@@ -30,7 +30,7 @@ export default function SavedRecipesScreen({navigation}) {
     // localhost 또는 로컬 IP를 ngrok URL로 변환
     return url.replace(
       /https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.0\.2\.2):8090/,
-      'https://f6aa9ba6797e.ngrok-free.app',
+      'https://9cf2c0aba42a.ngrok-free.app',
     );
   };
 

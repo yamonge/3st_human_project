@@ -3,7 +3,7 @@ import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ✅ 서버 IP 주소 (중앙 관리)
-export const SERVER_IP = 'f6aa9ba6797e.ngrok-free.app';
+export const SERVER_IP = '9cf2c0aba42a.ngrok-free.app';
 export const SERVER_PORT = '';
 export const SERVER_BASE_URL = `https://${SERVER_IP}`;
 

@@ -9,6 +9,7 @@ import com.cucook.moc.user.dto.response.UserReviewResponseDTO;
 import com.cucook.moc.user.vo.UserReviewVO;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +22,15 @@ public class UserReviewServiceImpl implements UserReviewService {
 
     private final UserReviewDAO userReviewDAO;
     private final UserDAO userDAO; // 후기 작성자 정보(닉네임, 프로필 이미지) 조회를 위해 주입
+    private final String serverBaseUrl; // 서버 base URL (프로필 이미지 URL 변환용)
 
     @Autowired // 생성자 주입
     public UserReviewServiceImpl(UserReviewDAO userReviewDAO,
-                                 UserDAO userDAO) { // ⭐ UserDAO 주입 추가
+                                 UserDAO userDAO,
+                                 @Value("${server.base-url:http://localhost:8090}") String serverBaseUrl) {
         this.userReviewDAO = userReviewDAO;
         this.userDAO = userDAO;
+        this.serverBaseUrl = serverBaseUrl;
     }
 
     /**
@@ -218,6 +222,14 @@ public class UserReviewServiceImpl implements UserReviewService {
             ReviewedUserDetailDTO userDetail = userDAO.selectReviewedUserDetail(userId);
             
             if (userDetail != null) {
+                // 프로필 이미지 URL 변환 (상대 경로 → 절대 URL)
+                String profileImageUrl = userDetail.getProfileImageUrl();
+                if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                    // 이미 절대 URL이면 그대로, 상대 경로면 절대 URL로 변환
+                    if (!profileImageUrl.startsWith("http://") && !profileImageUrl.startsWith("https://")) {
+                        userDetail.setProfileImageUrl(serverBaseUrl + profileImageUrl);
+                    }
+                }
                 return userDetail;
             }
             

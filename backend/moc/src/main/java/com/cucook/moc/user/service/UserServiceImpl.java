@@ -463,7 +463,20 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserReviewDTO> getUserReviews(Long targetUserId) {
-        return userReviewDAO.selectReviewsForUser(targetUserId);
+        List<UserReviewDTO> reviews = userReviewDAO.selectReviewsForUser(targetUserId);
+        
+        // 프로필 이미지 URL 변환 (상대 경로 → 절대 URL)
+        for (UserReviewDTO review : reviews) {
+            String profileImageUrl = review.getWriterProfileImageUrl();
+            if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                // 이미 절대 URL이면 그대로, 상대 경로면 절대 URL로 변환
+                if (!profileImageUrl.startsWith("http://") && !profileImageUrl.startsWith("https://")) {
+                    review.setWriterProfileImageUrl(serverBaseUrl + profileImageUrl);
+                }
+            }
+        }
+        
+        return reviews;
     }
 
     @Override
