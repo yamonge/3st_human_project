@@ -26,7 +26,7 @@ class StompClient {
    * WebSocket 서버 URL 가져오기
    */
   getWebSocketUrl() {
-    const BASE_URL = 'https://9cf2c0aba42a.ngrok-free.app';
+    const BASE_URL = 'https://54a341645666.ngrok-free.app';
 
     return `${BASE_URL}/ws-chat`; // WebSocket 엔드포인트
   }
